@@ -39,4 +39,7 @@ npm install
 npm run dev
 ```
 ### 點擊跑出來的local連結
+![image](https://github.com/user-attachments/assets/4134fcce-a5e9-4ec4-8ea2-6eae6173dfec)
+
 看到畫面代表執行成功
+![image](https://github.com/user-attachments/assets/36858f40-ba60-4bd5-8a9b-33d5d0e5a5b6)
