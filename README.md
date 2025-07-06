@@ -1,11 +1,5 @@
 # 架構
-
-![Uploading 網頁架構.png…]()
-
-
-
-
-
+![LINE_NOTE_250706_1](https://github.com/user-attachments/assets/7de33e0b-406c-4857-9147-e59a6cf6dbdb)
 
 # vue-frontend
 
