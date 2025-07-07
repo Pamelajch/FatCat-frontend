@@ -2,7 +2,7 @@
 import ProductGridComponent from '@/components/ProductGridComponent.vue'
 import CouponComponent from '@/components/CouponComponent.vue'
 import ProductCategoryComponent from '@/components/ProductCategoryComponent.vue';
-import ActivityComponent from '@/components/ActivityComponent.vue';
+import ActivityComponent from '@/components/CampaignComponent.vue';
 import LoadingComponent from '@/components/LoadingComponent.vue';
 </script>
 
