@@ -49,25 +49,21 @@ onMounted(async () => {
 </script>
 
 <template>
-  <!-- 元件的根容器，套用新的日式條紋背景 -->
   <div class="campaigns-view-container">
     <main class="container py-5">
-      <!-- 標題區塊，加上了日式雲朵裝飾 -->
       <div class="title-container text-center mb-5">
         <h1 class="display-4 fw-bold page-title">所有活動</h1>
       </div>
 
-      <!-- 錯誤訊息顯示區 -->
       <div v-if="error" class="alert alert-danger">{{ error }}</div>
-
-      <!-- 載入中訊息顯示區 -->
       <div v-if="isLoading" class="text-center py-5">
-        <div class="spinner-border theme-spinner" style="width: 3rem; height: 3rem;" role="status">
-          <span class="visually-hidden">載入中...</span>
-        </div>
+        <div class="spinner-border theme-spinner" role="status"></div>
       </div>
 
-      <!-- 活動列表 -->
+      <!-- 
+        👇👇👇【結構簡化】👇👇👇
+        我們移除了外層的 campaign-wrapper，直接對 campaign-card 進行 v-for
+      -->
       <div v-if="!isLoading && campaigns.length > 0" class="d-grid gap-5">
         <div 
           v-for="campaign in campaigns" 
@@ -76,19 +72,17 @@ onMounted(async () => {
           class="campaign-card card"
         >
           <div class="row g-0">
-            <!-- 左側欄：活動圖片 -->
             <div class="col-lg-5 image-container">
               <img 
                 :src="`${BACKEND_URL}${campaign.coverImageUrl}`" 
                 class="img-fluid" 
                 :alt="campaign.title"
-                onerror="this.onerror=null;this.src='https://placehold.co/600x800/686868/FFFFFF?text=圖片載入失敗'">
+                onerror="this.onerror=null;this.src='https://placehold.co/600x800/eeeeee/FFFFFF?text=圖片載入失敗'">
             </div>
 
-            <!-- 右側欄：活動文字內容 -->
             <div class="col-lg-7 d-flex flex-column">
               <div class="card-body p-5">
-                <h3 class="card-title display-6 fw-bold mb-3">{{ campaign.title }}</h3>
+                <h3 class="card-title fw-bold mb-3">{{ campaign.title }}</h3>
                 <p class="card-text text-muted mb-4">
                   <small>活動期間：{{ new Date(campaign.startDate).toLocaleDateString() }} - {{ new Date(campaign.endDate).toLocaleDateString() }}</small>
                 </p>
@@ -104,7 +98,6 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- 沒有活動時顯示的訊息 -->
       <div v-if="!isLoading && campaigns.length === 0 && !error" class="text-center text-muted py-5">
         <p class="fs-4">目前沒有任何活動。</p>
       </div>
@@ -113,34 +106,30 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-/* 日式條紋背景
-  使用 repeating-linear-gradient 創造斜向的條紋效果
-  顏色使用淡紫色 (#d3a2da) 和一個更淺的紫色 (#e9d6ec) 來搭配
-*/
+/* 主要容器背景，使用你喜歡的「淡紫色」和「白色」粗條紋 */
 .campaigns-view-container {
-  background-color: #d3a2da;
+  background-color: #d3a2da; /* 淡紫色 */
   background-image: repeating-linear-gradient(
-    45deg,
+    to bottom,
     #d3a2da,
-    #d3a2da 25px,
-    #e9d6ec 25px,
-    #e9d6ec 50px
+    #d3a2da 60px,
+    #ffffff 60px,
+    #ffffff 120px
   );
   min-height: 100vh;
-  padding-top: 2rem;
-  padding-bottom: 4rem;
+  padding: 3rem 0;
 }
 
-/* 頁面大標題樣式，加上類似日式家紋的背景 */
+/* 頁面大標題樣式 */
 .page-title {
   color: #92559c; /* 深紫色 */
-  background-color: rgba(255, 255, 255, 0.8);
-  padding: 1rem 2rem;
-  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 1rem 2.5rem;
+  border-radius: 1rem;
   display: inline-block;
-  border: 3px solid #92559c;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  backdrop-filter: blur(5px);
+  border: 4px solid #92559c;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  backdrop-filter: blur(4px);
 }
 
 /* 載入中 spinner 的顏色 */
@@ -148,67 +137,69 @@ onMounted(async () => {
   color: #92559c;
 }
 
+/* 👇👇👇【CSS 簡化】👇👇👇
+  移除了 .campaign-wrapper 和 ::before (扇子) 的所有樣式
+*/
+
 /* 活動卡片樣式 */
 .campaign-card {
   background-color: #f6f6f6; /* 淺灰白色 */
-  border: 4px solid #686868; /* 深灰色邊框 */
+  border: 4px solid #000000; /* 你喜歡的 4px 黑邊框 */
   border-radius: 10px;
-  overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  box-shadow: 10px 10px 0px rgba(146, 85, 156, 0.7);
 }
 
 .campaign-card:hover {
-  transform: translateY(-10px) scale(1.02);
-  box-shadow: 0 16px 35px rgba(0,0,0,0.2);
+  transform: translate(-5px, -5px);
+  box-shadow: 15px 15px 0px #ffa600;
 }
 
-/* 圖片容器，加上一個內陰影增加立體感 */
+/* 圖片容器 */
 .image-container {
-  padding: 1rem;
-  background-color: #fff;
+  padding: 0;
+  border-right: 4px solid #000;
 }
 .campaign-card img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 5px;
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+  border-radius: 5px 0 0 5px;
 }
 
-/* 卡片標題使用深紫色 */
+/* 卡片標題，保留印章設計 */
 .campaign-card .card-title {
   color: #92559c;
+  position: relative;
+  padding-left: 20px;
+  font-size: 2.25rem;
+}
+.campaign-card .card-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 80%;
+  background-color: #ffd689; /* 淡黃色 */
+  border-radius: 2px;
 }
 
-/* 卡片內文使用深灰色 */
-.campaign-card .card-text {
-  color: #686868;
-}
-
-/* 卡片底部 footer 的樣式 */
-.campaign-card .card-footer {
-  background: none;
-  border: none;
-}
-
-/* 自訂按鈕樣式，使用橘黃色，並加上圖示 */
+/* 按鈕樣式，保留你喜歡的設計 */
 .btn-theme-action {
-  background-color: #ffa600; /* 橘黃色 */
-  color: white;
+  background: linear-gradient(45deg, #ffa600, #ffd689);
+  color: #686868;
   font-weight: bold;
-  border: 2px solid rgba(0,0,0,0.1);
-  padding: 0.75rem 2rem;
-  border-radius: 8px;
+  border: none;
+  padding: 0.75rem 2.5rem;
+  border-radius: 50px;
   transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  box-shadow: 0 4px 15px rgba(255, 166, 0, 0.3);
 }
 
 .btn-theme-action:hover {
-  background-color: #ffd689; /* 淡黃色 */
-  color: #686868; /* 深灰色 */
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 7px 25px rgba(255, 166, 0, 0.4);
 }
 </style>
