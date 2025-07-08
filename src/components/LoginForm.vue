@@ -14,100 +14,87 @@
     rememberMe: false
     })
 
-    // 狀態
+    //控制密碼可見性
     const showPassword = ref(false)
-    const errorMessage = ref('')
-    const emailError = ref('')
-    const passwordError = ref('')
-
-    // 計算屬性
-    const isLoading = computed(() => authStore.isLoading)
-
-    // 方法
     const togglePassword = () => {
     showPassword.value = !showPassword.value
     }
 
+    //錯誤訊息狀態：分別處理不同類型錯誤
+    const errorMessage = ref('')
+    const emailError = ref('')
+    const passwordError = ref('')
+
+    // 計算屬性 載入狀態：從 Auth Store 取得
+    const isLoading = computed(() => authStore.isLoading)
+
+    //表單驗證
     const validateForm = () => {
-    clearErrors()
+      clearErrors()
+      let hasError = false
 
-    let hasError = false
+      // 驗證 Email
+      const emailPattern = /^[^\s@]+@[^\s@]/
+      if (!loginForm.value.email) {
+          emailError.value = '請輸入電子郵件'
+          console.log('Email錯誤:', emailError.value) // 測試用
+          hasError = true
+      } else if (!emailPattern.test(loginForm.value.email)) {
+          emailError.value = '請輸入有效的電子郵件格式'
+          console.log('Email格式錯誤:', emailError.value) // 測試用
+          hasError = true
+      }
 
-    // 驗證 Email
-    const emailPattern = /^[^\s@]+@[^\s@]/
-    if (!loginForm.value.email) {
-        emailError.value = '請輸入電子郵件'
-        console.log('Email錯誤:', emailError.value) // 調試用
-        hasError = true
-    } else if (!emailPattern.test(loginForm.value.email)) {
-        emailError.value = '請輸入有效的電子郵件格式'
-        console.log('Email格式錯誤:', emailError.value) // 調試用
-        hasError = true
-    }
-
-    // 驗證密碼
-    if (!loginForm.value.password) {
-        passwordError.value = '請輸入密碼'
-        console.log('密碼錯誤:', passwordError.value) // 調試用
-        hasError = true
-    } else if (loginForm.value.password.length < 3) {
-        passwordError.value = '密碼至少需要3個字元'
-        console.log('密碼長度錯誤:', passwordError.value) // 調試用
-        hasError = true
-    }
-
-    // 如果有任何錯誤，顯示整體提示訊息
-    if (hasError) {
-        errorMessage.value = '請檢查並修正以下欄位錯誤'
-        console.log('表單驗證失敗，有錯誤欄位') // 調試用
-    }
-
-    return !hasError
+      // 驗證密碼
+      if (!loginForm.value.password) {
+          passwordError.value = '請輸入密碼'
+          console.log('密碼錯誤:', passwordError.value) // 測試用
+          hasError = true
+      } else if (loginForm.value.password.length < 3) {
+          passwordError.value = '密碼至少需要3個字元'
+          console.log('密碼長度錯誤:', passwordError.value) // 測試用
+          hasError = true
+      }
+      return !hasError
     }
 
     const handleLogin = async () => {
-    // 清除之前的錯誤
-    errorMessage.value = ''
-    
-    // 驗證表單
-    if (!validateForm()) {
-        return
-    }
+      // 清除之前的錯誤
+      errorMessage.value = ''
+      
+      // 如果表單驗證成功 => 登入
+      if (!validateForm()) {
+          return
+      }
+      try {
+          // 呼叫登入
+          const result = await authStore.login({
+          email: loginForm.value.email,
+          password: loginForm.value.password,
+          rememberMe: loginForm.value.rememberMe
+          })
 
-    try {
-        // 呼叫登入
-        const result = await authStore.login({
-        email: loginForm.value.email,
-        password: loginForm.value.password
-        })
-
-        if (result.success) {
-        // 登入成功，跳轉到首頁
-        router.push('/')
-        } else {
-        // 登入失敗，顯示錯誤訊息
-        errorMessage.value = result.message || '登入失敗'
-        }
-    } catch (error) {
-        errorMessage.value = '網路錯誤，請稍後再試'
+          if (result.success) {
+          // 登入成功，跳轉到首頁
+          router.push('/')
+          } else {
+          // 登入失敗，顯示錯誤訊息
+          errorMessage.value = result.message || '登入失敗'
+          }
+      } catch (error) {
+          errorMessage.value = '網路錯誤，請稍後再試'
+      }
     }
-    }
-    // 清除錯誤訊息
-    const clearErrors = () => {
+  // 清除錯誤訊息
+  const clearErrors = () => {
     emailError.value = ''
     passwordError.value = ''
     errorMessage.value = ''
-    }
+  }
 </script>
 
 <template>
   <form @submit.prevent="handleLogin" class="login-form" novalidate>
-    <!-- 錯誤訊息 -->
-    <div v-if="errorMessage" class="alert error-alert" role="alert">
-      <i class="bi bi-exclamation-circle me-2"></i>
-      {{ errorMessage }}
-    </div>
-
     <!-- Email 輸入 -->
     <div class="mb-3">
       <label for="email" class="form-label custom-label">電子郵件</label>
@@ -115,16 +102,7 @@
         <span class="input-group-text custom-input-group-text">
           <i class="bi bi-envelope"></i>
         </span>
-        <input
-          id="email"
-          v-model="loginForm.email"
-          type="text"
-          class="form-control custom-form-control"
-          :class="{ 'is-invalid': emailError }"
-          placeholder="請輸入您的電子郵件"
-          :disabled="isLoading"
-          @input="emailError = ''; errorMessage = ''"
-        >
+        <input id="email" v-model="loginForm.email" type="text" class="form-control custom-form-control" :class="{ 'is-invalid': emailError }" placeholder="請輸入您的電子郵件" :disabled="isLoading" @input="emailError = ''; errorMessage = ''">
       </div>
       <div v-if="emailError" class="email-error-message">
         {{ emailError }}
@@ -138,22 +116,9 @@
         <span class="input-group-text custom-input-group-text">
           <i class="bi bi-lock"></i>
         </span>
-        <input
-          id="password"
-          v-model="loginForm.password"
-          :type="showPassword ? 'text' : 'password'"
-          class="form-control custom-form-control"
-          :class="{ 'is-invalid': passwordError }"
-          placeholder="請輸入您的密碼"
-          :disabled="isLoading"
-          @input="passwordError = ''; errorMessage = ''"
-        >
-        <button
-          type="button"
-          class="btn custom-password-toggle"
-          @click="togglePassword"
-          :disabled="isLoading"
-        >
+        <input id="password" v-model="loginForm.password" :type="showPassword ? 'text' : 'password'" class="form-control custom-form-control" :class="{ 'is-invalid': passwordError }" placeholder="請輸入您的密碼" :disabled="isLoading" @input="passwordError = ''; errorMessage = ''">
+        <!-- 密碼顯示切換 -->
+        <button type="button" class="btn custom-password-toggle" @click="togglePassword" :disabled="isLoading">
           <i :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
         </button>
       </div>

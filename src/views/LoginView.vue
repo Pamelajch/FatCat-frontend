@@ -1,9 +1,10 @@
 <script setup>
-    import LoginForm from '../components/LoginForm.vue'
+import LoginForm from '../components/LoginForm.vue'
 </script>
 
 <template>
-<div class="login-page">
+    <!-- .login-page：整個頁面容器 -->
+<div class="login-page">  
     <div class="container-fluid vh-100">
       <div class="row h-100">
         <!-- 左側 - 登入表單 -->
@@ -30,7 +31,7 @@
             </div>
           </div>
         </div>
-         <!-- 右側 - 背景圖片 -->
+         <!-- 右側 - 背景圖片 d-none d-md-block 在小螢幕隱藏 -->
         <div class="col-md-6 col-lg-7 d-none d-md-block">
           <div class="login-bg h-100 d-flex align-items-center justify-content-center">
             <div class="text-center text-white">
@@ -88,6 +89,7 @@
   color: var(--orange-yellow);
 }
 
+/* 漸層背景 */
 .login-bg {
   background: linear-gradient(135deg, var(--deep-purple) 0%, var(--light-purple) 50%, var(--light-yellow) 100%);
   position: relative;

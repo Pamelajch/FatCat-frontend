@@ -16,7 +16,18 @@
         <RouterLink :to="{name:'home'}" class="icon-btn" title="首頁"><i class="bi bi-house-door"></i></RouterLink>
         <RouterLink :to="{name:'cart'}" class="icon-btn" title="購物車"><i class="bi bi-cart"></i></RouterLink>
         <RouterLink :to="{name:'favorite'}" class="icon-btn" title="我的最愛"><i class="bi bi-heart-fill"></i></RouterLink>
-        <RouterLink :to="{name:'user'}" class="icon-btn" title="會員中心"><i class="bi bi-person-circle"></i></RouterLink>
+
+        <!-- 會員中心下拉選單 -->
+        <div class="dropdown">
+          <button class="icon-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="會員中心">
+            <i class="bi bi-person-circle"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><RouterLink :to="{name:'login'}" class="dropdown-item"><i class="bi bi-box-arrow-in-right me-2"></i>登入</RouterLink></li>
+            <li><RouterLink :to="{name:'user'}" class="dropdown-item"><i class="bi bi-person-gear me-2"></i>會員中心</RouterLink></li>
+          </ul>
+        </div>
+
         <RouterLink :to="{name:'notification'}" class="icon-btn" title="通知"><i class="bi bi-bell"></i></RouterLink>
       </div>
     </div>
@@ -53,6 +64,33 @@
 
 .icon-btn:hover {
   color: #ffe0f0;
+}
+
+/* 下拉選單樣式 */
+.dropdown-menu {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item {
+  color: #212529;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.dropdown-item:hover {
+  background-color: #e9ecef;
+  color: #212529;
+  text-decoration: none;
+}
+
+.dropdown-item i {
+  width: 1rem;
 }
 
 /* 響應式調整 */
