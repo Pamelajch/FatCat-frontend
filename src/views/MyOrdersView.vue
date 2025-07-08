@@ -25,9 +25,20 @@
         <div class="tab-content" id="pills-tabContent">
         <div class="tab-pane fade show active" id="pills-1" role="tabpanel" aria-labelledby="pills-1-tab">
             <ul class="list-group">
-            <li class="list-group-item"><router-link to="/orderdetail">
+            <li class="list-group-item">
+                <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    訂單編號:
+                    <br>
+                    訂單狀態:
+                    <br>
+                    訂單金額:
+                </div>
+                <router-link to="/orderdetail">
                     <button type="button" class="btn btn-primary float-end">訂單明細</button>
-                </router-link></li>
+                </router-link>
+                </div>
+                </li>
             <li class="list-group-item">A second item</li>
             <li class="list-group-item">A third item</li>
             <li class="list-group-item">A fourth item</li>
