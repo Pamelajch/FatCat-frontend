@@ -53,7 +53,10 @@ onMounted(() => {
 
 <template>
   <div class="loading-container">
-
+    <div>
+        <img src="/logofont.png" alt="logo" class="logo" />
+    </div>
+        
     <h2 class="loading-text">你今天想吃啥？</h2>
     
     <button class="start-button">START</button>
@@ -133,5 +136,9 @@ onMounted(() => {
   height: auto;
   flex-shrink: 0;
   pointer-events: none;
+}
+
+.logo {
+  width: 400px;
 }
 </style>
