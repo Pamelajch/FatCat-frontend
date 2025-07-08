@@ -34,24 +34,7 @@ const routes = [
             hideHeaderFooter: true //讓登入頁面不要套用Header及Footer(方法寫在app.vue)
         }
     },
-    // 註冊頁面--佳馨
-    {
-        path: "/register",
-        component: RegisterView,
-        name: "register",
-        meta: {
-            hideHeaderFooter: true
-        }
-    },
-    // 忘記密碼頁面--佳馨
-    {
-        path: "/forgot-password",
-        component: ForgotPasswordView,
-        name: "forgot-password",
-        meta: {
-            hideHeaderFooter: true
-        }
-    },
+
 
 
 

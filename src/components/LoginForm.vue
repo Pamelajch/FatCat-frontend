@@ -22,12 +22,6 @@
 
     // 計算屬性
     const isLoading = computed(() => authStore.isLoading)
-    const isFormValid = computed(() => {
-    return loginForm.value.email && 
-            loginForm.value.password && 
-            !emailError.value && 
-            !passwordError.value
-    })
 
     // 方法
     const togglePassword = () => {
@@ -35,17 +29,17 @@
     }
 
     const validateForm = () => {
-    emailError.value = ''
-    passwordError.value = ''
-    errorMessage.value = ''
+    clearErrors()
 
     // 驗證 Email
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const emailPattern = /^[^\s@]+@[^\s@]/
     if (!loginForm.value.email) {
         emailError.value = '請輸入電子郵件'
+        console.log('Email錯誤:', emailError.value) // 調試用
         return false
     } else if (!emailPattern.test(loginForm.value.email)) {
         emailError.value = '請輸入有效的電子郵件格式'
+        console.log('Email格式錯誤:', emailError.value) // 調試用
         return false
     }
 
@@ -97,77 +91,77 @@
 </script>
 
 <template>
-  <form @submit.prevent="handleLogin" class="login-form">
+  <form @submit.prevent="handleLogin" class="login-form" novalidate>
     <!-- 錯誤訊息 -->
-    <div v-if="errorMessage" class="alert alert-danger" role="alert">
+    <div v-if="errorMessage" class="alert error-alert" role="alert">
       <i class="bi bi-exclamation-circle me-2"></i>
       {{ errorMessage }}
     </div>
 
     <!-- Email 輸入 -->
     <div class="mb-3">
-      <label for="email" class="form-label">電子郵件</label>
+      <label for="email" class="form-label custom-label">電子郵件</label>
       <div class="input-group">
-        <span class="input-group-text">
+        <span class="input-group-text custom-input-group-text">
           <i class="bi bi-envelope"></i>
         </span>
         <input
           id="email"
           v-model="loginForm.email"
-          type="email"
-          class="form-control"
+          type="text"
+          class="form-control custom-form-control"
           :class="{ 'is-invalid': emailError }"
           placeholder="請輸入您的電子郵件"
-          required
           :disabled="isLoading"
+          @input="emailError = ''; errorMessage = ''"
         >
       </div>
-      <div v-if="emailError" class="invalid-feedback">
+      <div v-if="emailError" class="email-error-message">
         {{ emailError }}
       </div>
     </div>
 
     <!-- 密碼輸入 -->
     <div class="mb-3">
-      <label for="password" class="form-label">密碼</label>
+      <label for="password" class="form-label custom-label">密碼</label>
       <div class="input-group">
-        <span class="input-group-text">
+        <span class="input-group-text custom-input-group-text">
           <i class="bi bi-lock"></i>
         </span>
         <input
           id="password"
           v-model="loginForm.password"
           :type="showPassword ? 'text' : 'password'"
-          class="form-control"
+          class="form-control custom-form-control"
           :class="{ 'is-invalid': passwordError }"
           placeholder="請輸入您的密碼"
-          required
           :disabled="isLoading"
+          @input="passwordError = ''; errorMessage = ''"
         >
         <button
           type="button"
-          class="btn btn-outline-secondary"
+          class="btn custom-password-toggle"
           @click="togglePassword"
           :disabled="isLoading"
         >
           <i :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
         </button>
       </div>
-      <div v-if="passwordError" class="invalid-feedback">
+      <div v-if="passwordError" class="password-error-message">
         {{ passwordError }}
       </div>
     </div>
 
      <!-- 記住我 -->
-    <div class="mb-3 form-check">
+    <div class="mb-3 form-check custom-form-check">
       <input
         id="rememberMe"
         v-model="loginForm.rememberMe"
         type="checkbox"
-        class="form-check-input"
+        class="form-check-input custom-checkbox"
         :disabled="isLoading"
       >
-      <label for="rememberMe" class="form-check-label">
+      <label for="rememberMe" class="form-check-label custom-check-label">
         記住我
       </label>
     </div>
@@ -175,8 +169,8 @@
     <!-- 登入按鈕 -->
     <button
       type="submit"
-      class="btn btn-primary w-100 mb-3"
-      :disabled="isLoading || !isFormValid"
+      class="btn custom-login-btn w-100 mb-3"
+      :disabled="isLoading"
     >
       <span v-if="isLoading" class="spinner-border spinner-border-sm me-2" role="status">
         <span class="visually-hidden">載入中...</span>
@@ -187,7 +181,7 @@
 
     <!-- 忘記密碼 -->
     <div class="text-center">
-      <a href="#" class="text-muted text-decoration-none small">
+      <a href="#" class="custom-forgot-password-link">
         忘記密碼？
       </a>
     </div>
@@ -196,37 +190,161 @@
 </template>
 
 <style lang="css" scoped>
-    .login-form {
-    width: 100%;
-    }
+/* 色系定義 - 使用組件內變數 */
+.login-form {
+  --deep-purple: #92559c;
+  --light-purple: #d3a2da;
+  --light-yellow: #ffd689;
+  --orange-yellow: #ffa600;
+  --deep-gray: #686868;
+  --light-gray: #f6f6f6;
+  
+  width: 100%;
+}
 
-    .input-group-text {
-    background-color: #f8f9fa;
-    border-right: none;
-    }
+/* 錯誤訊息樣式 */
+.error-alert {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
 
-    .form-control {
-    border-left: none;
-    }
+/* 標籤樣式 */
+.custom-label {
+  color: var(--deep-gray);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
 
-    .form-control:focus {
-    border-color: #86b7fe;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    }
+/* 輸入框組樣式 */
+.custom-input-group-text {
+  background-color: var(--light-gray);
+  border: 1px solid var(--deep-gray);
+  border-right: none;
+  color: var(--deep-purple);
+}
 
-    .btn-primary {
-    padding: 0.75rem 1rem;
-    font-weight: 500;
-    }
+.custom-form-control {
+  border: 1px solid var(--deep-gray);
+  border-left: none;
+  background-color: white;
+  color: var(--deep-gray);
+}
 
-    .spinner-border-sm {
-    width: 1rem;
-    height: 1rem;
-    }
-    /* 響應式調整 */
-    @media (max-width: 576px) {
-    .login-form {
-        padding: 0;
-    }
-    }
+.custom-form-control:focus {
+  border-color: var(--deep-purple);
+  box-shadow: 0 0 0 0.25rem rgba(146, 85, 156, 0.25);
+  background-color: white;
+}
+
+.custom-form-control::placeholder {
+  color: #999;
+}
+
+/* 密碼切換按鈕 */
+.custom-password-toggle {
+  background-color: var(--light-gray);
+  border: 1px solid var(--deep-gray);
+  border-left: none;
+  color: var(--deep-purple);
+  transition: all 0.3s ease;
+}
+
+.custom-password-toggle:hover {
+  background-color: var(--light-purple);
+  color: var(--deep-purple);
+}
+
+/* 複選框樣式 */
+.custom-form-check {
+  margin-bottom: 1.5rem;
+}
+
+.custom-checkbox {
+  accent-color: var(--deep-purple);
+}
+
+.custom-check-label {
+  color: var(--deep-gray);
+  font-size: 0.9rem;
+}
+
+/* 登入按鈕樣式 */
+.custom-login-btn {
+  background: linear-gradient(135deg, var(--deep-purple) 0%, var(--light-purple) 100%);
+  border: none;
+  color: white;
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+}
+
+.custom-login-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--light-purple) 0%, var(--orange-yellow) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(146, 85, 156, 0.3);
+}
+
+.custom-login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 忘記密碼連結 */
+.custom-forgot-password-link {
+  color: var(--deep-gray);
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: color 0.3s ease;
+}
+
+.custom-forgot-password-link:hover {
+  color: var(--deep-purple);
+}
+
+/* 無效輸入樣式 */
+.is-invalid {
+  border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* 自定義錯誤訊息樣式 */
+.email-error-message,
+.password-error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: block;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+/* 載入動畫 */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* 響應式調整 */
+@media (max-width: 576px) {
+  .login-form {
+    padding: 0;
+  }
+  
+  .custom-login-btn {
+    padding: 0.875rem 1rem;
+  }
+}
 </style>
