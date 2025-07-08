@@ -6,6 +6,7 @@ import FavoriteView from "./views/FavoriteView.vue"
 import UserView from "./views/UserView.vue"
 import NotificationView from "./views/NotificationView.vue"
 import CampaignsView from '@/views/CampaignsView.vue'
+import _ReviewTestView from "@/views/_ReviewTestView.vue"
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
@@ -31,6 +32,9 @@ const routes = [
     //活動 --如謙
     //http://localhost:5173/campaigns
     { path: "/campaigns", component: CampaignsView, name: "campaigns" },
+    //產品評論討論區 --如謙
+    //http://localhost:5173/_reviewtest
+    { path: "/_reviewtest", component: _ReviewTestView, name: "_reviewtest" },
 
 ]
 
