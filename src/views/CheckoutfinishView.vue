@@ -4,7 +4,7 @@
 
 <template>
     <div class=" container mb-2">
-        <h2>訂單結帳</h2>
+        <h2>完成結帳</h2>
         <div class="accordion col-lg-10 container mb-5" id="accordionPanelsStayOpenExample" >
   <div class="accordion-item">
     <h2 class="accordion-header" id="panelsStayOpen-headingOne">
@@ -76,14 +76,14 @@
                         
                     </div>
                     </li>
-                  <li class="list-group-item">
+                  <!-- <li class="list-group-item">
                     <div class="form-check">
                     <input class="form-check-input" type="checkbox" id="sameAsMember">
                     <label class="form-check-label" for="sameAsMember">
                         同會員資料填入
                     </label>
                     </div>
-                </li>
+                </li> -->
                 </ul>
                     
                 </div>
@@ -122,13 +122,11 @@
                 
             </div>
             <div>
-                <router-link to="/checkoutfinish">
-                    <button type="button" class="btn btn-primary float-end">確定結帳</button>
-                </router-link>
                 
-                <router-link to="/cart">
-                        <button type="button" class="btn btn-secondary float-end">購物車確認</button>
-                        </router-link>
+                <button type="button" class="btn btn-primary float-end">我的訂單</button>
+                <!-- <router-link to="/cart">
+                        
+                        </router-link> -->
                 
             </div>
             
