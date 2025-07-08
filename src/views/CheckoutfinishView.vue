@@ -123,10 +123,10 @@
             </div>
             <div>
                 
-                <button type="button" class="btn btn-primary float-end">我的訂單</button>
-                <!-- <router-link to="/cart">
-                        
-                        </router-link> -->
+                
+                <router-link to="/myorders">
+                        <button type="button" class="btn btn-primary float-end">我的訂單</button>
+                        </router-link>
                 
             </div>
             

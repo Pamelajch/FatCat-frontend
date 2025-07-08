@@ -7,6 +7,7 @@ import UserView from "./views/UserView.vue"
 import NotificationView from "./views/NotificationView.vue"
 import CheckoutView from "./views/CheckoutView.vue"
 import CheckoutfinishView from "./views/CheckoutfinishView.vue"
+import MyOrdersView from "./views/MyOrdersView.vue"
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
@@ -34,7 +35,10 @@ const routes = [
     { path: "/checkout", component: CheckoutView, name: "checkout" },
     //完成結帳 -- 梓瑋
     //http://localhost:5173/checkoutfinish
-    { path: "/checkoutfinish", component: CheckoutfinishView, name: "checkoutfinish" }
+    { path: "/checkoutfinish", component: CheckoutfinishView, name: "checkoutfinish" },
+    //我的訂單 -- 梓瑋
+    //http://localhost:5173/checkoutfinish
+    { path: "/myorders", component: MyOrdersView, name: "myorders" }
 ]
 
 const router = createRouter({
