@@ -2,15 +2,15 @@ import axios from "axios"
 
 //建立axios 實例
 const api = axios.create({
-    baseURL: 'https://localhost:7017/api',
-    timeout: 10000, //請求逾時設定10秒
+    baseURL: 'https://localhost:7017/api', //baseURL 設定 - 統一的後端 API 基礎路徑
+    timeout: 10000, //請求逾時設定10秒 防止請求卡死
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     }
 })
 
-//請求攔截器 --自動添加JWT Token
+//請求攔截器 - 自動在每個請求中添加 JWT Token
 api.interceptors.request.use(
     (config) => {
         // 從 localStorage 獲取 token
@@ -25,7 +25,7 @@ api.interceptors.request.use(
     }
 )
 
-// 回應攔截器 - 統一處理錯誤
+// 回應攔截器 - 統一處理 401 認證錯誤
 api.interceptors.response.use(
     (response) => {
         return response

@@ -2,7 +2,7 @@ import api from "./jjapi";
 
 // 認證相關的 API 服務
 export const authService = {
-    // 用戶登入
+    // 呼叫登入 API
     async login(loginData) {
         try {
             const response = await api.post('/auth/login', loginData)
@@ -12,7 +12,7 @@ export const authService = {
         }
     },
 
-    // 用戶註冊
+    //  呼叫註冊 API
     async register(registerData) {
         try {
             const response = await api.post('/auth/register', registerData)
@@ -34,7 +34,7 @@ export const authService = {
         }
     },
 
-    // 用戶登出
+    // 呼叫登出 API
     async logout() {
         try {
             const response = await api.post('/auth/logout')
@@ -45,7 +45,7 @@ export const authService = {
         }
     },
 
-    // 檢查 token 是否有效
+    // 檢查用戶是否已登入
     isAuthenticated() {
         const token = localStorage.getItem('token')
         if (!token) {
@@ -62,7 +62,7 @@ export const authService = {
         }
     },
 
-    // 儲存認證資訊
+    // 儲存認證資訊到 localStorage
     saveAuthData(authData) {
         localStorage.setItem('token', authData.token)
         localStorage.setItem('user', JSON.stringify({
