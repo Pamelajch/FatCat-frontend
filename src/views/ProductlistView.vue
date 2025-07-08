@@ -37,6 +37,7 @@ const onDrop = (event) => {
 
 <template>
   <div class="container">
+    <button @click="bowl = []" class="clear-button">清空碗</button>
     <!-- 食材清單 -->
     <div class="product-list">
       <div
@@ -51,14 +52,17 @@ const onDrop = (event) => {
       </div>
     </div>
 
-    <!-- 拖曳進來的碗 -->
+    <!-- 拖曳進來的碗（用 pot.jpg 當背景）-->
     <div class="bowl" @dragover.prevent @drop="onDrop">
-      <h3>🍜 你的泡麵碗</h3>
-      <ul>
-        <li v-for="item in bowl" :key="item.productsId">
-          {{ item.name }}
-        </li>
-      </ul>
+      <div class="bowl-items">
+        <img
+        v-for="item in bowl"
+        :key="item.productsId"
+        :src="item.imageUrl"
+        :alt="item.name"
+        class="bowl-img"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -95,12 +99,50 @@ const onDrop = (event) => {
 }
 
 .bowl {
-  width: 80%;
-  min-height: 120px;
-  padding: 16px;
-  background-color: #ffe9d8;
-  border: 2px dashed #f79c6a;
-  border-radius: 20px;
-  text-align: center;
+  width: 800px;
+  height: 800px;
+  background-image: url('/pot.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: relative;  /* 讓子元素可以絕對定位 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px auto;
+}
+
+.bowl-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  position: absolute; /* 疊在碗圖上 */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.bowl-img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.clear-button {
+  margin-top: 12px;
+  background-color: #f79c6a;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+}
+
+.clear-button:hover {
+  background-color: #ffad7f;
 }
 </style>
