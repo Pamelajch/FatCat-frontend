@@ -53,13 +53,15 @@ const products = [
 }
 
 .section-title {
-  font-size: 36px;
+  font-size: 48px;
+  font-weight: bold;
   color: #ff8800; /* 橘色標題 */
   margin-bottom: 10px;
 }
 
 .subtitle {
-  font-size: 18px;
+  font-size: 24px;
+  font-weight: bold;
   color: #6f42c1; /* 紫色小標 */
   margin-bottom: 30px;
 }
