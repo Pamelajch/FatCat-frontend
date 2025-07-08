@@ -6,6 +6,7 @@ import FavoriteView from "./views/FavoriteView.vue"
 import UserView from "./views/UserView.vue"
 import NotificationView from "./views/NotificationView.vue"
 import LoginView from "./views/LoginView.vue"
+import NofundView from "./views/NofundView.vue"
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
@@ -41,8 +42,10 @@ const routes = [
 
 
 
-    //404頁面一定要放在最下面
 
+    //404頁面 !!一定要放在最下面!! 若要新增頁面請放上面↑↑
+    // (.*)* 任意字元
+    { path: "/:pathMatch(.*)*", component: NofundView, name: 'NotFund', meta: { hideHeaderFooter: true } }
 ]
 
 const router = createRouter({
