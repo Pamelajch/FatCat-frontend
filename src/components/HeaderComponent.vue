@@ -14,6 +14,7 @@
       <!-- 右側按鈕群組 -->
       <div class="d-flex align-items-center gap-3 gap-lg-4">
         <RouterLink :to="{name:'home'}" class="icon-btn" title="首頁"><i class="bi bi-house-door"></i></RouterLink>
+        <RouterLink :to="{name:'productlist'}" class="icon-btn" title="商品"><i class="fa-solid fa-bowl-food"></i></RouterLink>
         <RouterLink :to="{name:'cart'}" class="icon-btn" title="購物車"><i class="bi bi-cart"></i></RouterLink>
         <RouterLink :to="{name:'favorite'}" class="icon-btn" title="我的最愛"><i class="bi bi-heart-fill"></i></RouterLink>
         <RouterLink :to="{name:'user'}" class="icon-btn" title="會員中心"><i class="bi bi-person-circle"></i></RouterLink>
