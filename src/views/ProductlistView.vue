@@ -7,7 +7,7 @@ const bowl = ref([])      // 使用者拖進碗裡的食材
 // 取得產品資料（從你提供的 API）
 const fetchProducts = async () => {
   try {
-    const res = await fetch('https://localhost:7017/api/Products')
+    const res = await fetch('https://localhost:7017/api/Products/withImage')
     const data = await res.json()
     products.value = data
   } catch (error) {
