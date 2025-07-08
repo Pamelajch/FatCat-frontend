@@ -76,7 +76,14 @@
                         
                     </div>
                     </li>
-                  
+                  <li class="list-group-item">
+                    <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="sameAsMember">
+                    <label class="form-check-label" for="sameAsMember">
+                        同會員資料填入
+                    </label>
+                    </div>
+                </li>
                 </ul>
                     
                 </div>
