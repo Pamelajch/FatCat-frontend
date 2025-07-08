@@ -75,7 +75,7 @@ export const authService = {
 
     // 清除認證資訊
     clearAuthData() {
-        localStorage.removeItem('tokrn')
+        localStorage.removeItem('token')
         localStorage.removeItem('user')
     },
 

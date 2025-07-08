@@ -1,19 +1,28 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView,useRoute} from 'vue-router'
+import { computed } from 'vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap/dist/js/bootstrap.bundle.js'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import HeaderComponent from './components/HeaderComponent.vue'
 import FooterComponent from './components/FooterComponent.vue'
+
+
+//獲取目前路由
+const route = useRoute()
+//計算是否需要隱藏 Header 和 Footer
+const shouldhideHeaderFooter = computed(()=>{
+  return route.meta.hideHeaderFooter || false
+})
 </script>
 
 <template>
   <div>
-    <HeaderComponent></HeaderComponent>
+    <HeaderComponent v-if="!shouldhideHeaderFooter"></HeaderComponent>
     <main>
       <RouterView></RouterView>
     </main>
-    <FooterComponent></FooterComponent>
+    <FooterComponent v-if="!shouldhideHeaderFooter"></FooterComponent>
   </div>
 
 </template>
