@@ -5,6 +5,7 @@ import CartView from "./views/CartView.vue"
 import FavoriteView from "./views/FavoriteView.vue"
 import UserView from "./views/UserView.vue"
 import NotificationView from "./views/NotificationView.vue"
+import CheckoutView from "./views/CheckoutView.vue"
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
@@ -27,7 +28,9 @@ const routes = [
     //通知 --佳馨
     //http://localhost:5173/notification
     { path: "/notification", component: NotificationView, name: "notification" },
-
+    //訂單結帳 -- 梓瑋
+    //http://localhost:5173/checkout
+    { path: "/checkout", component: CheckoutView, name: "checkout" }
 ]
 
 const router = createRouter({

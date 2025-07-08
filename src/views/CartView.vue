@@ -34,8 +34,16 @@
                     <li class="list-group-item">
                         <h3>優惠&促銷</h3>
                     </li>
-                    <li class="list-group-item">已享有優惠&可用優惠券</li>
-                    <li class="list-group-item">優惠促銷</li>
+                    <li class="list-group-item">已享有優惠&可用優惠券
+                    <div>
+
+                    </div>
+                    </li>
+                    <li class="list-group-item">優惠促銷
+                    <div>
+                        指定系列滿XXX元可折XX元 再買XX元即享優惠
+                    </div>
+                    </li>
                 </ul>
                     
                 </div>
@@ -60,7 +68,9 @@
                   
                 </ul>
                     
-                </div><button type="button" class="btn btn-primary float-end">前往結帳</button>
+                </div><router-link to="/checkout">
+                        <button type="button" class="btn btn-primary float-end">前往結帳</button>
+                        </router-link>
             </div>
         </div>
     </div>
