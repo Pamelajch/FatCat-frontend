@@ -151,7 +151,7 @@ onMounted(async () => {
 /* 活動卡片樣式 */
 .campaign-card {
   background-color: #f6f6f6; /* 淺灰白色 */
-  border: 2px solid #686868; /* 深灰色邊框 */
+  border: 4px solid #686868; /* 深灰色邊框 */
   border-radius: 10px;
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
