@@ -1,5 +1,36 @@
 <script setup>
-    
+    import { useAuthStore } from '../stores/auth'
+    import { useRouter } from 'vue-router'
+    import { computed } from 'vue'
+
+    //登入登出功能區------------------------------------------
+    // 使用auth store和router
+    const authStore = useAuthStore()
+    const router = useRouter()
+
+    // 計算屬性：是否已登入
+    const isAuthenticated = computed(() => authStore.isAuthenticated)
+    const user = computed(() => authStore.user)
+
+    // 登出處理
+    const handleLogout = async () => {
+      try {
+        await authStore.logout()
+        // 跳轉到首頁
+        router.push('/')
+      } catch (error) {
+        console.error('登出失敗:', error)
+      }
+    }
+
+    // 處理頭像顯示
+    const getUserAvatar = computed(() => {
+      if (user.value?.picPath) {
+        return user.value.picPath
+      }
+      return null
+    })
+    //登入登出功能區 end-------------------------------------
 </script>
 
 <template>
@@ -19,12 +50,30 @@
 
         <!-- 會員中心下拉選單 -->
         <div class="dropdown">
-          <button class="icon-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="會員中心">
-            <i class="bi bi-person-circle"></i>
+          <button class="icon-btn dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="會員中心">
+            <!-- 根據登入狀態顯示不同的圖示和文字 -->
+            <template v-if="isAuthenticated">
+              <!-- 如果有頭像則顯示頭像，否則顯示預設圖示 -->
+              <img v-if="getUserAvatar" :src="getUserAvatar" alt="會員頭像" class="user-avatar" />
+              <i v-else class="bi bi-person-circle"></i>
+              <span class="user-greeting d-none d-lg-inline">{{ user.name }}您好</span>
+            </template>
+            <template v-else>
+              <i class="bi bi-person-circle"></i>
+              <span class="d-none d-lg-inline"></span>
+            </template>
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
-            <li><RouterLink :to="{name:'login'}" class="dropdown-item"><i class="bi bi-box-arrow-in-right me-2"></i>會員登入</RouterLink></li>
-            <li><RouterLink :to="{name:'user'}" class="dropdown-item"><i class="bi bi-person-gear me-2"></i>會員中心</RouterLink></li>
+            <!-- 根據登入狀態顯示不同的選單項目 -->
+            <template v-if="isAuthenticated">
+              <li><RouterLink :to="{name:'user'}" class="dropdown-item"><i class="bi bi-person-gear me-2"></i>會員中心</RouterLink></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><button @click="handleLogout" class="dropdown-item" :disabled="authStore.isLoading"><i class="bi bi-box-arrow-right me-2"></i>{{ authStore.isLoading ? '登出中...' : '登出' }}</button></li>
+            </template>
+            <template v-else>
+              <li><RouterLink :to="{name:'login'}" class="dropdown-item"><i class="bi bi-box-arrow-in-right me-2"></i>會員登入</RouterLink></li>
+              <li><RouterLink :to="{name:'user'}" class="dropdown-item"><i class="bi bi-person-gear me-2"></i>會員中心</RouterLink></li>
+            </template>
           </ul>
         </div>
 
@@ -121,6 +170,70 @@
   
   .icon-btn {
     font-size: 1.1rem;
+  }
+}
+
+/* 登入登出css設定 */
+/* 使用者頭像樣式 */
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid white;
+}
+
+/* 使用者歡迎文字 */
+.user-greeting {
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* 修改 dropdown-item 樣式以支援 button */
+.dropdown-item {
+  color: #212529;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  transition: background-color 0.15s ease-in-out;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.dropdown-item:disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.dropdown-divider {
+  height: 0;
+  margin: 0.5rem 0;
+  overflow: hidden;
+  border-top: 1px solid #dee2e6;
+}
+
+/* 響應式調整 */
+@media (max-width: 992px) {
+  .user-greeting {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .user-avatar {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 576px) {
+  .user-avatar {
+    width: 24px;
+    height: 24px;
   }
 }
 </style> 

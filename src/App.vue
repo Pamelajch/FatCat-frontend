@@ -1,12 +1,12 @@
 <script setup>
 import { RouterLink, RouterView,useRoute} from 'vue-router'
-import { computed } from 'vue'
+import { computed,onMounted } from 'vue'
+import { useAuthStore } from './stores/auth'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap/dist/js/bootstrap.bundle.js'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import HeaderComponent from './components/HeaderComponent.vue'
 import FooterComponent from './components/FooterComponent.vue'
-
 
 //獲取目前路由
 const route = useRoute()
@@ -14,6 +14,14 @@ const route = useRoute()
 const shouldhideHeaderFooter = computed(()=>{
   return route.meta.hideHeaderFooter || false
 })
+
+//記住user登入資訊
+// 獲取auth store
+   const authStore = useAuthStore()
+      // 在組件掛載時初始化auth狀態
+      onMounted(() => {
+        authStore.initializeAuth()
+   })
 </script>
 
 <template>
