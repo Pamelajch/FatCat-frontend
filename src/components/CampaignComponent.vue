@@ -89,7 +89,7 @@ onMounted(() => {
                       活動期間：{{ new Date(campaign.startDate).toLocaleDateString() }} - {{ new Date(campaign.endDate).toLocaleDateString() }}
                     </p>
                     <p class="card-text fs-5 mb-5">{{ campaign.content }}</p>
-                    <router-link :to="`/campaigns/${campaign.campaignId}`" class="btn btn-warning btn-lg fw-bold px-5 py-3">
+                    <router-link :to="{ path: '/campaigns', hash: `#campaign-${campaign.campaignId}` }" class="btn btn-warning btn-lg fw-bold px-5 py-3">
                       查看詳情
                     </router-link>
                   </div>

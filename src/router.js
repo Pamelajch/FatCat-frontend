@@ -5,6 +5,7 @@ import CartView from "./views/CartView.vue"
 import FavoriteView from "./views/FavoriteView.vue"
 import UserView from "./views/UserView.vue"
 import NotificationView from "./views/NotificationView.vue"
+import CampaignsView from '@/views/CampaignsView.vue'
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
@@ -27,6 +28,9 @@ const routes = [
     //通知 --佳馨
     //http://localhost:5173/notification
     { path: "/notification", component: NotificationView, name: "notification" },
+    //活動 --如謙
+    //http://localhost:5173/campaigns
+    { path: "/campaigns", component: CampaignsView, name: "campaigns" },
 
 ]
 
