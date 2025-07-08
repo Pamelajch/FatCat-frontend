@@ -29,7 +29,7 @@ const newReview = ref({
 // --- 計算屬性 (Computed Properties) ---
 // 計算平均評分和總評論數
 const averageRating = computed(() => {
-  if (reviews.value.length === 0) return 0;
+  if (!reviews.value || reviews.value.length === 0) return 0;
   const total = reviews.value.reduce((sum, review) => sum + review.rating, 0);
   return (total / reviews.value.length).toFixed(1);
 });
@@ -72,7 +72,7 @@ onMounted(() => {
       <h3 class="mb-0">顧客評論 ({{ reviews.length }})</h3>
       <div v-if="reviews.length > 0" class="average-rating">
         <strong>{{ averageRating }}</strong> / 5
-        <!-- 這裡可以放星星圖示 -->
+        <span class="star filled ms-1">★</span>
       </div>
     </div>
 
@@ -86,9 +86,9 @@ onMounted(() => {
         <div class="card-body">
           <div class="d-flex align-items-center mb-2">
             <!-- 使用者頭像 (暫用預設圖) -->
-            <img src="https://placehold.co/50x50/92559c/FFFFFF?text=User" class="rounded-circle me-3" alt="user avatar">
+            <img :src="`https://ui-avatars.com/api/?name=${review.userName || '?'}&background=92559c&color=fff`" class="rounded-circle me-3" alt="user avatar">
             <div>
-              <h6 class="card-title mb-0">{{ review.userName }}</h6>
+              <h6 class="card-title mb-0">{{ review.userName || '匿名使用者' }}</h6>
               <small class="text-muted">{{ new Date(review.createdAt).toLocaleDateString() }}</small>
             </div>
             <div class="ms-auto">
@@ -97,10 +97,17 @@ onMounted(() => {
             </div>
           </div>
           <p class="card-text">{{ review.comment }}</p>
+          
+          <!-- 👇👇👇【這就是我們新增的區塊】👇👇👇 -->
           <!-- 附件圖片 -->
           <div v-if="review.attachments && review.attachments.length > 0" class="attachments mt-2">
-            <img v-for="att in review.attachments" :key="att.filePath" :src="`${BACKEND_URL}${att.filePath}`" class="img-thumbnail me-2" alt="review attachment">
+            <!-- 用 v-for 遍歷所有附件 -->
+            <a v-for="att in review.attachments" :key="att.filePath" :href="`${BACKEND_URL}${att.filePath}`" target="_blank" title="點擊放大">
+              <!-- 組合出完整的圖片 URL -->
+              <img :src="`${BACKEND_URL}${att.filePath}`" class="img-thumbnail me-2" alt="review attachment">
+            </a>
           </div>
+
           <!-- 官方回覆 -->
           <div v-if="review.response" class="official-response mt-3 p-3">
             <strong>店家回覆：</strong> {{ review.response }}
@@ -142,6 +149,16 @@ onMounted(() => {
 .review-card { border-left: 4px solid #d3a2da; }
 .star { color: #e0e0e0; font-size: 1.2rem; }
 .star.filled { color: #ffa600; }
-.attachments img { width: 80px; height: 80px; object-fit: cover; }
+/* 附件圖片的樣式 */
+.attachments img { 
+  width: 80px; 
+  height: 80px; 
+  object-fit: cover; /* 確保圖片不變形 */
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.attachments img:hover {
+  transform: scale(1.1); /* 滑鼠移過時放大一點 */
+}
 .official-response { background-color: #f6f6f6; border-radius: 5px; border: 1px solid #eee; }
 </style>
