@@ -59,11 +59,18 @@
                         <h3>猜你喜歡</h3>
                     </li>
                     <li class="list-group-item">
-                        <div class="btn-group" role="group" aria-label="Basic mixed styles example">
+                        <div style="margin-right: 2px;">
                             <button type="button" class="btn btn-danger">Left</button>
+                        </div>
+                        <div>
                             <button type="button" class="btn btn-warning">Middle</button>
+                        </div>
+                        
+                        <div>
                             <button type="button" class="btn btn-success">Right</button>
                         </div>
+                            
+                        
                     </li>
                   
                 </ul>

@@ -4,7 +4,7 @@
 
 <template>
     <div class=" container mb-2">
-        <h2>完成結帳</h2>
+        <h2>結帳完成</h2>
         <div class="accordion col-lg-10 container mb-5" id="accordionPanelsStayOpenExample" >
   <div class="accordion-item">
     <h2 class="accordion-header" id="panelsStayOpen-headingOne">
