@@ -31,28 +31,38 @@
     const validateForm = () => {
     clearErrors()
 
+    let hasError = false
+
     // 驗證 Email
     const emailPattern = /^[^\s@]+@[^\s@]/
     if (!loginForm.value.email) {
         emailError.value = '請輸入電子郵件'
         console.log('Email錯誤:', emailError.value) // 調試用
-        return false
+        hasError = true
     } else if (!emailPattern.test(loginForm.value.email)) {
         emailError.value = '請輸入有效的電子郵件格式'
         console.log('Email格式錯誤:', emailError.value) // 調試用
-        return false
+        hasError = true
     }
 
     // 驗證密碼
     if (!loginForm.value.password) {
         passwordError.value = '請輸入密碼'
-        return false
+        console.log('密碼錯誤:', passwordError.value) // 調試用
+        hasError = true
     } else if (loginForm.value.password.length < 3) {
         passwordError.value = '密碼至少需要3個字元'
-        return false
+        console.log('密碼長度錯誤:', passwordError.value) // 調試用
+        hasError = true
     }
 
-    return true
+    // 如果有任何錯誤，顯示整體提示訊息
+    if (hasError) {
+        errorMessage.value = '請檢查並修正以下欄位錯誤'
+        console.log('表單驗證失敗，有錯誤欄位') // 調試用
+    }
+
+    return !hasError
     }
 
     const handleLogin = async () => {
