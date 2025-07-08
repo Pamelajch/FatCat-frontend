@@ -13,7 +13,6 @@ import FooterComponent from './components/FooterComponent.vue'
     <main>
       <RouterView></RouterView>
     </main>
-    
     <FooterComponent></FooterComponent>
   </div>
 
