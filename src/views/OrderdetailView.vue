@@ -4,7 +4,7 @@
 
 <template>
     <div class=" container mb-2">
-        <h2>完成結帳</h2>
+        <h2>訂單明細</h2>
         <div class="accordion col-lg-10 container mb-5" id="accordionPanelsStayOpenExample" >
   <div class="accordion-item">
     <h2 class="accordion-header" id="panelsStayOpen-headingOne">
@@ -60,6 +60,16 @@
                     <ul class="list-group">
                     <li class="list-group-item">
                         <h3>送貨資料</h3>
+                    </li>
+                    <li class="list-group-item">訂單狀態:
+                    <div>
+
+                    </div>
+                    </li>
+                    <li class="list-group-item">物流狀態:
+                    <div>
+
+                    </div>
                     </li>
                     <li class="list-group-item">送貨方式:
                     <div>
@@ -125,7 +135,7 @@
                 
                 
                 <router-link to="/myorders">
-                        <button type="button" class="btn btn-primary float-end">我的訂單</button>
+                        <button type="button" class="btn btn-light float-end">我的訂單</button>
                         </router-link>
                 
             </div>
