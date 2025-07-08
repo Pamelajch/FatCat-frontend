@@ -63,17 +63,23 @@
                     </li>
                     <li class="list-group-item">送貨方式:
                     <div>
+                       <select class="form-select form-select-sm" aria-label=".form-select-sm example">
+                        <option selected>請選擇送貨方式</option>
+                        <option value="1">One</option>
+                        <option value="2">Two</option>
+                        <option value="3">Three</option>
+                        </select>
 
                     </div>
                     </li>
                     <li class="list-group-item">收件人姓名:
                     <div>
-                        
+                        <input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
                     </div>
                     </li>
                     <li class="list-group-item">收件人電話:
                     <div>
-                        
+                        <input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
                     </div>
                     </li>
                   <li class="list-group-item">
@@ -102,7 +108,12 @@
                     </li>
                     <li class="list-group-item">使用優惠券:
                     <div>
-                        
+                         <select class="form-select form-select-sm" aria-label=".form-select-sm example">
+                        <option selected>請選擇優惠</option>
+                        <option value="1">One</option>
+                        <option value="2">Two</option>
+                        <option value="3">Three</option>
+                        </select>
                     </div>
                     </li>
                     <li class="list-group-item">訂單總金額:

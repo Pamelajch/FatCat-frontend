@@ -133,9 +133,10 @@
             </div>
             <div>
                 
-                
+                <button type="button" class="btn btn-primary float-end">聯絡我們</button>
+                <button type="button" class="btn btn-danger float-end">取消訂單</button>
                 <router-link to="/myorders">
-                        <button type="button" class="btn btn-light float-end">我的訂單</button>
+                        <button type="button" class="btn btn-secondary float-end">返回我的訂單</button>
                         </router-link>
                 
             </div>
