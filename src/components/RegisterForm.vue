@@ -92,6 +92,10 @@
     }
 
     const handleRegister = async () => {
+         // 測試：檢查原始的 birthdate 值
+            // console.log('原始 birthdate 值:', registerForm.value.birthdate)
+            // console.log('birthdate 是否為空字串:', registerForm.value.birthdate === '')
+            // console.log('birthdate 是否為 null:', registerForm.value.birthdate === null)
         // 清除之前的錯誤
         errorMessage.value = ''
         
@@ -101,15 +105,15 @@
         }
 
          try {
-                    // 準備註冊資料 (不包含確認密碼)
-        const registerData = {
-            name: registerForm.value.name?.trim() || "",
-            email: registerForm.value.email?.trim() || "",
-            password: registerForm.value.password || "",
-            phone: registerForm.value.phone?.trim() || null,
-            gender: registerForm.value.gender || null,
-            // 修正日期格式處理
-            birthdate: registerForm.value.birthdate ? new Date(registerForm.value.birthdate).toISOString() : null
+                // 準備註冊資料 (不包含確認密碼)
+                 const registerData = {
+                 name: registerForm.value.name?.trim() || "",
+                 email: registerForm.value.email?.trim() || "",
+                 password: registerForm.value.password || "",
+                phone: registerForm.value.phone?.trim() || null,
+                gender: registerForm.value.gender || null,
+                // 修正日期格式處理
+                birthdate: registerForm.value.birthdate ? new Date(registerForm.value.birthdate).toISOString() : null
         }
                 // 額外驗證確保必填欄位不為空
                 if (!registerData.name || !registerData.email || !registerData.password) {
@@ -123,7 +127,7 @@
                     return
                 }
 
-                console.log('發送註冊資料:', registerData) // 測試用
+                // console.log('發送註冊資料:', registerData) // 測試用
             // 呼叫註冊
             const result = await authStore.register(registerData)
 

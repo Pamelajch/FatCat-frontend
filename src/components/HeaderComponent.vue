@@ -26,9 +26,15 @@
     // 處理頭像顯示
     const getUserAvatar = computed(() => {
       if (user.value?.picPath) {
+        // 如果 picPath 是相對路徑，加上後端服務器 URL
+        if (user.value.picPath.startsWith('/')) {
+          return `https://localhost:7017${user.value.picPath}`
+        }
+        // 如果已經是完整 URL，直接返回
         return user.value.picPath
       }
-      return null
+      // 如果沒有頭像，返回預設圖片
+      return '/pingu.png'
     })
     //登入登出功能區 end-------------------------------------
 </script>

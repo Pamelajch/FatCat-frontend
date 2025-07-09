@@ -2,10 +2,6 @@
     import { useAuthStore } from '@/stores/auth';
 
     const authStore = useAuthStore()
-
-    console.log(authStore.user?.userId)     // 使用者ID
-    console.log(authStore.user?.name)       // 使用者名稱
-    console.log(authStore.user?.email)      // 電子郵件
 </script>
 
 <template>
