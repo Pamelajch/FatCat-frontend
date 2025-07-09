@@ -16,7 +16,7 @@ export default defineConfig({
     },
   },
   server: {
-    proxy: {
+    proxy: { //導向圖片image資料夾用的
       '/ProductImages': {
         target: 'https://localhost:7017',
         changeOrigin: true,
