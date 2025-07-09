@@ -45,7 +45,9 @@
       <!-- 右側按鈕群組 -->
       <div class="d-flex align-items-center gap-3 gap-lg-4">
         <RouterLink :to="{name:'home'}" class="icon-btn" title="首頁"><i class="bi bi-house-door"></i></RouterLink>
-        <RouterLink :to="{name:'cart'}" class="icon-btn" title="購物車"><i class="bi bi-cart"></i></RouterLink>
+        <button class="icon-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" aria-controls="offcanvasExample" title="購物車">
+          <i class="bi bi-cart"></i>
+        </button>
         <RouterLink :to="{name:'favorite'}" class="icon-btn" title="我的最愛"><i class="bi bi-heart-fill"></i></RouterLink>
 
         <!-- 會員中心下拉選單 -->
@@ -81,6 +83,19 @@
       </div>
     </div>
   </header>
+   <!-- Offcanvas Start -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="offcanvasExampleLabel">購物車</h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div>目前尚無資料</div>
+    <router-link to="/" class="btn custom-header btn-space">前往購物</router-link>
+    <router-link to="/cart" class="btn custom-header">立刻結帳</router-link>
+  </div>
+</div>
+<!-- Offcanvas End -->
 </template>
 
 <style lang="css" scoped>
@@ -113,6 +128,10 @@
 
 .icon-btn:hover {
   color: #ffe0f0;
+}
+
+.btn-space {
+  margin-right: 10px; /* 可以依需求微調距離 */
 }
 
 /* 下拉選單樣式 */

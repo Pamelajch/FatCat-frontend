@@ -5,6 +5,10 @@ import CartView from "./views/CartView.vue"
 import FavoriteView from "./views/FavoriteView.vue"
 import UserView from "./views/UserView.vue"
 import NotificationView from "./views/NotificationView.vue"
+import CheckoutView from "./views/CheckoutView.vue"
+import CheckoutfinishView from "./views/CheckoutfinishView.vue"
+import MyOrdersView from "./views/MyOrdersView.vue"
+import OrderdetailView from "./views/OrderdetailView.vue"
 import LoginView from "./views/LoginView.vue"
 import NofundView from "./views/NofundView.vue"
 import RegisterView from "./views/RegisterView.vue"
@@ -30,6 +34,18 @@ const routes = [
     //通知 --佳馨
     //http://localhost:5173/notification
     { path: "/notification", component: NotificationView, name: "notification" },
+    //訂單結帳 -- 梓瑋
+    //http://localhost:5173/checkout
+    { path: "/checkout", component: CheckoutView, name: "checkout" },
+    //完成結帳 -- 梓瑋
+    //http://localhost:5173/checkoutfinish
+    { path: "/checkoutfinish", component: CheckoutfinishView, name: "checkoutfinish" },
+    //我的訂單 -- 梓瑋
+    //http://localhost:5173/myorders
+    { path: "/myorders", component: MyOrdersView, name: "myorders" },
+    //訂單明細 -- 梓瑋
+    //http://localhost:5173/orderdetail
+    { path: "/orderdetail", component: OrderdetailView, name: "orderdetail" }
     //登入頁面
     {
         path: "/login", component: LoginView, name: "login", meta: {
