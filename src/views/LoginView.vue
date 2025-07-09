@@ -1,5 +1,30 @@
 <script setup>
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 import LoginForm from '../components/LoginForm.vue'
+
+// 路由和認證狀態
+const router = useRouter()
+const authStore = useAuthStore()
+
+// 控制顯示狀態
+const showLoginForm = ref(true)
+const redirectMessage = ref('')
+
+// 檢查登入狀態
+onMounted(() => {
+  if (authStore.isAuthenticated) {
+    showLoginForm.value = false
+    redirectMessage.value = `您已登入，${authStore.user?.name || '會員'}！`
+    
+    // 3秒後自動導回首頁
+    setTimeout(() => {
+      router.push('/')
+    }, 3000)
+  }
+})
+
 </script>
 
 <template>
@@ -7,30 +32,50 @@ import LoginForm from '../components/LoginForm.vue'
 <div class="login-page">  
     <div class="container-fluid vh-100">
       <div class="row h-100">
+
         <!-- 左側 - 登入表單 -->
-        <div class="col-md-6 col-lg-5 d-flex align-items-center justify-content-center">
-          <div class="login-form-container w-100" style="max-width: 400px;">
-            <!-- Logo 和標題 -->
-            <div class="text-center mb-4">
-              <img src="/cat-logo.png" alt="Fat Cat Logo" class="mb-3" style="height: 60px;">
-              <h2 class="h3 mb-3 fw-bold login-title">歡迎回來</h2>
-              <p class="login-subtitle">請登入您的帳戶</p>
-            </div>
+<div class="col-md-6 col-lg-5 d-flex align-items-center justify-content-center">
+  <div class="login-form-container w-100" style="max-width: 400px;">
+    
+    <!-- 如果已登入，顯示重導向訊息 -->
+    <div v-if="!showLoginForm" class="text-center">
+      <img src="/cat-logo.png" alt="Fat Cat Logo" class="mb-3" style="height: 60px;">
+      <div class="alert alert-success" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        {{ redirectMessage }}
+      </div>
+      <p class="text-muted">3秒後自動導向首頁...</p>
+      <button @click="router.push('/')" class="btn btn-primary">
+        <i class="bi bi-house-door-fill me-2"></i>
+        立即前往首頁
+      </button>
+    </div>
 
-            <!-- 登入表單組件 -->
-            <LoginForm></LoginForm>
+    <!-- 如果未登入，顯示登入表單 -->
+    <div v-else>
+      <!-- Logo 和標題 -->
+      <div class="text-center mb-4">
+        <img src="/cat-logo.png" alt="Fat Cat Logo" class="mb-3" style="height: 60px;">
+        <h2 class="h3 mb-3 fw-bold login-title">歡迎回來</h2>
+        <p class="login-subtitle">請登入您的帳戶</p>
+      </div>
 
-            <!-- 註冊連結 -->
-            <div class="text-center mt-4">
-              <p class="register-text">
-                還沒有帳戶？ 
-                <router-link to="/register" class="register-link">
-                  立即註冊
-                </router-link>
-              </p>
-            </div>
-          </div>
-        </div>
+      <!-- 登入表單組件 -->
+      <LoginForm></LoginForm>
+
+      <!-- 註冊連結 -->
+      <div class="text-center mt-4">
+        <p class="register-text">
+          還沒有帳戶？ 
+          <router-link to="/register" class="register-link">
+            立即註冊
+          </router-link>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
          <!-- 右側 - 背景圖片 d-none d-md-block 在小螢幕隱藏 -->
         <div class="col-md-6 col-lg-7 d-none d-md-block">
           <div class="login-bg h-100 d-flex align-items-center justify-content-center">
@@ -116,5 +161,35 @@ import LoginForm from '../components/LoginForm.vue'
     margin: 1rem;
     padding: 1.5rem;
   }
+}
+
+/* 成功提示樣式 */
+.alert-success {
+  background-color: #d1e7dd;
+  border: 1px solid #badbcc;
+  color: #0f5132;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
+}
+
+.btn-primary {
+  background-color: var(--deep-purple);
+  border-color: var(--deep-purple);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--light-purple);
+  border-color: var(--light-purple);
+  transform: translateY(-1px);
+}
+
+.text-muted {
+  color: var(--deep-gray) !important;
+  font-size: 0.9rem;
 }
 </style>
