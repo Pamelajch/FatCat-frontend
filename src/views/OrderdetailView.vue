@@ -135,9 +135,9 @@
             <div>
                 
                 <button type="button" class="btn custom-purple-btn float-end">聯絡我們</button>
-                <button type="button" class="btn btn-danger float-end">取消訂單</button>
+                <button type="button" class="btn btn-danger float-end btn-space">取消訂單</button>
                 <router-link to="/myorders">
-                        <button type="button" class="btn custom-purple-outline-btn float-end">返回我的訂單</button>
+                        <button type="button" class="btn custom-purple-outline-btn float-end btn-space">返回我的訂單</button>
                         </router-link>
                 
             </div>
@@ -171,6 +171,12 @@
   background-color: #92559c;
   color: white;
   border-color: #92559c;
+
+  
+}
+
+.btn-space {
+  margin-right: 10px; /* 可以依需求微調距離 */
 }
 </style>
 

@@ -161,6 +161,9 @@
   color: white;
   border-color: #92559c;
 }
+.btn-space {
+  margin-right: 10px; /* 可以依需求微調距離 */
+}
 </style>
 
 

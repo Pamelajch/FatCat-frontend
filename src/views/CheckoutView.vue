@@ -139,7 +139,7 @@
                 </router-link>
                 
                 <router-link to="/cart">
-                        <button type="button" class="btn custom-purple-outline-btn float-end">購物車確認</button>
+                        <button type="button" class="btn custom-purple-outline-btn float-end btn-space">購物車確認</button>
                         </router-link>
                 
             </div>
@@ -173,6 +173,10 @@
   background-color: #92559c;
   color: white;
   border-color: #92559c;
+}
+
+.btn-space {
+  margin-right: 10px; /* 可以依需求微調距離 */
 }
 </style>
 
