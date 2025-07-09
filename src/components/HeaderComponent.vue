@@ -44,6 +44,7 @@
 
       <!-- 右側按鈕群組 -->
       <div class="d-flex align-items-center gap-3 gap-lg-4">
+        <RouterLink :to="{name:'_reviewtest'}" class="icon-btn" title="通知"><i>rr測試站</i></RouterLink>
         <RouterLink :to="{name:'home'}" class="icon-btn" title="首頁"><i class="bi bi-house-door"></i></RouterLink>
         <button class="icon-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" aria-controls="offcanvasExample" title="購物車">
           <i class="bi bi-cart"></i>
