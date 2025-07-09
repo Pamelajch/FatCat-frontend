@@ -31,13 +31,25 @@ const removeFromFavorites = async (productId) => {
   }
   try {
     await axios.delete(`${API_URL}/${productId}`);
-    // 成功後，直接從前端列表中移除，畫面會即時更新，使用者體驗更好
     favorites.value = favorites.value.filter(item => item.productId !== productId);
   } catch (err) {
     console.error('移除收藏失敗:', err);
     alert('移除失敗，請稍後再試。');
   }
 };
+
+// --- 👇👇👇【新增的函式】👇👇👇 ---
+// 加入購物車的函式
+const addToCart = (product) => {
+  // 這裡的 alert 是一個暫時的佔位符
+  alert(`已將「${product.productName}」加入購物車！`);
+  
+  // --- 給梓偉加入 實際的邏輯區塊 (加入購物車) ---
+  // 可以在這裡呼叫 Pinia store 中的 action
+  // 
+  // ------------------------------------
+};
+
 
 // --- 生命週期鉤子 ---
 onMounted(() => {
@@ -69,10 +81,16 @@ onMounted(() => {
               <h5 class="card-title">{{ item.productName }}</h5>
               <p class="card-text text-danger fs-5 fw-bold mt-auto">${{ item.productPrice }}</p>
             </div>
-            <div class="card-footer bg-transparent border-0 pb-3">
-              <button @click="removeFromFavorites(item.productId)" class="btn btn-sm btn-outline-danger w-100">
-                <i class="fas fa-trash-alt me-1"></i> 移出收藏
-              </button>
+            <!-- 加入購物車按鈕 -->
+            <div class="card-footer bg-transparent border-0 p-3">
+              <div class="btn-group w-100" role="group">
+                <button @click="addToCart(item)" type="button" class="btn btn-warning">
+                  <i class="fas fa-cart-plus me-1"></i> 加入購物車
+                </button>
+                <button @click="removeFromFavorites(item.productId)" type="button" class="btn btn-outline-secondary">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -110,12 +128,18 @@ onMounted(() => {
 .favorite-card .card-title {
   font-size: 1rem;
   font-weight: 600;
-  /* 限制標題最多顯示兩行 */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;  
   overflow: hidden;
   text-overflow: ellipsis;
-  min-height: 2.5rem; /* 確保標題區塊高度一致 */
+  min-height: 2.5rem;
+}
+
+/* 👇👇👇【新增的樣式】👇👇👇 */
+.btn-group .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
