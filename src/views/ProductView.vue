@@ -39,6 +39,12 @@ onMounted(() => {
     </div>
   </div>
   <div v-else class="loading">載入中...</div>
+  <div>
+    <!-- 給梓瑋的放加入購物車按鈕連結的地方 -->
+  </div>
+  <div>
+    <!-- 給如謙的放加入購物車按鈕連結的地方 -->
+  </div>
 </template>
 
 <style scoped>
