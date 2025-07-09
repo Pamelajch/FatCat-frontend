@@ -168,6 +168,18 @@ onMounted(() => {
     
   </div>
 
+  <!-- 👇 6. 在這裡使用你的新元件 -->
+  <!-- 
+    - v-if="showReportModal": 根據狀態決定是否顯示
+    - :reviewId="reportingReviewId": 把要檢舉的 ID 傳給子元件
+    - @close="closeReportModal": 監聽子元件發出的 'close' 事件
+  -->
+  <ReportModal 
+    v-if="showReportModal" 
+    :review-id="reportingReviewId"
+    @close="closeReportModal" 
+  />
+
   
 </template>
 
