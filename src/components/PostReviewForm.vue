@@ -81,34 +81,3 @@ const submitReview = async () => {
 .rating-input .star:hover { color: #ffd966; }
 </style>
 
-
- <!-- 發表評論表單 -->
-    <!-- <div class="add-review-form card mt-5">
-      <h5 class="card-header">發表你的評論</h5>
-      <div class="card-body">
-        <form @submit.prevent="submitReview">
-          <div class="mb-3">
-            <label class="form-label">你的評分</label>
-            <div class="rating-input">
-              <span 
-                v-for="star in 5" 
-                :key="star" 
-                class="star interactive"
-                :class="{ 'filled': star <= newReview.rating }"
-                @click="newReview.rating = star"
-                >★</span>
-            </div>
-          </div>
-          <div class="mb-3">
-            <label for="comment" class="form-label">評論內容</label>
-            <textarea id="comment" v-model="newReview.comment" class="form-control" rows="4" placeholder="分享你對這個客製化組合的心得..." required></textarea>
-          </div>
-          <div class="mb-3">
-              <label for="reviewFiles" class="form-label">上傳照片 (可選)</label>
-              <input class="form-control" type="file" id="reviewFiles" @change="handleFileChange" multiple accept="image/*">
-          </div>
-          <button type="submit" class="btn btn-primary w-100">提交評論</button>
-        </form>
-      </div>
-    </div>
-  </div> -->

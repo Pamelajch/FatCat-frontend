@@ -25,16 +25,6 @@ const newReview = reactive({
   files: [] // 用來儲存使用者選擇的檔案
 });
 
-// --- 👇👇👇【已補上】檢舉功能的完整狀態 👇👇👇 ---
-const reportModal = ref(null); // 用於控制 Bootstrap Modal 的實例
-const reportReasons = ref([]); // 儲存從後端取回的檢舉原因列表
-const isFetchingReasons = ref(false); // 追蹤是否正在讀取原因
-const currentReport = reactive({ // 儲存當前正在處理的檢舉資料
-  reviewId: null,
-  reasonTypeId: '',
-  reasonComment: ''
-});
-// --- 補上結束 ---
 
 
 // --- 計算屬性 ---
@@ -67,35 +57,9 @@ const handleFileChange = (event) => {
   newReview.files = Array.from(event.target.files);
 };
 
-const submitReview = async () => {
-  const formData = new FormData();
-  formData.append('Rating', newReview.rating);
-  formData.append('Comment', newReview.comment);
-  
-  if (newReview.files.length > 0) {
-    for (const file of newReview.files) {
-      formData.append('Files', file);
-    }
-  }
 
-  try {
-    await axios.post(`${API_BASE_URL}/products/${props.productId}/reviews`, formData);
-    alert('評論已成功送出！');
-    
-    newReview.rating = 5;
-    newReview.comment = '';
-    newReview.files = [];
-    document.getElementById('reviewFiles').value = '';
-    
-    fetchReviews();
 
-  } catch (err) {
-    console.error('提交評論失敗:', err);
-    alert('提交評論失敗，請稍後再試。');
-  }
-};
-
-// --- 👇👇👇【已補上】檢舉與投票的完整函式 👇👇👇 ---
+// --- 👇👇👇投票的完整函式 👇👇👇 ---
 
 const voteForReview = async (review, voteType) => {
   if (review.currentUserVote === voteType) return;
@@ -122,49 +86,7 @@ const voteForReview = async (review, voteType) => {
   }
 };
 
-const fetchReportReasons = async () => {
-  if (reportReasons.value.length > 0) return;
-  isFetchingReasons.value = true;
-  try {
-    const response = await axios.get(`${API_BASE_URL}/reviews/report-reasons`);
-    reportReasons.value = response.data;
-  } catch (err) {
-    console.error('取得檢舉原因失敗:', err);
-    alert('無法載入檢舉原因，請稍後再試。');
-  } finally {
-    isFetchingReasons.value = false;
-  }
-};
 
-const openReportModal = (reviewId) => {
-  currentReport.reviewId = reviewId;
-  currentReport.reasonTypeId = '';
-  currentReport.reasonComment = '';
-  fetchReportReasons();
-  const modal = new bootstrap.Modal(reportModal.value);
-  modal.show();
-};
-
-const submitReport = async () => {
-  if (!currentReport.reasonTypeId) {
-    alert('請選擇一個檢舉原因。');
-    return;
-  }
-  try {
-    const payload = {
-      reasonTypeId: currentReport.reasonTypeId,
-      reasonComment: currentReport.reasonComment
-    };
-    await axios.post(`${API_BASE_URL}/reviews/${currentReport.reviewId}/report`, payload);
-    const modal = bootstrap.Modal.getInstance(reportModal.value);
-    modal.hide();
-    alert('感謝您的檢舉，我們將會盡快處理。');
-  } catch (err) {
-    console.error('提交檢舉失敗:', err);
-    alert('提交失敗，請稍後再試。');
-  }
-};
-// --- 補上結束 ---
 
 // --- 生命週期鉤子 ---
 onMounted(() => {
@@ -211,14 +133,14 @@ onMounted(() => {
               <div class="review-actions d-flex align-items-center">
                  <div class="helpfulness-voting">
                     <button @click="voteForReview(review, true)" class="btn btn-sm" :class="review.currentUserVote === true ? 'btn-success' : 'btn-outline-secondary'">
-                      <i class="fas fa-thumbs-up"></i> ({{ review.helpfulnessCount }})
+                      <i class="fas fa-thumbs-up">有用</i> ({{ review.helpfulnessCount }})
                     </button>
                     <button @click="voteForReview(review, false)" class="btn btn-sm ms-2" :class="review.currentUserVote === false ? 'btn-danger' : 'btn-outline-secondary'">
                       <i class="fas fa-thumbs-down"></i>
                     </button>
                   </div>
                 <button @click="openReportModal(review.reviewId)" class="btn btn-sm btn-link text-danger p-0 ms-3" title="檢舉此評論">
-                  <i class="fas fa-flag"></i>
+                  <i class="fas fa-flag"> 檢舉</i>
                 </button>
               </div>
             </div>
@@ -246,41 +168,7 @@ onMounted(() => {
     
   </div>
 
-  <!-- 檢舉 Modal -->
-  <div class="modal fade" id="reportModal" tabindex="-1" ref="reportModal">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">檢舉不當評論</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div v-if="isFetchingReasons" class="text-center">
-            <div class="spinner-border spinner-border-sm"></div>
-          </div>
-          <form v-else @submit.prevent="submitReport">
-            <div class="mb-3">
-              <label for="reportReason" class="form-label">請選擇檢舉原因：</label>
-              <select class="form-select" id="reportReason" v-model="currentReport.reasonTypeId" required>
-                <option disabled value="">請選擇...</option>
-                <option v-for="reason in reportReasons" :key="reason.reasonTypeId" :value="reason.reasonTypeId">
-                  {{ reason.reasonName }}
-                </option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="reportComment" class="form-label">補充說明 (可選填)：</label>
-              <textarea class="form-control" id="reportComment" rows="3" v-model="currentReport.reasonComment"></textarea>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-          <button type="button" class="btn btn-danger" @click="submitReport">送出檢舉</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  
 </template>
 
 <style scoped>

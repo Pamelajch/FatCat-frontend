@@ -32,7 +32,7 @@ const routes = [
     //活動 --如謙
     //http://localhost:5173/campaigns
     { path: "/campaigns", component: CampaignsView, name: "campaigns" },
-    //產品評論討論區 --如謙
+    //rr測試站 --如謙
     //http://localhost:5173/_reviewtest
     { path: "/_reviewtest", component: _ReviewTestView, name: "_reviewtest" },
 
