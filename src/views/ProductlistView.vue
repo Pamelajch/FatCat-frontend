@@ -51,7 +51,6 @@ const onDropToList = (event) => {
 
 <template>
   <div class="container">
-    <button @click="bowl = []" class="clear-button">清空碗</button>
     <!-- 食材清單 -->
     <div class="product-list" @dragover.prevent @drop="onDropToList">
       <div
@@ -80,6 +79,13 @@ const onDropToList = (event) => {
         />
       </div>
     </div>
+    <button @click="bowl = []" class="clear-button">清空碗</button>
+  </div>
+  <div>
+    <!-- 給梓瑋的放加入購物車按鈕連結的地方 -->
+  </div>
+  <div>
+    <!-- 給如謙的放加入購物車按鈕連結的地方 -->
   </div>
 </template>
 
@@ -89,6 +95,8 @@ const onDropToList = (event) => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-top: 40px;
+  padding-bottom: 60px; /* 下方空間，避免壓到 footer */
 }
 
 .product-list {
@@ -149,16 +157,21 @@ const onDropToList = (event) => {
 }
 
 .clear-button {
-  margin-top: 12px;
+  margin-top: 30px;
   background-color: #f79c6a;
   border: none;
-  padding: 6px 12px;
-  border-radius: 10px;
+  padding: 14px 28px;         /* 加大按鈕內部空間 */
+  border-radius: 14px;        /* 邊角更圓潤 */
   color: white;
   cursor: pointer;
+  font-size: 20px;            /* 字體變大 */
+  font-weight: bold;          /* 更有力道 */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* 加點陰影感 */
+  transition: all 0.2s ease-in-out;
 }
 
 .clear-button:hover {
   background-color: #ffad7f;
+  transform: scale(1.05);     /* 滑鼠移上去微微放大 */
 }
 </style>
