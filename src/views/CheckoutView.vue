@@ -135,11 +135,11 @@
             </div>
             <div>
                 <router-link to="/checkoutfinish">
-                    <button type="button" class="btn btn-primary float-end">確定結帳</button>
+                    <button type="button" class="btn custom-purple-btn float-end">確定結帳</button>
                 </router-link>
                 
                 <router-link to="/cart">
-                        <button type="button" class="btn btn-secondary float-end">購物車確認</button>
+                        <button type="button" class="btn custom-purple-outline-btn float-end">購物車確認</button>
                         </router-link>
                 
             </div>
@@ -151,7 +151,29 @@
 </template>
 
 <style lang="css" scoped>
+.custom-purple-btn {
+  background-color: #92559c;
+  border-color: #92559c;
+  color: white;
+}
 
+.custom-purple-btn:hover {
+  background-color: #7b4583; /* 可選的 hover 色 */
+  border-color: #7b4583;
+}
+
+.custom-purple-outline-btn {
+  background-color: transparent;
+  border: 2px solid #92559c;
+  color: #92559c;
+  transition: all 0.3s ease;
+}
+
+.custom-purple-outline-btn:hover {
+  background-color: #92559c;
+  color: white;
+  border-color: #92559c;
+}
 </style>
 
 

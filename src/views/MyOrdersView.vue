@@ -6,9 +6,9 @@
     <div class="page-content-wrapper pt-5 pb-5">
     <div class=" container mb-2">
         <h2>我的訂單</h2>
-        <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+        <ul class="nav nav-pills  mb-3" id="pills-tab" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="pills-1-tab" data-bs-toggle="pill" data-bs-target="#pills-1" type="button" role="tab" aria-controls="pills-1" aria-selected="true">未處理</button>
+            <button class="nav-link active " id="pills-1-tab" data-bs-toggle="pill" data-bs-target="#pills-1" type="button" role="tab" aria-controls="pills-1" aria-selected="true">未處理</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="pills-2-tab" data-bs-toggle="pill" data-bs-target="#pills-2" type="button" role="tab" aria-controls="pills-2" aria-selected="false">處理中</button>
@@ -36,7 +36,7 @@
                     訂單金額:
                 </div>
                 <router-link to="/orderdetail">
-                    <button type="button" class="btn btn-primary float-end">訂單明細</button>
+                    <button type="button" class="btn custom-purple-btn float-end">訂單明細</button>
                 </router-link>
                 </div>
                 </li>
@@ -72,5 +72,27 @@
 </template>
 
 <style lang="css" scoped>
+.custom-purple-btn {
+  background-color: #92559c;
+  border-color: #92559c;
+  color: white;
+}
 
+.custom-purple-btn:hover {
+  background-color: #7b4583; /* 可選的 hover 色 */
+  border-color: #7b4583;
+}
+
+.custom-purple-outline-btn {
+  background-color: transparent;
+  border: 2px solid #92559c;
+  color: #92559c;
+  transition: all 0.3s ease;
+}
+
+.custom-purple-outline-btn:hover {
+  background-color: #92559c;
+  color: white;
+  border-color: #92559c;
+}
 </style>
