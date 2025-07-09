@@ -1,5 +1,11 @@
 <script setup>
-    import { ref, onMounted } from 'vue'
+  import { ref, onMounted } from 'vue'
+  import { useRouter } from 'vue-router'
+const router = useRouter()
+
+const goToProductDetail = (id) => {
+  router.push({ name: 'product', query: { id } })  // 👉 對應 /Product?id=5
+}
 
 const products = ref([])  // 所有可拖曳商品（泡麵食材）
 const bowl = ref([])      // 使用者拖進碗裡的食材
@@ -54,15 +60,16 @@ const onDropToList = (event) => {
     <!-- 食材清單 -->
     <div class="product-list" @dragover.prevent @drop="onDropToList">
       <div
-        v-for="product in products"
-        :key="product.productsId"
-        class="product"
-        draggable="true"
-        @dragstart="onDragStart(product, 'list')"
-      >
-      <img :src="product.imageUrl" alt="product image" />
-      <p>{{ product.name }}</p>
-    </div>
+  v-for="product in products"
+  :key="product.productsId"
+  class="product"
+  draggable="true"
+  @dragstart="onDragStart(product, 'list')"
+  @dblclick="goToProductDetail(product.productsId)"
+>
+  <img :src="product.imageUrl" alt="product image" />
+  <p>{{ product.name }}</p>
+</div>
 </div>
 
     <!-- 拖曳進來的碗（用 pot.jpg 當背景）-->
