@@ -1,5 +1,6 @@
 <script setup>
 import ReviewComponent from '../components/ReviewComponent.vue';
+import PostReviewForm from '@/components/PostReviewForm.vue';
 </script>
 
 <template>
@@ -12,5 +13,7 @@ import ReviewComponent from '../components/ReviewComponent.vue';
       這樣它就能去呼叫 /api/products/1/reviews 來抓取資料。
     -->
     <ReviewComponent :product-id="1" />
+    <PostReviewForm></PostReviewForm>
+    
   </div>
 </template>
