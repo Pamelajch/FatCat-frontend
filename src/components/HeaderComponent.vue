@@ -2,7 +2,7 @@
     import { useAuthStore } from '../stores/auth'
     import { useRouter } from 'vue-router'
     import { computed } from 'vue'
-
+    import Swal from 'sweetalert2'
     //登入登出功能區------------------------------------------
     // 使用auth store和router
     const authStore = useAuthStore()
@@ -14,12 +14,68 @@
 
     // 登出處理
     const handleLogout = async () => {
+      // 1. 確認對話框
+      const result = await Swal.fire({
+        title: '確定要登出嗎？',
+        text: '登出後需要重新登入才能存取會員功能',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '確定登出',
+        cancelButtonText: '取消',
+        confirmButtonColor: '#92559c',
+        cancelButtonColor: '#6c757d'
+      })
+
+      if (!result.isConfirmed) {
+        return // 用戶取消登出
+      }
+
       try {
+        // 2. 顯示載入中
+        Swal.fire({
+          title: '登出中...',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => {
+            Swal.showLoading()
+          }
+        })
+
+        // 3. 執行登出
         await authStore.logout()
-        // 跳轉到首頁
-        router.push('/')
+        
+        // 4. 顯示成功提示
+        await Swal.fire({
+          title: '登出成功！',
+          text: '感謝您的使用，期待下次再見！',
+          icon: 'success',
+          confirmButtonText: '確定',
+          confirmButtonColor: '#92559c',
+          timer: 3000,
+          timerProgressBar: true
+        })
+        
+        // 5. 智能跳轉邏輯
+        const currentRoute = router.currentRoute.value
+        const authRequiredPages = ['user', 'myorders', 'checkout', 'favorite']
+        
+        if (authRequiredPages.includes(currentRoute.name)) {
+          router.push('/')
+        } else {
+          window.location.reload()
+        }
+        
       } catch (error) {
         console.error('登出失敗:', error)
+        
+        Swal.fire({
+          title: '登出失敗',
+          text: '請檢查網路連線後再試',
+          icon: 'error',
+          confirmButtonText: '確定',
+          confirmButtonColor: '#dc3545'
+        })
       }
     }
 
