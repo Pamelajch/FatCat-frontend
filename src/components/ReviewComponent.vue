@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, reactive } from 'vue';
+import HelpfulnessVoting from './HelpfulnessVoting.vue';
 import axios from 'axios';
 
 // --- Props ---
@@ -40,11 +41,8 @@ const fetchReviews = async () => {
   error.value = null;
   try {
     const response = await axios.get(`${API_BASE_URL}/products/${props.productId}/reviews`);
-    // 在拿到資料後，為每一則評論加上一個本地的投票狀態，方便 UI 互動
-    reviews.value = response.data.map(review => ({
-      ...review,
-      currentUserVote: null // null: 未投票, true: 有幫助, false: 沒幫助
-    }));
+    // 直接使用後端回傳的資料，因為後端已經幫我們算好 currentUserVote 了
+    reviews.value = response.data; // <--- 
   } catch (err) {
     console.error(`取得商品 ${props.productId} 的評論失敗:`, err);
     error.value = '無法載入評論。';
@@ -59,32 +57,6 @@ const handleFileChange = (event) => {
 
 
 
-// --- 👇👇👇投票的完整函式 👇👇👇 ---
-
-const voteForReview = async (review, voteType) => {
-  if (review.currentUserVote === voteType) return;
-
-  try {
-    const previousVote = review.currentUserVote;
-    review.currentUserVote = voteType;
-
-    if (voteType === true) {
-      review.helpfulnessCount++;
-    } else {
-      if (previousVote === true) {
-        review.helpfulnessCount--;
-      }
-    }
-    
-    await axios.post(`${API_BASE_URL}/reviews/${review.reviewId}/helpfulness`, {
-      isHelpful: voteType
-    });
-
-  } catch (err) {
-    console.error('投票失敗:', err);
-    alert('投票失敗，請稍後再試。');
-  }
-};
 
 
 
@@ -130,17 +102,15 @@ onMounted(() => {
                 <span v-for="n in 5" :key="n" class="star" :class="{ 'filled': n <= review.rating }">★</span>
               </div>
               <!-- 互動按鈕區 -->
-              <div class="review-actions d-flex align-items-center">
-                 <div class="helpfulness-voting">
-                    <button @click="voteForReview(review, true)" class="btn btn-sm" :class="review.currentUserVote === true ? 'btn-success' : 'btn-outline-secondary'">
-                      <i class="fas fa-thumbs-up">有用</i> ({{ review.helpfulnessCount }})
-                    </button>
-                    <button @click="voteForReview(review, false)" class="btn btn-sm ms-2" :class="review.currentUserVote === false ? 'btn-danger' : 'btn-outline-secondary'">
-                      <i class="fas fa-thumbs-down"></i>
-                    </button>
-                  </div>
-                <button @click="openReportModal(review.reviewId)" class="btn btn-sm btn-link text-danger p-0 ms-3" title="檢舉此評論">
-                  <i class="fas fa-flag"> 檢舉</i>
+              <div class="review-actions d-flex align-items-center gap-2">
+                 <!-- 嵌入有用 沒用 -->
+                <HelpfulnessVoting
+                  :review-id="review.reviewId"
+                  :initial-count="review.helpfulnessCount"
+                  :initial-user-vote="review.currentUserVote"  
+                />
+                <button @click="openReportModal(review.reviewId)" class="btn btn-sm btn-link text-danger p-0" title="檢舉此評論">
+                <i class="fas fa-flag"></i> 檢舉
                 </button>
               </div>
             </div>
