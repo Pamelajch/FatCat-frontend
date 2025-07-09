@@ -110,7 +110,9 @@ onMounted(() => {
 
 .noodles-wrapper {
   width: 100%;
+  height: 250px;          /* 限制高度，避免圖片突破範圍 */
   overflow-x: auto;
+  overflow-y: hidden;     /* 禁止上下滾動 */
   cursor: grab;
   user-select: none;
   /* 隱藏滾輪樣式 */
@@ -132,7 +134,7 @@ onMounted(() => {
 }
 
 .noodle-img {
-  width: 400px;
+  width: 350px;
   height: auto;
   flex-shrink: 0;
   pointer-events: none;
