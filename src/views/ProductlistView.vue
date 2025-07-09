@@ -21,8 +21,9 @@ onMounted(() => {
 })
 
 // 拖曳開始
-const onDragStart = (product) => {
+const onDragStart = (product, from = 'list') => {
   event.dataTransfer.setData('product-id', product.productsId)
+  event.dataTransfer.setData('from', from)
 }
 
 // 放進碗裡
@@ -33,24 +34,37 @@ const onDrop = (event) => {
     bowl.value.push(product)
   }
 }
+
+const onDropToList = (event) => {
+  const id = parseInt(event.dataTransfer.getData('product-id'))
+  const from = event.dataTransfer.getData('from')
+
+  // 如果是從 bowl 拖出來的，才需要移除
+  if (from === 'bowl') {
+    const index = bowl.value.findIndex(p => p.productsId === id)
+    if (index !== -1) {
+      bowl.value.splice(index, 1)
+    }
+  }
+}
 </script>
 
 <template>
   <div class="container">
     <button @click="bowl = []" class="clear-button">清空碗</button>
     <!-- 食材清單 -->
-    <div class="product-list">
+    <div class="product-list" @dragover.prevent @drop="onDropToList">
       <div
         v-for="product in products"
         :key="product.productsId"
         class="product"
         draggable="true"
-        @dragstart="onDragStart(product)"
+        @dragstart="onDragStart(product, 'list')"
       >
-        <img :src="product.imageUrl" alt="product image" />
-        <p>{{ product.name }}</p>
-      </div>
+      <img :src="product.imageUrl" alt="product image" />
+      <p>{{ product.name }}</p>
     </div>
+</div>
 
     <!-- 拖曳進來的碗（用 pot.jpg 當背景）-->
     <div class="bowl" @dragover.prevent @drop="onDrop">
@@ -61,6 +75,8 @@ const onDrop = (event) => {
         :src="item.imageUrl"
         :alt="item.name"
         class="bowl-img"
+        draggable="true"
+        @dragstart="onDragStart(item, 'bowl')"
         />
       </div>
     </div>
