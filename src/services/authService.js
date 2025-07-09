@@ -37,12 +37,21 @@ export const authService = {
     // 呼叫登出 API
     async logout() {
         try {
-            const response = await api.post('/auth/logout')
-            return response.data
+            // 呼叫後端登出 API（可選）
+            await axios.post('/api/auth/logout')
+        } catch (error) {
+            // 即使後端失敗也繼續清除本地狀態
+            console.warn('後端登出失敗，但仍清除本地狀態')
+        } finally {
+            // 無論如何都要清除本地狀態
+            this.clearAuthData()
         }
-        catch (error) {
-            throw error.response?.data || { message: '登出失敗' }
-        }
+    },
+    // 清除認證資料
+    clearAuthData() {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        // 清除其他相關資料
     },
 
     // 檢查用戶是否已登入
