@@ -99,4 +99,26 @@
 .btn-space {
   margin-right: 10px; /* 可以依需求微調距離 */
 }
+
+/* 非 active 的頁籤樣式 */
+.nav-pills .nav-link {
+  color: #92559c;
+  border: 1px solid #92559c;
+  background-color: transparent;
+  margin-right: 8px;
+  transition: all 0.3s ease;
+}
+
+/* 滑過頁籤時 */
+.nav-pills .nav-link:hover {
+  background-color: #f3e8f7; /* 淡紫色背景可選 */
+  color: #92559c;
+}
+
+/* 被選中（active）的頁籤樣式 */
+.nav-pills .nav-link.active {
+  background-color: #92559c;
+  color: white;
+  border-color: #92559c;
+}
 </style>
