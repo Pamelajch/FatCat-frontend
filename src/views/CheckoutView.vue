@@ -3,6 +3,7 @@
 </script>
 
 <template>
+    <div class="page-content-wrapper pt-5 pb-5">
     <div class=" container mb-2">
         <h2>訂單結帳</h2>
         <div class="accordion col-lg-10 container mb-5" id="accordionPanelsStayOpenExample" >
@@ -146,7 +147,7 @@
                         
         </div>
     </div>
-
+</div>
 </template>
 
 <style lang="css" scoped>

@@ -3,6 +3,7 @@
 </script>
 
 <template>
+    <div class="page-content-wrapper pt-5 pb-5">
     <div class=" container mb-2">
         <h2>購物車確認</h2>
         <div class="accordion col-lg-10 container mb-5" id="accordionPanelsStayOpenExample" >
@@ -80,6 +81,7 @@
                         </router-link>
             </div>
         </div>
+    </div>
     </div>
 </template>
 
