@@ -8,9 +8,6 @@ import LoadingComponent from '@/components/LoadingComponent.vue';
 
 <template>
   <div class="home-view">
-    <h3 class="fw-bold">首頁HomeView.vue的部分</h3>
-    <h3 class="fw-bold">分成五個Component，請大家依照自己的部分去做</h3>
-    <hr>
     <LoadingComponent></LoadingComponent>
     <hr>
     <!-- 商品分類組件 --玥彤-->
