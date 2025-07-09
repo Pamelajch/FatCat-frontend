@@ -156,9 +156,9 @@
 
     <!-- 忘記密碼 -->
     <div class="text-center">
-      <a href="#" class="custom-forgot-password-link">
+      <RouterLink :to="{name:'forgot-password'}" class="custom-forgot-password-link">
         忘記密碼？
-      </a>
+      </RouterLink>
     </div>
   </form>
 

@@ -15,6 +15,7 @@ import OrderdetailView from "./views/OrderdetailView.vue"
 import LoginView from "./views/LoginView.vue"
 import NofundView from "./views/NofundView.vue"
 import RegisterView from "./views/RegisterView.vue"
+import ForgotPasswordView from "./views/ForgotPasswordView.vue"
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
@@ -70,6 +71,24 @@ const routes = [
             hideHeaderFooter: true //讓註冊頁面不要套用Header及Footer
         }
     },
+    //忘記密碼頁面
+    {
+        path: "/forgot-password", component: ForgotPasswordView, name: "forgot-password", meta: {
+            hideHeaderFooter: true
+        }
+    },
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
