@@ -5,6 +5,7 @@ import CartView from "./views/CartView.vue"
 import FavoriteView from "./views/FavoriteView.vue"
 import UserView from "./views/UserView.vue"
 import NotificationView from "./views/NotificationView.vue"
+import ProductView from "./views/ProductView.vue"
 import CampaignsView from '@/views/CampaignsView.vue'
 import _ReviewTestView from "@/views/_ReviewTestView.vue"
 import CheckoutView from "./views/CheckoutView.vue"
@@ -24,6 +25,8 @@ const routes = [
     //商品列表 --玥彤
     //http://localhost:5173/productlist
     { path: "/productlist", component: ProductlistView, name: "productlist" },
+    //http://localhost:5173/product
+    { path: "/Product", component: ProductView, name: "product" },
     //購物車 --梓瑋
     //http://localhost:5173/cart
     { path: "/cart", component: CartView, name: "cart" },
