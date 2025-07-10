@@ -30,8 +30,8 @@ const products = [
 
 <template>
   <section class="hot-products">
-    <h2 class="section-title">🔥 強檔泡麵推薦</h2>
-    <p class="subtitle">這些人氣口味你吃過了嗎？</p>
+    <h2 class="section-title">🔥 特殊款泡麵推薦</h2>
+    <p class="subtitle">給有選擇障礙的你</p>
 
     <div class="product-list">
       <div v-for="product in products" :key="product.id" class="product-card">
@@ -53,7 +53,7 @@ const products = [
 }
 
 .section-title {
-  font-size: 48px;
+  font-size: 36px;
   font-weight: bold;
   color: #ff8800; /* 橘色標題 */
   margin-bottom: 10px;

@@ -206,7 +206,7 @@ onMounted(() => {
   padding: 10px;
 }
 .noodle-img {
-  width: 350px;
+  width: 300px;
   height: auto;
   flex-shrink: 0;
   pointer-events: none;
@@ -220,7 +220,7 @@ onMounted(() => {
   position: relative;
 }
 .result-img {
-  max-width: 600px;
+  max-width: 550px;
   width: 100%;
   height: auto;
   z-index: 1;
