@@ -59,7 +59,7 @@ const products = Array.from({ length: 12 }, (_, i) => ({
 .special-page {
   display: flex;
   padding: 2rem;
-  background-image: url('/catwalking.gif'); /* GIF路徑 */
+  background-image: url('/CatsWalking.gif'); /* GIF路徑 */
   background-repeat: repeat;
   background-size: 300px;
   animation: scroll 40s linear infinite;
