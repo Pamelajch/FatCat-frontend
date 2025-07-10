@@ -1,23 +1,29 @@
 <script setup>
-    
+      import { useCartStore } from '@/stores/cart'
+import CartItemList from '@/components/CartItemList.vue'
 </script>
 
 <template>
     <div class="page-content-wrapper pt-5 pb-5">
     <div class=" container mb-2">
         <h2>訂單明細</h2>
-        <div class="accordion col-lg-10 container mb-5" id="accordionPanelsStayOpenExample" >
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="panelsStayOpen-headingOne">
-      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseOne" aria-expanded="true" aria-controls="panelsStayOpen-collapseOne">
-        <h3>購物車</h3>
-      </button>
-    </h2>
-    <div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse show" aria-labelledby="panelsStayOpen-headingOne">
-      <div class="accordion-body">
-        
-                 </div>
-              </div>
+        <div class="accordion col-lg-10 container mb-5" id="accordionPanelsStayOpenExample">
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="panelsStayOpen-headingOne">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse"
+              data-bs-target="#panelsStayOpen-collapseOne" aria-expanded="true"
+              aria-controls="panelsStayOpen-collapseOne">
+              <h3>商品列表</h3>
+            </button>
+          </h2>
+          <div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse show"
+            aria-labelledby="panelsStayOpen-headingOne">
+            <div class="accordion-body">
+              <!-- 購物車內容開始 -->
+              <CartItemList />
+              <!-- 購物車內容結束 -->
+            </div>
+          </div>
             </div>
          </div>
     </div>
