@@ -5,15 +5,15 @@ export const useCartStore = defineStore('cart', () => {
     const items = ref([
         {
             id: 1,
-            name: '貓咪罐頭',
-            price: 80,
+            name: '一般般牛肉片',
+            price: 5,
             quantity: 2,
             image: '/images/product1.jpg'
         },
         {
             id: 2,
-            name: '貓抓板',
-            price: 150,
+            name: '一般般豬肉片',
+            price: 4,
             quantity: 1,
             image: '/images/product2.jpg'
         }
