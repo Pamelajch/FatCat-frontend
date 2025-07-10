@@ -20,7 +20,7 @@ onMounted(() => {
   })
 
   container.addEventListener('mouseleave', () => {
-    isDown = false微調
+    isDown = false
   })
 
   container.addEventListener('mouseup', () => {
