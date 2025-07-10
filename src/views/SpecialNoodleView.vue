@@ -43,13 +43,15 @@ const products = Array.from({ length: 12 }, (_, i) => ({
       <h2 class="title title-arrow">🔥 {{ selectedCategory }}</h2>
 
       <div class="product-grid">
-        <div v-for="product in products" :key="product.id" class="product-card">
-          <img :src="product.imageUrl" :alt="product.name" class="product-image" />
-          <div class="product-info">
-            <span class="product-tag">{{ product.tag }}</span>
-            <h3 class="product-name">{{ product.name }}</h3>
-          </div>
-        </div>
+        <RouterLink :to="{ name: 'onespecialnoodle', query: { id: product.id } }" class="product-card"
+        v-for="product in products"
+        :key="product.id">
+            <img :src="product.imageUrl" :alt="product.name" class="product-image" />
+            <div class="product-info">
+                <span class="product-tag">{{ product.tag }}</span>
+                <h3 class="product-name">{{ product.name }}</h3>
+            </div>
+        </RouterLink>
       </div>
     </section>
   </div>
@@ -155,6 +157,8 @@ const products = Array.from({ length: 12 }, (_, i) => ({
 }
 
 .product-card {
+  display: block; /* RouterLink 是 inline by default，要顯示區塊 */
+  text-decoration: none; /* 移除底線 */
   background-color: white;
   border-radius: 1rem;
   overflow: hidden;
