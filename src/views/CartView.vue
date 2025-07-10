@@ -64,9 +64,14 @@ const cartStore = useCartStore()
               <button type="button" class="btn btn-success">Right</button>
             </li>
           </ul>
+          
           <!-- 結帳按鈕 -->
           <router-link to="/checkout">
             <button type="button" class="btn custom-purple-btn float-end">前往結帳</button>
+          </router-link>
+        
+          <router-link to="/">
+            <button type="button" class="btn custom-purple-outline-btn float-end btn-space">繼續購物</button>
           </router-link>
         </div>
       </div>

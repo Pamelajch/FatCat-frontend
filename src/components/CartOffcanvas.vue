@@ -34,7 +34,7 @@ const cartStore = useCartStore()
                 <button class="btn btn-outline-secondary btn-sm" @click="cartStore.increaseQty(item)">+</button>
               </div>
             </div>
-            <button class="btn btn-sm btn-danger" @click="cartStore.removeItem(item.id)">移除</button>
+            <button class="btn btn-sm btn-danger" @click="cartStore.removeItem(item.id)"><i class="fa-solid fa-trash-can"></i>移除</button>
           </div>
         </div>
 
@@ -42,13 +42,42 @@ const cartStore = useCartStore()
           總金額：<span class="text-danger">${{ cartStore.totalAmount }}</span>
         </div>
 
-        <router-link to="/cart" class="btn btn-primary w-100">立刻結帳</router-link>
+        <router-link to="/cart" class="btn custom-purple-btn w-100">立刻結帳</router-link>
       </template>
 
       <template v-else>
         <div class="text-center">購物車內尚無商品</div>
-        <router-link to="/" class="btn btn-outline-secondary mt-3 w-100">前往購物</router-link>
+        <router-link to="/" class="btn custom-purple-outline-btn mt-3 w-100">前往購物</router-link>
       </template>
     </div>
   </div>
 </template>
+
+<style lang="css" scoped>
+.custom-purple-btn {
+  background-color: #92559c;
+  border-color: #92559c;
+  color: white;
+}
+
+.custom-purple-btn:hover {
+  background-color: #7b4583; /* 可選的 hover 色 */
+  border-color: #7b4583;
+}
+
+.custom-purple-outline-btn {
+  background-color: transparent;
+  border: 2px solid #92559c;
+  color: #92559c;
+  transition: all 0.3s ease;
+}
+
+.custom-purple-outline-btn:hover {
+  background-color: #92559c;
+  color: white;
+  border-color: #92559c;
+}
+.btn-space {
+  margin-right: 10px; /* 可以依需求微調距離 */
+}
+</style>
