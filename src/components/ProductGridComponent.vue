@@ -41,7 +41,7 @@ const products = [
       </div>
     </div>
 
-    <button class="more-btn">查看更多 ➜</button>
+    <RouterLink :to="{name:'specialnoodle'}"><button class="more-btn">查看更多 ➜</button></RouterLink>
   </section>
 </template>
 
