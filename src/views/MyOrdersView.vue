@@ -53,7 +53,32 @@
 
         </div>
         <div class="tab-pane fade" id="pills-3" role="tabpanel" aria-labelledby="pills-3-tab">3
+          <ul class="list-group">
+            <li class="list-group-item">
+                <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    訂單編號:
+                    <br>
+                    訂單狀態:
+                    <br>
+                    訂單金額:
+                </div>
 
+                <div>
+                
+                <router-link to="/orderdetail">
+                    <button type="button" class="btn custom-purple-btn float-end">訂單明細</button>
+                </router-link>
+
+                <button type="button" class="btn custom-purple-btn float-end btn-space">前往評價</button>
+              </div>  
+              </div>
+                </li>
+            <li class="list-group-item">A second item</li>
+            <li class="list-group-item">A third item</li>
+            <li class="list-group-item">A fourth item</li>
+            <li class="list-group-item">And a fifth one</li>
+            </ul>
 
 
         </div>
