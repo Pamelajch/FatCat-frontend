@@ -33,6 +33,22 @@ export const authService = {
             throw error.response?.data || { message: '獲取用戶資訊失敗' }
         }
     },
+    // 新增到 authService 物件中
+    async uploadAvatar(file) {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await api.post('/auth/upload-avatar', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: '上傳頭像失敗' };
+        }
+    },
 
     // 更新用戶資料
     async updateProfile(userData) {

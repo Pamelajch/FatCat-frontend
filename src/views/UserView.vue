@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import authService from '@/services/authService'
 
 const authStore = useAuthStore()
 
@@ -48,6 +49,7 @@ const editForm = ref({
 
 // 檔案上傳相關
 const fileInput = ref(null)
+const isUploading = ref(false)
 
 // 計算用戶頭像URL
 const getUserAvatar = computed(() => {
@@ -55,7 +57,7 @@ const getUserAvatar = computed(() => {
         // 如果有自定義頭像，確保URL正確
         return authStore.user.picPath.startsWith('http') 
             ? authStore.user.picPath 
-            : `http://localhost:7017${authStore.user.picPath}`
+            : `https://localhost:7017${authStore.user.picPath}`
     }
     // 預設頭像
     return '/pingu.png'
@@ -67,9 +69,9 @@ const triggerFileUpload = () => {
 }
 
 // 處理檔案選擇
-const handleFileSelect = (event) => {
-    const file = event.target.files[0]
-    if (!file) return
+const handleFileSelect = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
     // 檢查檔案大小（2MB限制）
     if (file.size > 2 * 1024 * 1024) {
@@ -84,10 +86,29 @@ const handleFileSelect = (event) => {
         return
     }
 
-    // 這裡將來會實作上傳邏輯
-    console.log('選擇的檔案:', file)
-    // TODO: 實作檔案上傳到伺服器
-}
+    try {
+            // 顯示上傳中狀態
+            isUploading.value = true;
+            
+            // 上傳檔案
+            const result = await authService.uploadAvatar(file);
+            
+            if (result.success) {
+                // 更新用戶頭像
+                await authStore.fetchUserProfile();
+                alert('頭像上傳成功！');
+            } else {
+                alert('上傳失敗：' + result.message);
+            }
+        } catch (error) {
+            console.error('上傳錯誤:', error);
+            alert('上傳失敗：' + error.message);
+        } finally {
+            isUploading.value = false;
+            // 清空檔案選擇器
+            event.target.value = '';
+        }
+};
 
 // 格式化生日
 const formatBirthdate = (dateString) => {
@@ -245,10 +266,16 @@ const saveAllChanges = async () => {
                 <div class="avatar-upload-section row mb-4">
                     <div class="col-md-3 text-center">
                         <!-- 頭像顯示 -->
-                        <div class="avatar-container mb-3">
+                        <div class="avatar-container mb-3" :class="{ 'uploading': isUploading }">
                             <img :src="getUserAvatar" alt="用戶頭像" class="user-avatar-large">
                             <div class="avatar-overlay">
-                                <i class="bi bi-camera-fill"></i>
+                                <i class="bi" :class="isUploading ? 'bi-hourglass-split' : 'bi-camera-fill'"></i>
+                            </div>
+                            <!-- 上傳時的遮罩效果 -->
+                            <div v-if="isUploading" class="upload-overlay">
+                                <div class="spinner-border spinner-border-sm text-light" role="status">
+                                    <span class="visually-hidden">上傳中...</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -256,9 +283,21 @@ const saveAllChanges = async () => {
                     <div class="col-md-9">
                         <!-- 上傳按鈕和說明 -->
                         <div class="upload-controls">
-                            <button class="btn btn-outline-primary mb-2" @click="triggerFileUpload">
-                                <i class="bi bi-upload me-2"></i>選擇圖片
+                            <button class="btn btn-outline-primary mb-2" 
+                                @click="triggerFileUpload" 
+                                :disabled="isUploading">
+                                <i class="bi me-2" :class="isUploading ? 'bi-hourglass-split' : 'bi-upload'"></i>
+                                {{ isUploading ? '上傳中...' : '選擇圖片' }}
                             </button>
+                            <!-- 上傳進度提示 -->
+                            <div v-if="isUploading" class="upload-progress mb-2">
+                                <div class="progress" style="height: 4px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                        role="progressbar" style="width: 100%"></div>
+                                </div>
+                                <small class="text-muted">正在上傳頭像，請稍候...</small>
+                            </div>
+
                             <input type="file" ref="fileInput" @change="handleFileSelect" 
                                 accept="image/*" style="display: none;">
                             
@@ -576,6 +615,40 @@ const saveAllChanges = async () => {
     font-size: 0.85rem;
     color: var(--deep-gray);
 }
+
+/* 上傳狀態樣式 */
+.avatar-container.uploading {
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+.upload-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-progress .progress {
+    background-color: #e9ecef;
+}
+
+.upload-progress .progress-bar {
+    background: linear-gradient(135deg, var(--deep-purple) 0%, var(--light-purple) 100%);
+}
+
+/* 按鈕禁用狀態 */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 /* 個人資訊區域樣式 */
 .personal-info-section {
     background: white;
