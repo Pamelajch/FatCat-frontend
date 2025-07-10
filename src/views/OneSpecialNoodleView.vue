@@ -41,6 +41,12 @@ import { useRoute } from 'vue-router'
 
   <!-- 正常頁面內容 -->
   <div v-else>
+    <div>
+        <!-- 給rr加最愛的地方 -->
+    </div>
+    <div>
+        <!-- 給zz加購物車的地方 -->
+    </div>
   </div>
 </template>
 
