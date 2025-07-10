@@ -2,11 +2,16 @@
     import { useAuthStore } from '../stores/auth'
     import { useRouter } from 'vue-router'
     import { computed } from 'vue'
+    import { useCartStore } from '@/stores/cart'
+    import CartOffcanvas from '@/components/CartOffcanvas.vue'
 
     //登入登出功能區------------------------------------------
     // 使用auth store和router
     const authStore = useAuthStore()
     const router = useRouter()
+
+    // 使用Cart store
+    const cartStore = useCartStore()
 
     // 計算屬性：是否已登入
     const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -85,19 +90,7 @@
       </div>
     </div>
   </header>
-   <!-- Offcanvas Start -->
-<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
-  <div class="offcanvas-header">
-    <h5 class="offcanvas-title" id="offcanvasExampleLabel">購物車</h5>
-    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>
-  <div class="offcanvas-body">
-    <div>購物車內尚無商品</div>
-    <router-link to="/" class="btn custom-header btn-space">前往購物</router-link>
-    <router-link to="/cart" class="btn custom-header">立刻結帳</router-link>
-  </div>
-</div>
-<!-- Offcanvas End -->
+<CartOffcanvas />
 </template>
 
 <style lang="css" scoped>
