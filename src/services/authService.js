@@ -34,17 +34,27 @@ export const authService = {
         }
     },
 
+    // 更新用戶資料
+    async updateProfile(userData) {
+        try {
+            const response = await api.put('/auth/profile', userData)
+            return response.data
+        } catch (error) {
+            throw error.response?.data || { message: '更新用戶資料失敗' }
+        }
+    },
+
     // 呼叫登出 API
     async logout() {
         try {
-            // 呼叫後端登出 API（可選）
-            await axios.post('/api/auth/logout')
+            // 呼叫後端登出 API
+            await api.post('/auth/logout')
         } catch (error) {
             // 即使後端失敗也繼續清除本地狀態
             console.warn('後端登出失敗，但仍清除本地狀態')
         } finally {
-            // 無論如何都要清除本地狀態
-            this.clearAuthData()
+            // 無論如何都要清除本地狀態（修正：移除 this 調用）
+            authService.clearAuthData()
         }
     },
     // 清除認證資料
@@ -94,4 +104,5 @@ export const authService = {
         return userStr ? JSON.parse(userStr) : null
     }
 }
+
 export default authService

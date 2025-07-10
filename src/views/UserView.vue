@@ -4,6 +4,30 @@ import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 
+// 初始化數據
+const initializeData = async () => {
+    if (authStore.isAuthenticated) {
+        // 先獲取最新用戶資料
+        await authStore.fetchUserProfile()
+        
+        // 然後初始化編輯表單
+        if (authStore.user) {
+            editForm.value = {
+                name: authStore.user.name || '',
+                birthdate: authStore.user.birthdate ? new Date(authStore.user.birthdate).toISOString().split('T')[0] : '',
+                phone: authStore.user.phone || '',
+                address1: '', // 暫時留空，等地址功能完善
+                address2: ''  // 暫時留空，等地址功能完善
+            }
+        }
+    }
+}
+
+// 在 onMounted 中調用
+onMounted(async () => {
+    await initializeData()
+})
+
 // 編輯模式控制
 const editMode = ref({
     name: false,
@@ -99,22 +123,32 @@ const toggleEdit = (field) => {
 // 保存單個欄位
 const saveField = async (field) => {
     try {
-        // 這裡將來會呼叫API更新用戶資料
-        console.log(`保存 ${field}:`, editForm.value[field])
+        // 準備更新的數據
+        const updateData = {}
         
-        // 暫時更新本地狀態（將來會從API響應更新）
         if (field === 'name') {
-            authStore.user.name = editForm.value.name
-        }
-        if (field === 'phone') {
-            authStore.user.phone = editForm.value.phone
+            updateData.name = editForm.value.name
+        } else if (field === 'phone') {
+            updateData.phone = editForm.value.phone
+        } else if (field === 'birthdate') {
+            updateData.birthdate = new Date(editForm.value.birthdate).toISOString()
         }
         
-        // 退出編輯模式
-        editMode.value[field] = false
+        console.log(`保存 ${field}:`, updateData)
         
-        // TODO: 實際的API呼叫
-        // await authService.updateUserProfile({ [field]: editForm.value[field] })
+        // 調用 API 更新
+        const result = await authStore.updateProfile(updateData)
+        
+        if (result.success) {
+            // 退出編輯模式
+            editMode.value[field] = false
+            
+            // 顯示成功提示
+            alert(`${field} 更新成功！`)
+            
+        } else {
+            alert('更新失敗：' + result.message)
+        }
         
     } catch (error) {
         console.error(`保存 ${field} 失敗:`, error)
@@ -136,39 +170,59 @@ const hasChanges = computed(() => {
 
 // 保存所有變更
 const saveAllChanges = async () => {
-    try {
-        console.log('保存所有變更')
+    try{
+        // 準備更新數據
+        const updateData = {}
         
-        // 保存所有正在編輯的欄位
-        for (const [field, isEditing] of Object.entries(editMode.value)) {
-            if (isEditing) {
-                await saveField(field)
-            }
+        // 只傳送有變更的欄位
+        if (editMode.value.name && editForm.value.name !== authStore.user?.name) {
+            updateData.name = editForm.value.name
+        }
+        if (editMode.value.phone && editForm.value.phone !== authStore.user?.phone) {
+            updateData.phone = editForm.value.phone
+        }
+        if (editMode.value.birthdate && editForm.value.birthdate) {
+            updateData.birthdate = new Date(editForm.value.birthdate).toISOString()
         }
         
-        alert('所有變更已保存')
-    } catch (error) {
-        console.error('保存失敗:', error)
-        alert('保存失敗，請稍後再試')
+        // 如果沒有任何變更，不執行更新
+        if (Object.keys(updateData).length === 0) {
+            alert('沒有任何變更需要保存')
+            return
+        }
+        
+        console.log('準備更新的數據:', updateData)
+
+         // 調用 API 更新
+        const result = await authStore.updateProfile(updateData)
+        
+        if (result.success) {
+            // 成功提示
+            alert('個人資料更新成功！')
+            
+            // 關閉所有編輯模式
+            Object.keys(editMode.value).forEach(key => {
+                editMode.value[key] = false
+            })
+            
+            // 重新整理頁面數據
+            await authStore.fetchUserProfile()
+            
+        } else {
+            // 錯誤提示
+            alert('更新失敗：' + result.message)
+        }
+        
+
     }
+    catch(error){
+        console.error('保存變更錯誤:', error)
+            alert('保存失敗：' + error.message)
+        
+    }
+
 }
 
-// 頁面初始化
-onMounted(async () => {
-    if (authStore.isAuthenticated) {
-        // 獲取最新用戶資料
-        await authStore.fetchUserProfile()
-        
-        // 初始化編輯表單的預設值
-        editForm.value = {
-            name: authStore.user?.name || '',
-            birthdate: authStore.user?.birthdate || '',
-            phone: authStore.user?.phone || '',
-            address1: '', // 這些欄位將來從API獲取
-            address2: ''
-        }
-    }
-})
 </script>
 
 <template>
