@@ -6,9 +6,8 @@ import axios from 'axios';
 const props = defineProps({
   reviewId: { type: Number, required: true },
   initialCount: { type: Number, default: 0 },
-  
-  // --- 👇👇👇【控制顏色的關鍵 #1】 ---
-  // 這裡必須定義 initialUserVote，它像一個插座，準備接收來自父層的「投票記憶」
+  // --- 👇👇👇【 1：接收來自父層的「投票記憶」】👇👇👇 ---
+  // 這個 prop 會告訴元件，使用者刷新前到底投了什麼票
   initialUserVote: { type: Boolean, default: null } 
 });
 
@@ -17,15 +16,15 @@ const emit = defineEmits(['vote-updated']);
 // --- 狀態定義 ---
 const API_BASE_URL = 'https://localhost:7017/api';
 const helpfulnessCount = ref(props.initialCount);
-const isLoading = ref(false);
+const isLoading = ref(false); // 加一個載入狀態，防止狂點
 
-// --- 👇👇👇【控制顏色的關鍵 #2】 ---
-// 這裡必須用 props.initialUserVote 來初始化狀態。
-// 它說：「我的初始顏色狀態，由父層傳進來的插頭決定！」
-// 如果收到 true，讚按鈕就是綠色；如果收到 false，倒讚按鈕就是紅色。
+// --- 👇👇👇【 2：用接收到的「記憶」來初始化狀態】👇👇👇 ---
+// 不要再寫死 ref(null)，而是使用父層傳進來的 props.initialUserVote
 const currentUserVote = ref(props.initialUserVote); 
 
+// --- 函式 ---
 const vote = async (voteType) => {
+  // 如果正在請求中，或點擊的按鈕就是當前狀態，則不反應
   if (isLoading.value || currentUserVote.value === voteType) {
     return;
   }
@@ -33,6 +32,7 @@ const vote = async (voteType) => {
   isLoading.value = true;
   const previousVote = currentUserVote.value;
 
+  // 樂觀更新計數
   if (voteType === true) {
     helpfulnessCount.value++;
   } else {
@@ -40,17 +40,21 @@ const vote = async (voteType) => {
       helpfulnessCount.value--;
     }
   }
-  currentUserVote.value = voteType;
+  currentUserVote.value = voteType; // 更新按鈕顏色
   
   try {
+    // 發送 API 請求
     const response = await axios.post(`${API_BASE_URL}/reviews/${props.reviewId}/helpfulness`, {
       isHelpful: voteType
     });
     
+    // --- 👇👇👇【修改點 3：使用後端回傳的最新計數來校準】👇👇👇 ---
+    // 這樣能保證畫面上顯示的數字永遠是最準確的
     if (response.data && typeof response.data.newCount === 'number') {
         helpfulnessCount.value = response.data.newCount;
     }
     
+    // 通知父層更新（如果需要）
     emit('vote-updated', { 
         reviewId: props.reviewId, 
         newCount: helpfulnessCount.value,
@@ -60,7 +64,9 @@ const vote = async (voteType) => {
   } catch (err) {
     console.error('投票失敗:', err);
     alert('投票失敗，請稍後再試。');
+    // 還原 UI 狀態
     currentUserVote.value = previousVote;
+    // 這裡也需要還原計數
      if (voteType === true) {
         helpfulnessCount.value--;
     } else {

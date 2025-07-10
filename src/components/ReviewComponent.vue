@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, reactive } from 'vue';
 import HelpfulnessVoting from './HelpfulnessVoting.vue';
 import axios from 'axios';
+import ReportModal from './ReportModal.vue';
 
 // --- Props ---
 const props = defineProps({
@@ -56,7 +57,25 @@ const handleFileChange = (event) => {
 };
 
 
+// --- 👇👇👇【檢舉】 👇👇👇 ---
 
+// 控制 Modal 是否顯示
+const showReportModal = ref(false); 
+// 儲存當前正在被檢舉的評論 ID
+const reportingReviewId = ref(null);
+
+// 開啟 Modal 的函式
+const openReportModal = (reviewId) => {
+  console.log('準備檢舉評論 ID:', reviewId); // 除錯用
+  reportingReviewId.value = reviewId; // 記下要檢舉的 ID
+  showReportModal.value = true;       // 把 Modal 打開
+};
+
+// 關閉 Modal 的函式
+const closeReportModal = () => {
+  showReportModal.value = false;      // 把 Modal 關閉
+  reportingReviewId.value = null;     // 清空 ID
+};
 
 
 
