@@ -21,7 +21,7 @@ const handleClaim = (coupon) => {
   if (claimedCouponIds.value.includes(coupon.couponId)) return;
 
   claimedCouponIds.value.push(coupon.couponId);
-  alert(`你成功領取了優惠券：${coupon.name}`);
+  alert(`成功領取優惠券：${coupon.description}`);
 };
 </script>
 
