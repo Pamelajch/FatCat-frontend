@@ -17,6 +17,7 @@ import NofundView from "./views/NofundView.vue"
 import RegisterView from "./views/RegisterView.vue"
 import FeedbackView from "./views/FeedbackView.vue"
 
+
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
     { path: "/", redirect: "/home" },

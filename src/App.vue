@@ -7,6 +7,8 @@ import 'bootstrap-icons/font/bootstrap-icons.css'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import HeaderComponent from './components/HeaderComponent.vue'
 import FooterComponent from './components/FooterComponent.vue'
+import CustomerService from './components/CustomerService.vue'
+
 
 //獲取目前路由
 const route = useRoute()
@@ -29,10 +31,10 @@ const shouldhideHeaderFooter = computed(()=>{
     <HeaderComponent v-if="!shouldhideHeaderFooter"></HeaderComponent>
     <main>
       <RouterView></RouterView>
+       <CustomerService />
     </main>
     <FooterComponent v-if="!shouldhideHeaderFooter"></FooterComponent>
   </div>
-
 </template>
 
 <style scoped>
