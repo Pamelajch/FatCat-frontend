@@ -149,14 +149,15 @@ export const useAuthStore = defineStore('auth', () => {
             const result = await authService.updateProfile(userData)
 
             if (result.success) {
-                // 更新本地用戶資料
-                if (user.value) {
-                    user.value.name = result.data.name || user.value.name
-                    user.value.phone = result.data.phone || user.value.phone
-                    user.value.gender = result.data.gender || user.value.gender
-                    user.value.birthdate = result.data.birthdate || user.value.birthdate
-                    user.value.picPath = result.data.picPath || user.value.picPath
+                // 修正：直接使用 API 返回的最新資料更新本地狀態
+                if (user.value && result.data) {
+                    // 使用展開運算符更新所有欄位
+                    user.value = {
+                        ...user.value,  // 保留現有資料
+                        ...result.data  // 覆蓋為最新資料
+                    }
                 }
+
                 // 更新 localStorage 中的用戶資料
                 localStorage.setItem('user', JSON.stringify(user.value))
 

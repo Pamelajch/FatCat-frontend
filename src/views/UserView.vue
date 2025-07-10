@@ -197,6 +197,8 @@ const saveAllChanges = async () => {
         const result = await authStore.updateProfile(updateData)
         
         if (result.success) {
+            // 測試
+            console.log('更新成功，當前用戶狀態:', authStore.user)
             // 成功提示
             alert('個人資料更新成功！')
             
@@ -207,6 +209,9 @@ const saveAllChanges = async () => {
             
             // 重新整理頁面數據
             await authStore.fetchUserProfile()
+
+            // 重新初始化表單資料
+            await initializeData()
             
         } else {
             // 錯誤提示
