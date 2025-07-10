@@ -35,11 +35,16 @@ export const useCartStore = defineStore('cart', () => {
         items.value = items.value.filter(i => i.id !== itemId)
     }
 
+    const clearCart = () => {
+        items.value = []
+    }
+
     return {
         items,
         totalAmount,
         increaseQty,
         decreaseQty,
-        removeItem
+        removeItem,
+        clearCart  // ✅ 新增這個
     }
 })

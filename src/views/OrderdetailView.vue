@@ -1,6 +1,12 @@
 <script setup>
-      import { useCartStore } from '@/stores/cart'
+import { onMounted } from 'vue'
+import { useCartStore } from '@/stores/cart'
+import { useOrderStore } from '@/stores/order'
 import CartItemList from '@/components/CartItemList.vue'
+
+const cartStore = useCartStore()
+const orderStore = useOrderStore()
+
 </script>
 
 <template>
@@ -19,10 +25,9 @@ import CartItemList from '@/components/CartItemList.vue'
           <div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse show"
             aria-labelledby="panelsStayOpen-headingOne">
             <div class="accordion-body">
-              <!-- 購物車內容開始 -->
-              <CartItemList />
-              <!-- 購物車內容結束 -->
-            </div>
+            <!-- 訂單商品列表 -->
+            <CartItemList :items="orderStore.latestOrderItems" />
+          </div>
           </div>
             </div>
          </div>
