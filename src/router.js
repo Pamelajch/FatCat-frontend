@@ -15,6 +15,7 @@ import OrderdetailView from "./views/OrderdetailView.vue"
 import LoginView from "./views/LoginView.vue"
 import NofundView from "./views/NofundView.vue"
 import RegisterView from "./views/RegisterView.vue"
+import FeedbackView from "./views/FeedbackView.vue"
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
@@ -45,7 +46,9 @@ const routes = [
     //rr測試站 --如謙
     //http://localhost:5173/_reviewtest
     { path: "/_reviewtest", component: _ReviewTestView, name: "_reviewtest" },
-
+    //進度追蹤 --如謙
+    //http://localhost:5173/feedback
+    { path: "/feedback", component: FeedbackView, name:"feedback" },
     //訂單結帳 -- 梓瑋
     //http://localhost:5173/checkout
     { path: "/checkout", component: CheckoutView, name: "checkout" },

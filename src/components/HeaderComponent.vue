@@ -71,6 +71,7 @@
             <!-- 根據登入狀態顯示不同的選單項目 -->
             <template v-if="isAuthenticated">
               <li><RouterLink :to="{name:'user'}" class="dropdown-item"><i class="bi bi-person-gear me-2"></i>會員中心</RouterLink></li>
+              <li><RouterLink :to="{name:'feedback'}" class="dropdown-item"><i class="bi bi-envelope-arrow-up me-2"></i>進度追蹤</RouterLink></li>
               <li><hr class="dropdown-divider"></li>
               <li><button @click="handleLogout" class="dropdown-item" :disabled="authStore.isLoading"><i class="bi bi-box-arrow-right me-2"></i>{{ authStore.isLoading ? '登出中...' : '登出' }}</button></li>
             </template>
