@@ -9,7 +9,11 @@ onMounted(async () => {
   try {
     const res = await fetch('https://localhost:7017/api/Coupons');
     if (!res.ok) throw new Error('載入失敗');
-    coupons.value = await res.json();
+    const data = await res.json();
+
+    // 過濾未過期的優惠券
+    const now = new Date();
+    coupons.value = data.filter(coupon => new Date(coupon.expirydate) > now);
   } catch (error) {
     console.error(error);
     message.value = '無法載入優惠券資料';
