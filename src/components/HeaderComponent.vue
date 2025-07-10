@@ -92,7 +92,7 @@
     <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
   <div class="offcanvas-body">
-    <div>目前尚無資料</div>
+    <div>購物車內尚無商品</div>
     <router-link to="/" class="btn custom-header btn-space">前往購物</router-link>
     <router-link to="/cart" class="btn custom-header">立刻結帳</router-link>
   </div>

@@ -76,7 +76,7 @@ const handleClaim = (coupon) => {
               :class="claimedCouponIds.includes(coupon.couponId) ? 'btn-secondary' : 'btn-success'"
               :disabled="claimedCouponIds.includes(coupon.couponId)"
               @click="handleClaim(coupon)"
-            >
+            ><i class="fa-solid fa-ticket"></i>
               {{ claimedCouponIds.includes(coupon.couponId) ? '已領取' : '領取' }}
             </button>
           </div>
