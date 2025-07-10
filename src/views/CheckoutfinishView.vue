@@ -126,6 +126,7 @@ onMounted(() => {
                     </li>
                     <li class="list-group-item">訂單總金額:
                     <div>
+                        運費:
                         <br>
                         折扣金額:
                         <hr>
