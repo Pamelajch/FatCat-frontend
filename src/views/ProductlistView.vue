@@ -87,6 +87,7 @@ const onDropToList = (event) => {
       </div>
     </div>
     <button @click="bowl = []" class="clear-button">清空碗</button>
+    <RouterLink :to="{name:'specialnoodle'}"><button class="clear-button">查看特殊款泡麵 ➜</button></RouterLink>
   </div>
   <div>
     <!-- 給梓瑋的放加入購物車按鈕連結的地方 -->
