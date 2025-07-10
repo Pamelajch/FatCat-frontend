@@ -1,22 +1,41 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 
 const coupons = ref([]);
+const shippings = ref([]);
 const message = ref('');
-const claimedCouponIds = ref([]); // 儲存已領取的 couponId
+const claimedCouponIds = ref([]);
+
+// 計算最小與最大運費
+const minShippingFee = computed(() => {
+  if (shippings.value.length === 0) return 0;
+  return Math.min(...shippings.value.map(s => s.shippingFee));
+});
+const maxShippingFee = computed(() => {
+  if (shippings.value.length === 0) return 0;
+  return Math.max(...shippings.value.map(s => s.shippingFee));
+});
 
 onMounted(async () => {
   try {
     const res = await fetch('https://localhost:7017/api/Coupons');
-    if (!res.ok) throw new Error('載入失敗');
+    if (!res.ok) throw new Error('載入優惠券失敗');
     const data = await res.json();
 
-    // 過濾未過期的優惠券
     const now = new Date();
     coupons.value = data.filter(coupon => new Date(coupon.expirydate) > now);
   } catch (error) {
     console.error(error);
     message.value = '無法載入優惠券資料';
+  }
+
+  try {
+    const res2 = await fetch('https://localhost:7017/api/Shippings');
+    if (!res2.ok) throw new Error('載入運費失敗');
+    shippings.value = await res2.json();
+  } catch (error) {
+    console.error(error);
+    message.value += '\n無法載入運費資料';
   }
 });
 
@@ -44,7 +63,12 @@ const handleClaim = (coupon) => {
             <h5 class="card-title">{{ coupon.name }}</h5>
             <p class="card-text">
               {{ coupon.description }}<br>
-              折扣金額：NT$ {{ coupon.discountAmount }}<br>
+              <span v-if="coupon.coupontypeId === 3 && shippings.length > 0">
+                折抵運費區間：NT$ {{ minShippingFee }} ~ {{ maxShippingFee }}
+              </span>
+              <span v-else>
+                折扣金額：NT$ {{ coupon.discountAmount }}
+              </span><br>
               到期日：{{ coupon.expirydate.split('T')[0] }}
             </p>
             <button
