@@ -54,6 +54,6 @@ onMounted(() => {
 }
 
 .loading-img {
-  width: 700px; /* 你可以調整大小 */
+  width: 700px; /* 調整gif大小 */
 }
 </style>
