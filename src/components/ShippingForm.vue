@@ -37,8 +37,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
+import { useCheckoutStore } from '@/stores/checkout'
 
 const shippingOptions = ref([])
 const selectedShippingId = ref('')
@@ -46,12 +47,24 @@ const recipientName = ref('')
 const recipientPhone = ref('')
 const sameAsMember = ref(false)
 
+const checkout = useCheckoutStore()
+
 onMounted(async () => {
   try {
-    const response = await axios.get('https://localhost:7017/api/Shippings') // ⬅ 調整成你的後端 API base URL
+    const response = await axios.get('https://localhost:7017/api/Shippings')
     shippingOptions.value = response.data
   } catch (error) {
     console.error('取得送貨方式失敗:', error)
   }
 })
+
+// ✅ 將所選運送方式同步到 checkout store
+watch(selectedShippingId, (newId) => {
+  checkout.shippingId = newId
+
+  const selected = shippingOptions.value.find(s => s.shippingId === Number(newId))
+  checkout.shippingFee = selected?.shippingFee ?? 0
+})
+
 </script>
+

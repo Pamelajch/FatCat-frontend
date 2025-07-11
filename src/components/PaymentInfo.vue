@@ -10,7 +10,7 @@ const shippingOptions = ref([])
 
 const productTotal = ref(2000) // TODO: 這應該從 cartStore 或父元件傳入
 
-// 取得優惠券與送貨方式資料
+// ✅ 取得優惠券與運送方式資料
 onMounted(async () => {
   try {
     const [couponRes, shippingRes] = await Promise.all([
@@ -19,19 +19,25 @@ onMounted(async () => {
     ])
     couponOptions.value = couponRes.data
     shippingOptions.value = shippingRes.data
+
+    // 🚀 資料載入完成後主動觸發一次運費更新
+    updateShippingFee(checkout.shippingId)
   } catch (error) {
     console.error('載入優惠券與送貨方式失敗:', error)
   }
 })
 
-// ✅ 當選擇運送方式時更新 shippingFee
+// ✅ 當選擇運送方式時更新運費
 watch(() => checkout.shippingId, (newId) => {
-  const selected = shippingOptions.value.find(s => s.shippingId === Number(newId))
-  checkout.shippingFee = selected?.fee ?? 0
-  updateTotal()
+  updateShippingFee(newId)
 })
 
-// ✅ 當選擇優惠券時更新 discount
+// ✅ shippingOptions 載入後也觸發一次運費更新
+watch(shippingOptions, () => {
+  updateShippingFee(checkout.shippingId)
+})
+
+// ✅ 當選擇優惠券時更新折扣
 watch(() => checkout.couponId, (newId) => {
   const selected = couponOptions.value.find(c => c.couponId === Number(newId))
 
@@ -58,11 +64,19 @@ watch(() => checkout.couponId, (newId) => {
   updateTotal()
 })
 
-// ✅ 總金額計算
+// ✅ 計算運費
+function updateShippingFee(id) {
+  const selected = shippingOptions.value.find(s => s.shippingId === Number(id))
+  checkout.shippingFee = selected?.shippingFee ?? 0
+  updateTotal()
+}
+
+// ✅ 計算總金額
 function updateTotal() {
   checkout.total = productTotal.value + checkout.shippingFee - checkout.discount
 }
 </script>
+
 
 <template>
   <ul class="list-group">
