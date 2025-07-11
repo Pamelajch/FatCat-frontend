@@ -1,4 +1,4 @@
-<!-- <template>
+<template>
   <div class="customer-service">
     <button
       v-if="!isOpen"
@@ -353,4 +353,4 @@ onUnmounted(() => { if (connection) { connection.stop(); } });
 .connection-status.connected {
   background: var(--primary-purple);
 }
-</style> -->
+</style>
