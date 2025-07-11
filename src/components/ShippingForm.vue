@@ -6,7 +6,7 @@
 
     <li class="list-group-item">送貨方式:
       <div>
-        <select class="form-select form-select-sm" v-model="selectedShippingId">
+        <select class="form-select form-select-sm" v-model.number="selectedShippingId">
           <option disabled value="">請選擇送貨方式</option>
           <option v-for="option in shippingOptions" :key="option.shippingId" :value="option.shippingId">
             {{ option.name }}
@@ -41,24 +41,23 @@ import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { useCheckoutStore } from '@/stores/checkout'
 
+const checkout = useCheckoutStore()
 const shippingOptions = ref([])
 const selectedShippingId = ref('')
 const recipientName = ref('')
 const recipientPhone = ref('')
 const sameAsMember = ref(false)
 
-const checkout = useCheckoutStore()
-
 onMounted(async () => {
   try {
-    const response = await axios.get('https://localhost:7017/api/Shippings')
-    shippingOptions.value = response.data
+    const res = await axios.get('https://localhost:7017/api/Shippings')
+    shippingOptions.value = res.data
   } catch (error) {
     console.error('取得送貨方式失敗:', error)
   }
 })
 
-// ✅ 將所選運送方式同步到 checkout store
+// ✅ 同步到 checkout store
 watch(selectedShippingId, (newId) => {
   checkout.shippingId = newId
 
@@ -66,5 +65,7 @@ watch(selectedShippingId, (newId) => {
   checkout.shippingFee = selected?.shippingFee ?? 0
 })
 
+watch(recipientName, val => checkout.recipientName = val)
+watch(recipientPhone, val => checkout.recipientPhone = val)
+watch(sameAsMember, val => checkout.sameAsMember = val)
 </script>
-

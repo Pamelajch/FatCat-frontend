@@ -8,13 +8,13 @@ export const useCheckoutStore = defineStore('checkout', () => {
     const email = ref('')
 
     // 送貨資料
-    const shippingId = ref('')
+    const shippingId = ref(null)
     const recipientName = ref('')
     const recipientPhone = ref('')
     const sameAsMember = ref(false)
 
     // 優惠 & 金額
-    const couponId = ref('')
+    const couponId = ref(null)
     const shippingFee = ref(0)
     const discount = ref(0)
     const total = ref(0)
