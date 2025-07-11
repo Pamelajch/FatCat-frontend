@@ -76,7 +76,7 @@ onMounted(() => {
       <div v-if="!isLoading && favorites.length > 0" class="row g-4">
         <div v-for="item in favorites" :key="item.productId" class="col-lg-3 col-md-4 col-sm-6">
           <div class="favorite-card card h-100 shadow-sm">
-            <img :src="`${BACKEND_URL}${item.productImageUrl}`" class="card-img-top" :alt="item.productName" onerror="this.onerror=null;this.src='https://placehold.co/400x300/6c757d/FFFFFF?text=Image'">
+            <img :src="`${BACKEND_URL}/ProductImages/${item.productImageUrl}`" class="card-img-top" :alt="item.productName" onerror="this.onerror=null;this.src='https://placehold.co/400x300/6c757d/FFFFFF?text=Image'">
             <div class="card-body d-flex flex-column">
               <h5 class="card-title">{{ item.productName }}</h5>
               <p class="card-text text-danger fs-5 fw-bold mt-auto">${{ item.productPrice }}</p>
