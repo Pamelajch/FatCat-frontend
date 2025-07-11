@@ -30,8 +30,9 @@ const products = [
 
 <template>
   <section class="hot-products">
-    <h2 class="section-title">🔥 強檔泡麵推薦</h2>
-    <p class="subtitle">這些人氣口味你吃過了嗎？</p>
+    <div class="bg-overlay"></div>
+    <h2 class="section-title">🔥 特殊款泡麵推薦</h2>
+    <p class="subtitle">給有選擇障礙的你</p>
 
     <div class="product-list">
       <div v-for="product in products" :key="product.id" class="product-card">
@@ -41,19 +42,41 @@ const products = [
       </div>
     </div>
 
-    <button class="more-btn">查看更多 ➜</button>
+    <RouterLink :to="{name:'specialnoodle'}"><button class="more-btn">查看更多 ➜</button></RouterLink>
   </section>
 </template>
 
 <style scoped>
 .hot-products {
+  position: relative;
   padding: 40px 20px;
-  background-color: #fdf8ff; /* 淺紫背景 */
   text-align: center;
+  background-image: url('/CatsWalking.gif');
+  background-repeat: repeat;
+  background-size: 300px;
+  background-attachment: fixed;
+  overflow: hidden;
+}
+
+.bg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; /* 原本可能會設為固定高度，這邊改成100% */
+  background-color: rgba(255, 255, 255, 0.6);
+  z-index: 0;
+  pointer-events: none; /* 避免遮罩擋住點擊事件 */
+}
+
+/* 保證內容都在遮罩上層 */
+.hot-products > *:not(.bg-overlay) {
+  position: relative;
+  z-index: 1;
 }
 
 .section-title {
-  font-size: 48px;
+  font-size: 36px;
   font-weight: bold;
   color: #ff8800; /* 橘色標題 */
   margin-bottom: 10px;

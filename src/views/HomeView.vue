@@ -12,13 +12,10 @@ import LoadingComponent from '@/components/LoadingComponent.vue';
     <h3 class="fw-bold">分成五個Component，請大家依照自己的部分去做</h3>
     <hr>
     <LoadingComponent></LoadingComponent>
-    <hr>
     <!-- 商品分類組件 --玥彤-->
     <ProductCategoryComponent></ProductCategoryComponent>
-    <hr>
     <!-- 商品局部列表組件 --玥彤-->
     <ProductGridComponent></ProductGridComponent>
-    <hr>
     <!-- 活動組件 --如謙-->
     <ActivityComponent></ActivityComponent>
     <hr>

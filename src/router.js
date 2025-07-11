@@ -15,6 +15,8 @@ import OrderdetailView from "./views/OrderdetailView.vue"
 import LoginView from "./views/LoginView.vue"
 import NofundView from "./views/NofundView.vue"
 import RegisterView from "./views/RegisterView.vue"
+import SpecialNoodleView from "./views/SpecialNoodleView.vue"
+import OneSpecialNoodleView from "./views/OneSpecialNoodleView.vue"
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
@@ -25,8 +27,12 @@ const routes = [
     //商品列表 --玥彤
     //http://localhost:5173/productlist
     { path: "/productlist", component: ProductlistView, name: "productlist" },
-    //http://localhost:5173/product
+    //http://localhost:5173/Product
     { path: "/Product", component: ProductView, name: "product" },
+    //http://localhost:5173/Specialnoodle
+    { path:"/Specialnoodle", component:SpecialNoodleView, name:"specialnoodle"},
+    //http://localhost:5173/OneSpecialNoodle
+    { path:"/OneSpecialNoodle", component:OneSpecialNoodleView, name:"onespecialnoodle"},
     //購物車 --梓瑋
     //http://localhost:5173/cart
     { path: "/cart", component: CartView, name: "cart" },

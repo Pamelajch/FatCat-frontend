@@ -35,7 +35,10 @@ onMounted(() => {
         狀態：<span :class="{'on-sale': product.status === 1, 'off-sale': product.status === 0}">{{ product.statusText }}</span>
       </p>
       <p class="description">{{ product.description }}</p>
-      <router-link to="/productlist" class="back-btn">← 返回商品列表</router-link>
+      <div class="button-row">
+        <RouterLink :to="{ name: 'productlist' }"><button class="back-btn">← 返回商品列表</button></RouterLink>
+        <RouterLink :to="{ name: 'specialnoodle' }"><button class="back-btn">查看特殊款泡麵 ➜</button></RouterLink>
+      </div>
     </div>
   </div>
   <div v-else class="loading">載入中...</div>
@@ -100,6 +103,13 @@ onMounted(() => {
   white-space: pre-wrap;
 }
 
+.button-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+}
+
 .back-btn {
   display: inline-block;
   background-color: #d9c7eb;
@@ -108,7 +118,11 @@ onMounted(() => {
   border-radius: 8px;
   text-decoration: none;
   transition: 0.3s;
+  border: none; /* 移除黑框 */
+  cursor: pointer;
+  font-size: 1rem;
 }
+
 .back-btn:hover {
   background-color: #c5b0e0;
   color: white;
