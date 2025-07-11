@@ -10,7 +10,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 
 import HeaderComponent from './components/HeaderComponent.vue'
 import FooterComponent from './components/FooterComponent.vue'
-import CustomerService from './components/CustomerService.vue'
+// import CustomerService from './components/CustomerService.vue'
 
 // 應用載入狀態
 const appLoading = ref(true)
@@ -33,8 +33,8 @@ onMounted(async () => {
   appLoading.value = false
 })
 
-// 定義 isLoading 狀態（來自 auth store 或 app loading）
-const isLoading = computed(() => authStore.isLoading || appLoading.value)
+// 定義 isLoading 狀態（只使用 app loading，避免 API 請求時重新渲染）
+const isLoading = computed(() => appLoading.value)
 </script>
 
 <template>
@@ -49,7 +49,7 @@ const isLoading = computed(() => authStore.isLoading || appLoading.value)
       <HeaderComponent v-if="!shouldhideHeaderFooter" />
       <main>
         <RouterView />
-        <CustomerService></CustomerService>
+        <!-- <CustomerService></CustomerService> -->
       </main>
       <FooterComponent v-if="!shouldhideHeaderFooter" />
     </div>

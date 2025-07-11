@@ -5,28 +5,64 @@ import authService from '@/services/authService'
 
 const authStore = useAuthStore()
 
+// 初始化標記，避免重複初始化
+const isInitialized = ref(false)
+
 // 初始化數據
 const initializeData = async () => {
+    // 如果已經初始化過，直接返回
+    if (isInitialized.value) {
+        return
+    }
+    
     if (authStore.isAuthenticated) {
-        // 先獲取最新用戶資料
-        await authStore.fetchUserProfile()
-        
-        // 然後初始化編輯表單
-        if (authStore.user) {
-            editForm.value = {
-                name: authStore.user.name || '',
-                birthdate: authStore.user.birthdate ? new Date(authStore.user.birthdate).toISOString().split('T')[0] : '',
-                phone: authStore.user.phone || '',
-                address1: '', // 暫時留空，等地址功能完善
-                address2: ''  // 暫時留空，等地址功能完善
+        try {
+            // 先獲取最新用戶資料
+            const result = await authStore.fetchUserProfile()
+            
+            if (result.success) {
+                // 然後初始化編輯表單
+                if (authStore.user) {
+                    editForm.value = {
+                        name: authStore.user.name || '',
+                        birthdate: authStore.user.birthdate ? new Date(authStore.user.birthdate).toISOString().split('T')[0] : '',
+                        phone: authStore.user.phone || '',
+                        address1: '', // 暫時留空，等地址功能完善
+                        address2: ''  // 暫時留空，等地址功能完善
+                    }
+                }
+                // 標記為已初始化
+                isInitialized.value = true
+            } else {
+                console.error('Failed to fetch user profile:', result.message)
+                throw new Error(result.message || '獲取用戶資料失敗')
             }
+        } catch (error) {
+            console.error('Error in initializeData:', error)
+            throw error
         }
+    } else {
+        throw new Error('用戶未登入')
     }
 }
 
 // 在 onMounted 中調用
 onMounted(async () => {
-    await initializeData()
+    // 檢查用戶是否已登入
+    if (!authStore.isAuthenticated) {
+        // 重定向到登入頁面
+        window.location.href = '/login'
+        return
+    }
+    
+    try {
+        await initializeData()
+    } catch (error) {
+        console.error('Error initializing user data:', error)
+        alert('載入用戶資料時發生錯誤，請重新登入')
+        // 如果載入失敗，重定向到登入頁面
+        window.location.href = '/login'
+    }
 })
 
 // 編輯模式控制
@@ -218,8 +254,6 @@ const saveAllChanges = async () => {
         const result = await authStore.updateProfile(updateData)
         
         if (result.success) {
-            // 測試
-            console.log('更新成功，當前用戶狀態:', authStore.user)
             // 成功提示
             alert('個人資料更新成功！')
             
@@ -231,8 +265,16 @@ const saveAllChanges = async () => {
             // 重新整理頁面數據
             await authStore.fetchUserProfile()
 
-            // 重新初始化表單資料
-            await initializeData()
+            // 手動更新表單資料（避免重複調用 initializeData）
+            if (authStore.user) {
+                editForm.value = {
+                    name: authStore.user.name || '',
+                    birthdate: authStore.user.birthdate ? new Date(authStore.user.birthdate).toISOString().split('T')[0] : '',
+                    phone: authStore.user.phone || '',
+                    address1: '', // 暫時留空，等地址功能完善
+                    address2: ''  // 暫時留空，等地址功能完善
+                }
+            }
             
         } else {
             // 錯誤提示
