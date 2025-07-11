@@ -64,7 +64,7 @@ const handleClaim = (coupon) => {
             <p class="card-text">
               {{ coupon.description }}<br>
               <span v-if="coupon.coupontypeId === 3 && shippings.length > 0">
-                折抵運費區間：NT$ {{ minShippingFee }} ~ {{ maxShippingFee }}
+                運費：免費
               </span>
               <span v-else>
                 折扣金額：NT$ {{ coupon.discountAmount }}
