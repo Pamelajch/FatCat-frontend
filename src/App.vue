@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { RouterLink, RouterView } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { useAuthStore } from './stores/auth'
 
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap/dist/js/bootstrap.bundle.js'
@@ -9,6 +10,10 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 
 import HeaderComponent from './components/HeaderComponent.vue'
 import FooterComponent from './components/FooterComponent.vue'
+import LoadingComponent from './components/LoadingComponent.vue'
+
+// 應用載入狀態
+const appLoading = ref(true)
 
 //獲取目前路由
 const route = useRoute()
@@ -19,11 +24,17 @@ const shouldhideHeaderFooter = computed(()=>{
 
 //記住user登入資訊
 // 獲取auth store
-   const authStore = useAuthStore()
-      // 在組件掛載時初始化auth狀態
-      onMounted(() => {
-        authStore.initializeAuth()
-   })
+const authStore = useAuthStore()
+// 在組件掛載時初始化auth狀態
+onMounted(async () => {
+  authStore.initializeAuth()
+  // 模擬初始載入時間，讓用戶看到LoadingComponent
+  await new Promise(resolve => setTimeout(resolve, 2000))
+  appLoading.value = false
+})
+
+// 定義 isLoading 狀態（來自 auth store 或 app loading）
+const isLoading = computed(() => authStore.isLoading || appLoading.value)
 </script>
 
 <template>
@@ -35,11 +46,11 @@ const shouldhideHeaderFooter = computed(()=>{
 
     <!--內容畫面 -->
     <div v-else>
-      <HeaderComponent />
+      <HeaderComponent v-if="!shouldhideHeaderFooter" />
       <main>
         <RouterView />
       </main>
-      <FooterComponent />
+      <FooterComponent v-if="!shouldhideHeaderFooter" />
     </div>
   </div>
 </template>
