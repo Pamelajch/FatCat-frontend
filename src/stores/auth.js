@@ -141,6 +141,38 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    //更新用戶資料
+    const updateProfile = async (userData) => {
+        try {
+            isLoading.value = true
+
+            const result = await authService.updateProfile(userData)
+
+            if (result.success) {
+                // 修正：直接使用 API 返回的最新資料更新本地狀態
+                if (user.value && result.data) {
+                    // 使用展開運算符更新所有欄位
+                    user.value = {
+                        ...user.value,  // 保留現有資料
+                        ...result.data  // 覆蓋為最新資料
+                    }
+                }
+
+                // 更新 localStorage 中的用戶資料
+                localStorage.setItem('user', JSON.stringify(user.value))
+
+                return { success: true, message: result.message }
+            } else {
+                return { success: false, message: result.message }
+            }
+        } catch (error) {
+            console.error('更新用戶資料錯誤:', error)
+            return { success: false, message: '更新失敗' }
+        } finally {
+            isLoading.value = false
+        }
+    }
+
     // 清除錯誤
     const clearError = () => {
         error.value = null
@@ -161,7 +193,8 @@ export const useAuthStore = defineStore('auth', () => {
         register,
         logout,
         fetchUserProfile,
-        clearError
+        clearError,
+        updateProfile
     }
 })
 

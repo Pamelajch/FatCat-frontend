@@ -5,6 +5,7 @@
     import { useCartStore } from '@/stores/cart'
     import CartOffcanvas from '@/components/CartOffcanvas.vue'
 
+    import Swal from 'sweetalert2'
     //登入登出功能區------------------------------------------
     // 使用auth store和router
     const authStore = useAuthStore()
@@ -19,21 +20,83 @@
 
     // 登出處理
     const handleLogout = async () => {
+      // 1. 確認對話框
+      const result = await Swal.fire({
+        title: '確定要登出嗎？',
+        text: '登出後需要重新登入才能存取會員功能',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '確定登出',
+        cancelButtonText: '取消',
+        confirmButtonColor: '#92559c',
+        cancelButtonColor: '#6c757d'
+      })
+
+      if (!result.isConfirmed) {
+        return // 用戶取消登出
+      }
+
       try {
+        // 2. 顯示載入中
+        Swal.fire({
+          title: '登出中...',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => {
+            Swal.showLoading()
+          }
+        })
+
+        // 3. 執行登出
         await authStore.logout()
-        // 跳轉到首頁
-        router.push('/')
+        
+        // 4. 顯示成功提示
+        await Swal.fire({
+          title: '登出成功！',
+          text: '感謝您的使用，期待下次再見！',
+          icon: 'success',
+          confirmButtonText: '確定',
+          confirmButtonColor: '#92559c',
+          timer: 3000,
+          timerProgressBar: true
+        })
+        
+        // 5. 智能跳轉邏輯
+        const currentRoute = router.currentRoute.value
+        const authRequiredPages = ['user', 'myorders', 'checkout', 'favorite']
+        
+        if (authRequiredPages.includes(currentRoute.name)) {
+          router.push('/')
+        } else {
+          window.location.reload()
+        }
+        
       } catch (error) {
         console.error('登出失敗:', error)
+        
+        Swal.fire({
+          title: '登出失敗',
+          text: '請檢查網路連線後再試',
+          icon: 'error',
+          confirmButtonText: '確定',
+          confirmButtonColor: '#dc3545'
+        })
       }
     }
 
     // 處理頭像顯示
     const getUserAvatar = computed(() => {
       if (user.value?.picPath) {
+        // 如果 picPath 是相對路徑，加上後端服務器 URL
+        if (user.value.picPath.startsWith('/')) {
+          return `https://localhost:7017${user.value.picPath}`
+        }
+        // 如果已經是完整 URL，直接返回
         return user.value.picPath
       }
-      return null
+      // 如果沒有頭像，返回預設圖片
+      return '/pingu.png'
     })
     //登入登出功能區 end-------------------------------------
 </script>
@@ -72,16 +135,18 @@
               <span class="d-none d-lg-inline"></span>
             </template>
           </button>
+          <!-- 下拉選單 -->
           <ul class="dropdown-menu dropdown-menu-end">
             <!-- 根據登入狀態顯示不同的選單項目 -->
             <template v-if="isAuthenticated">
               <li><RouterLink :to="{name:'user'}" class="dropdown-item"><i class="bi bi-person-gear me-2"></i>會員中心</RouterLink></li>
               <li><hr class="dropdown-divider"></li>
+              
               <li><button @click="handleLogout" class="dropdown-item" :disabled="authStore.isLoading"><i class="bi bi-box-arrow-right me-2"></i>{{ authStore.isLoading ? '登出中...' : '登出' }}</button></li>
             </template>
             <template v-else>
               <li><RouterLink :to="{name:'login'}" class="dropdown-item"><i class="bi bi-box-arrow-in-right me-2"></i>會員登入</RouterLink></li>
-              <li><RouterLink :to="{name:'user'}" class="dropdown-item"><i class="bi bi-person-gear me-2"></i>會員中心</RouterLink></li>
+              
             </template>
           </ul>
         </div>

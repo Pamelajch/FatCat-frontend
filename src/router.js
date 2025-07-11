@@ -15,6 +15,7 @@ import OrderdetailView from "./views/OrderdetailView.vue"
 import LoginView from "./views/LoginView.vue"
 import NofundView from "./views/NofundView.vue"
 import RegisterView from "./views/RegisterView.vue"
+import ForgotPasswordView from "./views/ForgotPasswordView.vue"
 import SpecialNoodleView from "./views/SpecialNoodleView.vue"
 import OneSpecialNoodleView from "./views/OneSpecialNoodleView.vue"
 
@@ -30,9 +31,9 @@ const routes = [
     //http://localhost:5173/Product
     { path: "/Product", component: ProductView, name: "product" },
     //http://localhost:5173/Specialnoodle
-    { path:"/Specialnoodle", component:SpecialNoodleView, name:"specialnoodle"},
+    { path: "/Specialnoodle", component: SpecialNoodleView, name: "specialnoodle" },
     //http://localhost:5173/OneSpecialNoodle
-    { path:"/OneSpecialNoodle", component:OneSpecialNoodleView, name:"onespecialnoodle"},
+    { path: "/OneSpecialNoodle", component: OneSpecialNoodleView, name: "onespecialnoodle" },
     //購物車 --梓瑋
     //http://localhost:5173/cart
     { path: "/cart", component: CartView, name: "cart" },
@@ -76,6 +77,24 @@ const routes = [
             hideHeaderFooter: true //讓註冊頁面不要套用Header及Footer
         }
     },
+    //忘記密碼頁面
+    {
+        path: "/forgot-password", component: ForgotPasswordView, name: "forgot-password", meta: {
+            hideHeaderFooter: true
+        }
+    },
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
