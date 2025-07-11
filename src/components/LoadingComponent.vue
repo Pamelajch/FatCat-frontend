@@ -146,7 +146,7 @@ onMounted(() => {
 
 <style scoped>
 .loading-container {
-  background-color: #c99cd3;
+  background-color: #c286cf;
   height: 100vh;
   width: 100vw;
   display: flex;
