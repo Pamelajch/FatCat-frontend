@@ -1,5 +1,8 @@
 <script setup>
-    
+import { useCartStore } from '@/stores/cart'
+import CartItemList from '@/components/CartItemList.vue'
+
+const cartStore = useCartStore()
 </script>
 
 <template>
@@ -15,7 +18,9 @@
     </h2>
     <div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse show" aria-labelledby="panelsStayOpen-headingOne">
       <div class="accordion-body">
-        
+         <!-- 購物車內容開始 -->
+              <CartItemList />
+              <!-- 購物車內容結束 -->
                  </div>
               </div>
             </div>
