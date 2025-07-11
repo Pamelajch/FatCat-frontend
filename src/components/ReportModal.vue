@@ -1,20 +1,19 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
+// --- 【改回點 #1】重新引入 axios ---
 import axios from 'axios';
 
 // --- Props & Emits ---
-// 這個元件接收來自父層的 reviewId
 const props = defineProps({
   reviewId: {
     type: Number,
     required: true
   }
 });
-
-// 定義一個 'close' 事件，讓父層知道何時該關閉視窗
 const emit = defineEmits(['close']);
 
 // --- 狀態定義 ---
+// --- 【改回點 #2】重新定義 API_BASE_URL ---
 const API_BASE_URL = 'https://localhost:7017/api';
 const reportReasons = ref([]);
 const isFetchingReasons = ref(false);
@@ -28,6 +27,7 @@ const fetchReportReasons = async () => {
   if (reportReasons.value.length > 0) return;
   isFetchingReasons.value = true;
   try {
+    // --- 【改回點 #3】將 apiClient 呼叫改回 axios ---
     const response = await axios.get(`${API_BASE_URL}/reviews/report-reasons`);
     reportReasons.value = response.data;
   } catch (err) {
@@ -45,10 +45,10 @@ const submitReport = async () => {
   }
   try {
     const payload = {
-      reasonTypeId: currentReport.reasonTypeId,
+      reasonTypeId: parseInt(currentReport.reasonTypeId),
       reasonComment: currentReport.reasonComment
     };
-    // 使用從 props 接收的 reviewId
+    // --- 【改回點 #4】將 apiClient 呼叫改回 axios ---
     await axios.post(`${API_BASE_URL}/reviews/${props.reviewId}/report`, payload);
     
     alert('感謝您的檢舉，我們將會盡快處理。');
@@ -61,7 +61,6 @@ const submitReport = async () => {
 
 // --- 生命週期鉤子 ---
 onMounted(() => {
-  // 元件一被建立，就去取得檢舉原因
   fetchReportReasons();
 });
 </script>

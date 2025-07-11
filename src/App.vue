@@ -10,15 +10,20 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 import HeaderComponent from './components/HeaderComponent.vue'
 import FooterComponent from './components/FooterComponent.vue'
 
-// 狀態：是否正在載入
-const isLoading = ref(true)
-
-onMounted(() => {
-  // 模擬loading 過程，可以替換成實際 API 完成後再關掉
-  setTimeout(() => {
-    isLoading.value = false
-  }, 1500)
+//獲取目前路由
+const route = useRoute()
+//計算是否需要隱藏 Header 和 Footer
+const shouldhideHeaderFooter = computed(()=>{
+  return route.meta.hideHeaderFooter || false
 })
+
+//記住user登入資訊
+// 獲取auth store
+   const authStore = useAuthStore()
+      // 在組件掛載時初始化auth狀態
+      onMounted(() => {
+        authStore.initializeAuth()
+   })
 </script>
 
 <template>
