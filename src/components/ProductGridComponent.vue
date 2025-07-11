@@ -101,7 +101,7 @@ const products = [
   background-color: white;
   border: 2px solid #e6d6f0; /* 淡紫邊框 */
   border-radius: 12px;
-  width: 440px;
+  width: 340px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   position: relative;
   transition: transform 0.3s;
