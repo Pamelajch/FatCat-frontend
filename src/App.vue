@@ -10,7 +10,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 
 import HeaderComponent from './components/HeaderComponent.vue'
 import FooterComponent from './components/FooterComponent.vue'
-import LoadingComponent from './components/LoadingComponent.vue'
+import CustomerService from './components/CustomerService.vue'
 
 // 應用載入狀態
 const appLoading = ref(true)
@@ -49,6 +49,7 @@ const isLoading = computed(() => authStore.isLoading || appLoading.value)
       <HeaderComponent v-if="!shouldhideHeaderFooter" />
       <main>
         <RouterView />
+        <CustomerService></CustomerService>
       </main>
       <FooterComponent v-if="!shouldhideHeaderFooter" />
     </div>
