@@ -3,7 +3,7 @@ import { useCartStore } from '@/stores/cart'
 import CartItemList from '@/components/CartItemList.vue'
 import MemberInfoForm from '@/components/MemberInfoForm.vue'
 import ShippingForm from '@/components/ShippingForm.vue'
-// PaymentInfo.vue 尚未使用
+import PaymentInfo from '@/components/PaymentInfo.vue'
 </script>
 
 <template>
@@ -41,31 +41,7 @@ import ShippingForm from '@/components/ShippingForm.vue'
           <ShippingForm />
         </div>
         <div class="col-12 col-md-4">
-          <!-- PaymentInfo 尚未套用 -->
-          <ul class="list-group">
-            <li class="list-group-item">
-              <h3>付款資料</h3>
-            </li>
-            <li class="list-group-item">使用優惠券:
-              <div>
-                <select class="form-select form-select-sm">
-                  <option selected>請選擇優惠</option>
-                  <option value="1">One</option>
-                  <option value="2">Two</option>
-                  <option value="3">Three</option>
-                </select>
-              </div>
-            </li>
-            <li class="list-group-item">訂單總金額:
-              <div>
-                運費:
-                <br />
-                折扣金額:
-                <hr />
-                實付金額:
-              </div>
-            </li>
-          </ul>
+          <PaymentInfo />
         </div>
 
         <!-- 下方按鈕 -->
