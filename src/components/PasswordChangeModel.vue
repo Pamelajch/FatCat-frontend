@@ -44,8 +44,9 @@ const validateCurrentPassword = () => {
         return false
     }
     
+    // 只清除錯誤訊息，不設定為驗證通過
     errors.currentPassword = ''
-    validationStatus.currentPassword = true
+    validationStatus.currentPassword = null  // 設為null，表示格式正確但未驗證
     
     // 如果新密碼已輸入，重新驗證新密碼（檢查重複）
     if (formData.newPassword) {
@@ -124,14 +125,14 @@ const validateConfirmPassword = () => {
 
 // 計算屬性 - 檢查是否所有欄位都已驗證通過
 const isFormValid = computed(() => {
-    return validationStatus.currentPassword === true &&
+    return formData.currentPassword.length > 0 && //只檢查是否有輸入
            validationStatus.newPassword === true &&
            validationStatus.confirmPassword === true
 })
 
 // 計算屬性 - 檢查是否有任何驗證錯誤
 const hasValidationErrors = computed(() => {
-    return validationStatus.currentPassword === false ||
+    return errors.currentPassword !== '' ||
            validationStatus.newPassword === false ||
            validationStatus.confirmPassword === false
 })
@@ -151,16 +152,10 @@ const onConfirmPasswordKeyup = () => {
 
 // 提交前的最終檢查（不重複驗證，只檢查狀態）
 const finalValidationCheck = () => {
-    // 如果有欄位還沒驗證過，強制驗證一次
-    if (validationStatus.currentPassword === null) {
-        validateCurrentPassword()
-    }
-    if (validationStatus.newPassword === null) {
-        validateNewPassword()
-    }
-    if (validationStatus.confirmPassword === null) {
-        validateConfirmPassword()
-    }
+    // 只做格式檢查，不做密碼正確性檢查
+    validateCurrentPassword()
+    validateNewPassword()
+    validateConfirmPassword()
     
     // 返回是否所有驗證都通過
     return isFormValid.value
