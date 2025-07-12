@@ -20,6 +20,7 @@ import FeedbackView from "./views/FeedbackView.vue"
 import ForgotPasswordView from "./views/ForgotPasswordView.vue"
 import SpecialNoodleView from "./views/SpecialNoodleView.vue"
 import OneSpecialNoodleView from "./views/OneSpecialNoodleView.vue"
+import AdminChat from "./views/AdminChat.vue"
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
@@ -57,6 +58,9 @@ const routes = [
     //進度追蹤 --如謙
     //http://localhost:5173/feedback
     { path: "/feedback", component: FeedbackView, name: "feedback" },
+    //客服管理者 --如謙
+    //http://localhost:5173/AdminChat
+    { path: "/AdminChat", component: AdminChat, name: "AdminChat" },
     //訂單結帳 -- 梓瑋
     //http://localhost:5173/checkout
     { path: "/checkout", component: CheckoutView, name: "checkout" },
