@@ -1,3 +1,168 @@
+<script setup>
+import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
+import * as signalR from '@microsoft/signalr';
+
+// --- 響應式狀態定義 ---
+const adminId = ref('admin_001');
+const connection = ref(null);
+const isConnected = ref(false);
+const connectionStatusText = ref('連線中...');
+const onlineUsers = ref([]);
+const userMessages = ref(new Map());
+const currentUserId = ref(null);
+const newMessage = ref('');
+const messagesContainer = ref(null);
+
+// --- Computed Properties ---
+const currentMessages = computed(() => {
+  return userMessages.value.get(currentUserId.value) || [];
+});
+
+// --- SignalR 連線邏輯 ---
+const initConnection = async () => {
+  connection.value = new signalR.HubConnectionBuilder()
+    .withUrl('https://localhost:7017/chatHub')
+    .configureLogging(signalR.LogLevel.Information)
+    .build();
+
+  // --- 註冊監聽事件 ---
+ connection.value.on('ReceiveMessage', (messageData) => {
+  // 從後端來的 timestamp 是完整的 ISO 字串，我們先轉成 Date 物件
+  const receivedTime = new Date(messageData.timestamp);
+  const formattedMessage = {
+    // 從收到的 messageData 中，把需要的屬性一個一個複製過來
+    userId: messageData.userId,
+    message: messageData.message,
+    type: messageData.type,
+    
+    // 然後使用我們格式化好的新時間來覆蓋掉舊的時間
+    timestamp: receivedTime.toLocaleTimeString('zh-TW', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false // 使用24小時制
+    })
+  };
+  
+  // 後續的程式碼完全不用改變
+  const userId = formattedMessage.userId;
+  if (!userMessages.value.has(userId)) {
+    userMessages.value.set(userId, []);
+  }
+  
+  // 將我們剛剛手動建立的、格式完全正確的 formattedMessage 物件推進陣列
+  userMessages.value.get(userId).push(formattedMessage);
+
+  if (currentUserId.value !== userId) {
+    const user = onlineUsers.value.find(u => u.userId === userId);
+    if (user) {
+      user.unreadCount++;
+    }
+  } else {
+    scrollToBottom();
+  }
+});
+
+  connection.value.on('UserOnline', (userId) => {
+    if (!onlineUsers.value.some(u => u.userId === userId)) {
+      onlineUsers.value.push({ userId, unreadCount: 0 });
+    }
+  });
+  
+  connection.value.on('UserOffline', (userId) => {
+    onlineUsers.value = onlineUsers.value.filter(u => u.userId !== userId);
+    if (currentUserId.value === userId) {
+      currentUserId.value = null; 
+    }
+  });
+
+  connection.value.on('OnlineUsersList', (users) => {
+    onlineUsers.value = users.map(userId => ({ userId, unreadCount: 0 }));
+  });
+
+  // --- 連線狀態處理 ---
+  connection.value.onclose(() => {
+    isConnected.value = false;
+    connectionStatusText.value = '連線已斷開';
+  });
+
+  connection.value.onreconnecting(() => {
+    isConnected.value = false;
+    connectionStatusText.value = '重新連線中...';
+  });
+  
+  connection.value.onreconnected(async () => {
+    isConnected.value = true;
+    connectionStatusText.value = '已連線';
+    if (connection.value) await connection.value.invoke('JoinAsAdmin', adminId.value);
+  });
+
+  // --- 啟動連線 ---
+  try {
+    await connection.value.start();
+    isConnected.value = true;
+    connectionStatusText.value = '已連線';
+    await connection.value.invoke('JoinAsAdmin', adminId.value);
+  } catch (err) {
+    console.error('SignalR 連線失敗:', err);
+    connectionStatusText.value = '連線失敗';
+    setTimeout(initConnection, 5000); 
+  }
+};
+
+// --- 組件生命週期 ---
+onMounted(() => {
+  initConnection();
+});
+
+onUnmounted(() => {
+  if (connection.value) {
+    connection.value.stop();
+  }
+});
+
+// --- UI 互動函式 ---
+const selectUser = (userId) => {
+  currentUserId.value = userId;
+  if (!userMessages.value.has(userId)) {
+    userMessages.value.set(userId, []);
+  }
+  const user = onlineUsers.value.find(u => u.userId === userId);
+  if (user) {
+    user.unreadCount = 0;
+  }
+  scrollToBottom();
+};
+
+const sendMessage = async () => {
+  if (!newMessage.value.trim() || !currentUserId.value) return;
+
+  try {
+    await connection.value.invoke('SendMessageToUser', adminId.value, currentUserId.value, newMessage.value);
+    
+    // 將自己發送的訊息也顯示出來，統一使用小寫 key
+    const messageData = {
+        message: newMessage.value,
+        timestamp: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        type: 'admin'
+    };
+    userMessages.value.get(currentUserId.value).push(messageData);
+    
+    newMessage.value = '';
+    scrollToBottom();
+  } catch (err) {
+    console.error('發送訊息失敗:', err);
+  }
+};
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    }
+  });
+};
+</script>
+
 <template>
   <div class="admin-container">
     <div class="sidebar">
@@ -58,10 +223,10 @@
             v-for="(msg, index) in currentMessages" 
             :key="index" 
             class="message" 
-            :class="`${msg.Type}-message`">
+            :class="`${msg.type}-message`">
             <div class="message-content">
-              <p>{{ msg.Message }}</p>
-              <div class="timestamp">{{ msg.Timestamp }}</div>
+              <p>{{ msg.message }}</p>
+              <div class="timestamp">{{ msg.timestamp }}</div>
             </div>
           </div>
         </div>
@@ -83,148 +248,6 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
-import * as signalR from '@microsoft/signalr';
-
-// --- 響應式狀態定義 ---
-const adminId = ref('admin_001');
-const connection = ref(null);
-const isConnected = ref(false);
-const connectionStatusText = ref('連線中...');
-const onlineUsers = ref([]); // { userId: string, unreadCount: number }[]
-const userMessages = ref(new Map()); // Map<userId, message[]>
-const currentUserId = ref(null);
-const newMessage = ref('');
-const messagesContainer = ref(null); // 用於滾動控制
-
-// --- Computed Properties ---
-const currentMessages = computed(() => {
-  return userMessages.value.get(currentUserId.value) || [];
-});
-
-// --- SignalR 連線邏輯 ---
-const initConnection = async () => {
-  connection.value = new signalR.HubConnectionBuilder()
-    .withUrl('https://localhost:7017/chatHub') // 確認後端 URL
-    .configureLogging(signalR.LogLevel.Information)
-    .build();
-
-  // --- 註冊監聽事件 ---
-  connection.value.on('ReceiveMessage', (messageData) => {
-    const userId = messageData.UserId;
-    if (!userMessages.value.has(userId)) {
-      userMessages.value.set(userId, []);
-    }
-    userMessages.value.get(userId).push(messageData);
-
-    if (currentUserId.value !== userId) {
-      const user = onlineUsers.value.find(u => u.userId === userId);
-      if (user) {
-        user.unreadCount++;
-      }
-    } else {
-      scrollToBottom();
-    }
-  });
-
-  connection.value.on('UserOnline', (userId) => {
-    if (!onlineUsers.value.some(u => u.userId === userId)) {
-      onlineUsers.value.push({ userId, unreadCount: 0 });
-    }
-  });
-  
-  connection.value.on('UserOffline', (userId) => {
-    onlineUsers.value = onlineUsers.value.filter(u => u.userId !== userId);
-    if (currentUserId.value === userId) {
-        currentUserId.value = null; // 如果當前對話用戶下線，清空聊天視窗
-    }
-  });
-
-  connection.value.on('OnlineUsersList', (users) => {
-    onlineUsers.value = users.map(userId => ({ userId, unreadCount: 0 }));
-  });
-
-  // --- 連線狀態處理 ---
-  connection.value.onclose(() => {
-    isConnected.value = false;
-    connectionStatusText.value = '連線已斷開';
-  });
-
-  connection.value.onreconnecting(() => {
-    isConnected.value = false;
-    connectionStatusText.value = '重新連線中...';
-  });
-  
-  connection.value.onreconnected(async () => {
-    isConnected.value = true;
-    connectionStatusText.value = '已連線';
-    await connection.value.invoke('JoinAsAdmin', adminId.value);
-  });
-
-  // --- 啟動連線 ---
-  try {
-    await connection.value.start();
-    isConnected.value = true;
-    connectionStatusText.value = '已連線';
-    await connection.value.invoke('JoinAsAdmin', adminId.value);
-  } catch (err) {
-    console.error('SignalR 連線失敗:', err);
-    connectionStatusText.value = '連線失敗';
-    setTimeout(initConnection, 5000); // 5秒後重試
-  }
-};
-
-// --- 組件生命週期 ---
-onMounted(() => {
-  initConnection();
-});
-
-onUnmounted(() => {
-  if (connection.value) {
-    connection.value.stop();
-  }
-});
-
-// --- UI 互動函式 ---
-const selectUser = (userId) => {
-  currentUserId.value = userId;
-  const user = onlineUsers.value.find(u => u.userId === userId);
-  if (user) {
-    user.unreadCount = 0;
-  }
-  scrollToBottom();
-};
-
-const sendMessage = async () => {
-  if (!newMessage.value.trim() || !currentUserId.value) return;
-
-  try {
-    await connection.value.invoke('SendMessageToUser', adminId.value, currentUserId.value, newMessage.value);
-    
-    // 將自己發送的訊息也顯示出來
-    const messageData = {
-        Message: newMessage.value,
-        Timestamp: new Date().toLocaleString('zh-TW'),
-        Type: 'admin'
-    };
-    userMessages.value.get(currentUserId.value).push(messageData);
-    
-    newMessage.value = '';
-    scrollToBottom();
-  } catch (err) {
-    console.error('發送訊息失敗:', err);
-  }
-};
-
-const scrollToBottom = () => {
-  nextTick(() => {
-    if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-    }
-  });
-};
-</script>
 
 <style scoped>
 /* 這裡直接沿用您原本 admin.html 的 CSS，可以無縫對接 */

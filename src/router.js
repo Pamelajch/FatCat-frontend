@@ -58,9 +58,9 @@ const routes = [
     //進度追蹤 --如謙
     //http://localhost:5173/feedback
     { path: "/feedback", component: FeedbackView, name: "feedback" },
-    //客服管理者 --如謙
+    //客服管理者 --如謙 meta 標籤，告訴系統「這是管理頁面」。
     //http://localhost:5173/AdminChat
-    { path: "/AdminChat", component: AdminChat, name: "AdminChat" },
+    { path: "/AdminChat", component: AdminChat, name: "AdminChat",meta: { isAdminPage: true } },
     //訂單結帳 -- 梓瑋
     //http://localhost:5173/checkout
     { path: "/checkout", component: CheckoutView, name: "checkout" },

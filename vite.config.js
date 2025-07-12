@@ -17,6 +17,7 @@ export default defineConfig({
   },
   server: {
     port: 5180, // 設定為您目前使用的端口
+    strictPort: true,
     host: 'localhost', // 明確設定主機
     proxy: { //導向圖片image資料夾用的
       '/ProductImages': {

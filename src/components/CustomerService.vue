@@ -1,3 +1,110 @@
+<script setup>
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import * as signalR from '@microsoft/signalr';
+
+const isOpen = ref(false);
+const isConnected = ref(false);
+const hasNewMessage = ref(false);
+const messages = ref([]);
+const newMessage = ref('');
+const messagesContainer = ref(null);
+const userId = ref(new URLSearchParams(window.location.search).get('userId') || `user_${Date.now().toString().slice(-6)}`);
+
+let connection = null;
+
+const initConnection = async () => {
+  connection = new signalR.HubConnectionBuilder()
+    .withUrl('https://localhost:7017/chatHub')
+    .configureLogging(signalR.LogLevel.Information)
+    .build();
+
+  connection.on('ReceiveMessage', (messageData) => {
+    // 後端傳來的 messageData 是 { adminId, message, timestamp, type }
+    // 將收到的時間字串轉換為 Date 物件
+    const receivedTime = new Date(messageData.timestamp);
+
+    // 推進本地 messages 陣列前，確保格式統一
+    messages.value.push({
+      id: Date.now(),
+      message: messageData.message,
+      timestamp: receivedTime.toLocaleTimeString('zh-TW', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }),
+      type: messageData.type
+    });
+    
+    if (!isOpen.value) {
+      hasNewMessage.value = true;
+    }
+    
+    scrollToBottom();
+  });
+
+  connection.onclose(() => { isConnected.value = false; });
+  connection.onreconnecting(() => { isConnected.value = false; });
+  connection.onreconnected(async () => { 
+    isConnected.value = true;
+    if (connection) await connection.invoke('JoinAsUser', userId.value);
+  });
+
+  try {
+    await connection.start();
+    isConnected.value = true;
+    await connection.invoke('JoinAsUser', userId.value);
+  } catch (err) {
+    console.error('SignalR 連線失敗:', err);
+    isConnected.value = false;
+    setTimeout(initConnection, 5000);
+  }
+};
+
+const toggleChat = () => {
+  isOpen.value = !isOpen.value;
+  if (isOpen.value) {
+    hasNewMessage.value = false;
+    scrollToBottom();
+  }
+};
+
+const sendMessage = async () => {
+  if (!newMessage.value.trim() || !isConnected.value) return;
+
+  // 自己發送的訊息，也統一使用小寫 key
+  const messageData = {
+    id: Date.now(),
+    message: newMessage.value,
+    timestamp: new Date().toLocaleTimeString('zh-TW', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }),
+    type: 'user'
+  };
+  messages.value.push(messageData);
+  
+  try {
+    await connection.invoke('SendMessageToAdmin', userId.value, newMessage.value);
+    newMessage.value = '';
+    scrollToBottom();
+  } catch (err) {
+    console.error('發送訊息失敗:', err);
+  }
+};
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    }
+  });
+};
+
+onMounted(() => { initConnection(); });
+onUnmounted(() => { if (connection) { connection.stop(); } });
+</script>
+
 <template>
   <div class="customer-service">
     <button
@@ -48,95 +155,8 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
-import * as signalR from '@microsoft/signalr';
 
-const isOpen = ref(false);
-const isConnected = ref(false);
-const hasNewMessage = ref(false);
-const messages = ref([]);
-const newMessage = ref('');
-const messagesContainer = ref(null);
-const userId = ref(new URLSearchParams(window.location.search).get('userId') || `user_${Date.now().toString().slice(-6)}`);
 
-let connection = null;
-
-const initConnection = async () => {
-  connection = new signalR.HubConnectionBuilder()
-    .withUrl('https://localhost:7017/chatHub') // 確認後端 URL
-    .configureLogging(signalR.LogLevel.Information)
-    .build();
-
-  connection.on('ReceiveMessage', (messageData) => {
-    messages.value.push({
-      id: Date.now(),
-      message: messageData.Message,
-      timestamp: messageData.Timestamp,
-      type: messageData.Type
-    });
-    
-    if (!isOpen.value) {
-      hasNewMessage.value = true;
-    }
-    
-    scrollToBottom();
-  });
-
-  connection.onclose(() => { isConnected.value = false; });
-  connection.onreconnecting(() => { isConnected.value = false; });
-  connection.onreconnected(() => { isConnected.value = true; });
-
-  try {
-    await connection.start();
-    isConnected.value = true;
-    await connection.invoke('JoinAsUser', userId.value);
-  } catch (err) {
-    console.error('SignalR 連線失敗:', err);
-    isConnected.value = false;
-    setTimeout(initConnection, 5000);
-  }
-};
-
-const toggleChat = () => {
-  isOpen.value = !isOpen.value;
-  if (isOpen.value) {
-    hasNewMessage.value = false;
-    scrollToBottom();
-  }
-};
-
-const sendMessage = async () => {
-  if (!newMessage.value.trim() || !isConnected.value) return;
-
-  const messageData = {
-    id: Date.now(),
-    message: newMessage.value,
-    timestamp: new Date().toLocaleString('zh-TW'),
-    type: 'user'
-  };
-  messages.value.push(messageData);
-  
-  try {
-    await connection.invoke('SendMessageToAdmin', userId.value, newMessage.value);
-    newMessage.value = '';
-    scrollToBottom();
-  } catch (err) {
-    console.error('發送訊息失敗:', err);
-  }
-};
-
-const scrollToBottom = () => {
-  nextTick(() => {
-    if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-    }
-  });
-};
-
-onMounted(() => { initConnection(); });
-onUnmounted(() => { if (connection) { connection.stop(); } });
-</script>
 
 <style scoped>
 /* --- 配色定義 --- */

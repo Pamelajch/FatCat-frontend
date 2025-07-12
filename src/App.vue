@@ -35,6 +35,13 @@ onMounted(async () => {
 
 // 定義 isLoading 狀態（只使用 app loading，避免 API 請求時重新渲染）
 const isLoading = computed(() => appLoading.value)
+
+// 【meta標籤】判斷當前頁面是否為管理頁面 
+const isAdminPage = computed(() => {
+  return route.meta.isAdminPage || false
+})
+
+
 </script>
 
 <template>
@@ -49,7 +56,7 @@ const isLoading = computed(() => appLoading.value)
       <HeaderComponent v-if="!shouldhideHeaderFooter" />
       <main>
         <RouterView />
-        <CustomerService></CustomerService>
+        <CustomerService v-if="!isAdminPage" />
       </main>
       <FooterComponent v-if="!shouldhideHeaderFooter" />
     </div>
