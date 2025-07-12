@@ -1,3 +1,4 @@
+<!-- jjtestView -->
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '@/services/jjapi.js'

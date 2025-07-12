@@ -2,8 +2,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import authService from '@/services/authService'
+import PasswordChangeModel from '@/components/PasswordChangeModel.vue'
 
 const authStore = useAuthStore()
+const passwordModal = ref(null)
 
 // 初始化標記，避免重複初始化
 const isInitialized = ref(false)
@@ -215,9 +217,45 @@ const saveField = async (field) => {
 
 // 開啟密碼變更對話框
 const openPasswordModal = () => {
-    // 這裡將來會開啟密碼變更模態窗
-    console.log('開啟密碼變更對話框')
-    alert('密碼變更功能將在下一階段實作')
+    if (passwordModal.value) {
+        passwordModal.value.showModal()
+    }
+}
+
+// 處理密碼變更
+const handlePasswordChange = async (passwordData) => {
+    try {
+        // 準備API請求數據
+        const changePasswordData = {
+            currentPassword: passwordData.currentPassword,
+            newPassword: passwordData.newPassword,
+            confirmPassword: passwordData.confirmPassword
+        }
+
+        // 調用狀態管理中的密碼變更方法
+        const result = await authStore.changePassword(changePasswordData)
+
+        if (result.success) {
+            // 成功提示
+            alert(result.message || '密碼變更成功！')
+
+            // 通知組件處理成功結果
+            if (passwordModal.value) {
+                passwordModal.value.handlePasswordChangeResult(true, result.message)
+            }
+        } else {
+           // 失敗時不顯示 alert，改為讓組件顯示錯誤訊息
+            if (passwordModal.value) {
+                passwordModal.value.handlePasswordChangeResult(false, result.message)
+            }
+        }
+    } catch (error) {
+        console.error('密碼變更錯誤:', error)
+        // 網絡錯誤或其他異常
+        if (passwordModal.value) {
+            passwordModal.value.handlePasswordChangeResult(false, '密碼變更時發生錯誤，請稍後再試')
+        }
+    }
 }
 
 // 檢查是否有變更
@@ -474,6 +512,9 @@ const saveAllChanges = async () => {
                 </div>
             </div>
         </div>
+
+        <!-- 密碼變更 Modal -->
+        <password-change-model ref="passwordModal" @password-changed="handlePasswordChange"></password-change-model>
     </div>
 </template>
 
