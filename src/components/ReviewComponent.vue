@@ -3,6 +3,7 @@ import { ref, onMounted, computed, reactive } from 'vue';
 import HelpfulnessVoting from './HelpfulnessVoting.vue';
 import axios from 'axios';
 import ReportModal from './ReportModal.vue';
+import api from '@/services/jjapi.js'; 
 
 // --- Props ---
 const props = defineProps({
@@ -13,7 +14,6 @@ const props = defineProps({
 });
 
 // --- 響應式狀態定義 ---
-const API_BASE_URL = 'https://localhost:7017/api';
 const BACKEND_URL = 'https://localhost:7017';
 
 const reviews = ref([]);
@@ -41,7 +41,7 @@ const fetchReviews = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    const response = await axios.get(`${API_BASE_URL}/products/${props.productId}/reviews`);
+    const response = await api.get(`/products/${props.productId}/reviews`);
     // 直接使用後端回傳的資料，因為後端已經幫我們算好 currentUserVote 了
     reviews.value = response.data; // <--- 
   } catch (err) {

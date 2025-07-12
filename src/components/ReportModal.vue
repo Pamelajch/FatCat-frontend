@@ -1,7 +1,6 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-// --- 【改回點 #1】重新引入 axios ---
-import axios from 'axios';
+import api from '@/services/jjapi.js'; // 👈 確保只匯入 api
 
 // --- Props & Emits ---
 const props = defineProps({
@@ -13,8 +12,6 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 
 // --- 狀態定義 ---
-// --- 【改回點 #2】重新定義 API_BASE_URL ---
-const API_BASE_URL = 'https://localhost:7017/api';
 const reportReasons = ref([]);
 const isFetchingReasons = ref(false);
 const currentReport = reactive({
@@ -27,8 +24,7 @@ const fetchReportReasons = async () => {
   if (reportReasons.value.length > 0) return;
   isFetchingReasons.value = true;
   try {
-    // --- 【改回點 #3】將 apiClient 呼叫改回 axios ---
-    const response = await axios.get(`${API_BASE_URL}/reviews/report-reasons`);
+    const response = await api.get(`/reviews/report-reasons`);
     reportReasons.value = response.data;
   } catch (err) {
     console.error('取得檢舉原因失敗:', err);
@@ -48,11 +44,12 @@ const submitReport = async () => {
       reasonTypeId: parseInt(currentReport.reasonTypeId),
       reasonComment: currentReport.reasonComment
     };
-    // --- 【改回點 #4】將 apiClient 呼叫改回 axios ---
-    await axios.post(`${API_BASE_URL}/reviews/${props.reviewId}/report`, payload);
+    
+    // 👇👇👇【主要修改點】改用 api 實例發送請求 👇👇👇
+    await api.post(`/reviews/${props.reviewId}/report`, payload);
     
     alert('感謝您的檢舉，我們將會盡快處理。');
-    emit('close'); // 成功後，發送 close 事件通知父層
+    emit('close');
   } catch (err) {
     console.error('提交檢舉失敗:', err);
     alert('提交失敗，請稍後再試。');
