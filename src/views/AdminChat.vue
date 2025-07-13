@@ -74,9 +74,16 @@ const initConnection = async () => {
   
   connection.value.on('UserOffline', (userId) => {
     onlineUsers.value = onlineUsers.value.filter(u => u.userId !== userId);
-    if (currentUserId.value === userId) {
-      currentUserId.value = null; 
-    }
+    if (userMessages.value.has(userId)) {
+    userMessages.value.get(userId).push({
+      type: 'system', // 一個新的訊息類型
+      message: '使用者已離開對話。',
+      timestamp: new Date().toLocaleTimeString('zh-TW', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    });
+  }
   });
 
   connection.value.on('OnlineUsersList', (users) => {
@@ -235,6 +242,14 @@ const scrollToBottom = () => {
           </div>
         </div>
 
+        <!-- 使用者以離開對話的設置 -->
+        <div 
+          v-for="(msg, index) in currentMessages" 
+          :key="index" 
+          class="message" 
+          :class="`${msg.type}-message`"> </div> 
+          <!-- 結束 -->
+
         <div class="chat-input">
           <input 
             type="text"
@@ -250,6 +265,8 @@ const scrollToBottom = () => {
       </div>
     </div>
   </div>
+
+  
 </template>
 
 
@@ -290,4 +307,22 @@ body { font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:#f5f5
 .admin-info { background:white; padding:15px 20px; }
 .admin-id-input { width:100%; padding:8px 12px; border:1px solid #ddd; border-radius:4px; font-size:14px; }
 .stats { padding:15px 20px; background:#f8f9fa; border-bottom:1px solid #ddd; font-size:14px; color:#6c757d; }
+
+.message.system-message {
+  justify-content: center; /* 讓訊息置中 */
+  margin: 20px 0;
+}
+
+.system-message .message-content {
+  background: #e9ecef; /* 灰色背景 */
+  color: #6c757d;      /* 深灰色文字 */
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  box-shadow: none;
+}
+
+.system-message .timestamp {
+    display: none; /* 系統訊息可以不用顯示時間戳 */
+}
 </style>
