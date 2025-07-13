@@ -36,7 +36,7 @@ const handleLogin = async () => {
 <template>
   <div class="login-container">
     <div class="login-card">
-      <h2 class="text-center mb-4">管理後台登入</h2>
+      <h2 class="text-center mb-4">肥貓客服系統後台</h2>
       <form @submit.prevent="handleLogin">
         <div class="mb-3">
           <label for="email" class="form-label">Email</label>

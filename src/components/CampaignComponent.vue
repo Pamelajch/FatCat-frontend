@@ -3,19 +3,14 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
 // --- 響應式狀態定義 ---
-
-// 後端公開 API 的網址
 const API_URL = 'https://localhost:7017/api/Campaigns'; 
-// 後端伺服器的基礎網址，用來組合圖片路徑
-const BACKEND_URL = 'https://localhost:7017'; // ⚠️ 請再次確認你的後端連接埠
+const BACKEND_URL = 'https://localhost:7017';
 
 const campaigns = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
 
 // --- API 呼叫函式 ---
-
-// 取得公開的活動列表
 const fetchCampaigns = async () => {
   try {
     const response = await axios.get(API_URL);
@@ -29,38 +24,24 @@ const fetchCampaigns = async () => {
 };
 
 // --- 生命週期鉤子 ---
-
-// 當元件第一次被掛載到畫面上時，自動執行一次 fetchCampaigns
 onMounted(() => {
   fetchCampaigns();
 });
 </script>
 
 <template>
-  <!-- 元件的根容器，使用自訂的紫黃色主題 -->
   <div class="campaign-container container-fluid py-5">
     <div class="container">
-      <!-- 標題區塊 -->
-      <h2 class="text-center mb-5 display-5 fw-bold text-black">熱門活動</h2>
+      <h2 class="text-center mb-5 display-5 fw-bold section-title">熱門活動</h2>
 
-      <!-- 錯誤訊息顯示區 -->
       <div v-if="error" class="alert alert-danger">{{ error }}</div>
-
-      <!-- 載入中訊息顯示區 -->
       <div v-if="isLoading" class="text-center">
         <div class="spinner-border text-warning" role="status">
           <span class="visually-hidden">載入中...</span>
         </div>
       </div>
 
-      <!-- 
-        輪播圖主體
-        - data-bs-ride="carousel": 啟用自動播放
-        - data-bs-interval="2000": 設定每 2 秒切換一次
-      -->
-      <div v-if="!isLoading && campaigns.length > 0" id="campaignCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="2000">
-        
-        <!-- 輪播圖內容 -->
+      <div v-if="!isLoading && campaigns.length > 0" id="campaignCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
         <div class="carousel-inner">
           <div 
             v-for="(campaign, index) in campaigns" 
@@ -68,39 +49,38 @@ onMounted(() => {
             class="carousel-item" 
             :class="{ active: index === 0 }">
             
-            <!-- 每一張投影片都是一個兩欄式的卡片 -->
-            <div class="campaign-slide-card card border-0">
-              <div class="row g-0 align-items-center">
-                
-                <!-- 左側欄：活動圖片 -->
-                <div class="col-lg-5">
+            <div class="campaign-slide-card card">
+              <div class="campaign-header-bar"></div>
+              
+              <div class="row g-0">
+                <div class="col-md-5 d-flex align-items-center justify-content-center p-4">
                   <img 
                     :src="`${BACKEND_URL}${campaign.coverImageUrl}`" 
-                    class="d-block w-100" 
+                    class="campaign-image" 
                     :alt="campaign.title"
                     onerror="this.onerror=null;this.src='https://placehold.co/600x800/333/FFFFFF?text=圖片載入失敗'">
                 </div>
 
-                <!-- 右側欄：活動文字內容 -->
-                <div class="col-lg-7">
-                  <div class="card-body p-5">
-                    <h3 class="card-title display-4 fw-bolder mb-3">{{ campaign.title }}</h3>
+                <div class="col-md-7">
+                  <div class="card-body p-lg-5 p-4 d-flex flex-column h-100">
+                    <h3 class="card-title mb-3">{{ campaign.title }}</h3>
                     <p class="card-text text-muted mb-4">
                       活動期間：{{ new Date(campaign.startDate).toLocaleDateString() }} - {{ new Date(campaign.endDate).toLocaleDateString() }}
                     </p>
                     <p class="card-text fs-5 mb-5">{{ campaign.content }}</p>
-                    <router-link :to="{ path: '/campaigns', hash: `#campaign-${campaign.campaignId}` }" class="btn btn-warning btn-lg fw-bold px-5 py-3">
-                      查看詳情
-                    </router-link>
+                    
+                    <div class="mt-auto">
+                      <router-link :to="{ path: '/campaigns', hash: `#campaign-${campaign.campaignId}` }" class="btn-details">
+                        查看詳情
+                      </router-link>
+                    </div>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 上一張/下一張 控制按鈕 -->
         <button class="carousel-control-prev" type="button" :data-bs-target="'#campaignCarousel'" data-bs-slide="prev">
           <span class="carousel-control-prev-icon" aria-hidden="true"></span>
           <span class="visually-hidden">上一張</span>
@@ -111,8 +91,7 @@ onMounted(() => {
         </button>
       </div>
 
-      <!-- 沒有活動時顯示的訊息 -->
-      <div v-if="!isLoading && campaigns.length === 0 && !error" class="text-center text-white-50 py-5">
+      <div v-if="!isLoading && campaigns.length === 0 && !error" class="text-center text-muted py-5">
         <p class="fs-4">目前沒有任何進行中的活動。</p>
       </div>
     </div>
@@ -120,77 +99,107 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* 定義主題顏色 */
-:root {
-  --theme-purple: #4a148c; /* 深紫色 */
-  --theme-yellow: #ffc107; /* 亮黃色 */
-}
-
-/* 整體容器背景，使用深紫色漸層 */
+/* 1. 全局背景：淺紫色與淡鵝黃色斜向粗條紋 */
 .campaign-container {
-  background: linear-gradient(135deg, #daa8e3 0%, #f3e3f4 100%);
-  border-radius: 20px;
+  background-color: #FFF9E6; /* 淡鵝黃色底 */
+  background-image: repeating-linear-gradient(
+    180deg,
+    #E8DAEF,
+    #E8DAEF 35px,
+    #FFF9E6 35px,
+    #FFF9E6 70px
+  );
 }
 
-/* 輪播項目卡片樣式 */
+/* 區塊標題 */
+.section-title {
+  font-family: 'Noto Serif TC', serif; /* 一個好看的襯線字體 */
+  color: #3D2B1F; /* 深咖啡色 */
+  text-shadow: 2px 2px 0 #FFF9E6; /* 加上一點背景色的陰影，更有立體感 */
+}
+
+/* 2. 卡片設計：模擬日式祭典的布簾 (Noren) 感 */
 .campaign-slide-card {
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 15px;
-  overflow: hidden; /* 確保圓角能正確顯示 */
-  min-height: 550px;
+  background-color: #fefcf5; /* 帶一點米白的紙質感 */
+  border: 2px solid #3D2B1F; /* 深咖啡色邊框 */
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  position: relative;
+  min-height: 500px;
 }
 
-/* 圖片樣式，確保能完整顯示直式海報 */
-.campaign-slide-card img {
+/* 磚紅色的頂部裝飾條 */
+.campaign-header-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 550px;
-  object-fit: contain; /* 👈 關鍵！完整顯示圖片，不裁切 */
-  background-color: #f8f9fa; /* 給圖片一個淺色底，避免透明背景的圖不好看 */
+  height: 20px;
+  background-color: #B85C5C; /* 磚紅色 */
+  border-bottom: 2px solid #3D2B1F;
 }
 
-/* 卡片標題使用較深的紫色 */
+/* 左側海報圖片 */
+.campaign-image {
+  display: block;
+  width: 100%;
+  max-width: 300px; /* 限制最大寬度，避免不成比例 */
+  height: auto;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 右側文字區 */
+.card-body {
+  padding: 2.5rem;
+}
 .card-title {
-  color: #311B92;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #B85C5C; /* 標題使用磚紅色 */
+  border-bottom: 3px solid #E8DAEF; /* 加上淺紫色底線 */
+  padding-bottom: 0.5rem;
+  display: inline-block; /* 讓底線長度符合文字 */
 }
 
-/* 按鈕樣式，使用主題黃色 */
-.btn-warning {
-  background-color: #ffc107;
-  border-color: #ffc107;
-  color: #212529;
+/* 3. 按鈕設計：像一個小木牌或掛牌 */
+.btn-details {
+  display: inline-block;
+  background-color: #B85C5C; /* 磚紅色 */
+  color: white;
+  text-decoration: none;
+  padding: 12px 30px;
+  border-radius: 30px;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   transition: all 0.3s ease;
+  border: 2px solid #8c4747;
 }
 
-.btn-warning:hover {
-  background-color: #ffca2c;
-  border-color: #ffca2c;
+.btn-details:hover {
+  background-color: #a04f4f;
   transform: translateY(-3px);
-  box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
 }
 
-/* 👇👇👇【這就是我們新增的修改】👇👇👇
-  輪播控制按鈕的樣式
-*/
+
+/* 輪播控制按鈕 (沿用之前的精緻化設計) */
 .carousel-control-prev,
 .carousel-control-next {
-  /* 讓按鈕的寬度變窄，不要佔滿整個側面 */
   width: 5%; 
 }
-
-/* 讓箭頭圖示本身更精緻 */
 .carousel-control-prev-icon,
 .carousel-control-next-icon {
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(61, 43, 31, 0.6); /* 改為深咖啡色半透明 */
   border-radius: 50%;
   padding: 1.5rem;
   background-size: 50% 50%;
-  transition: background-color 0.3s ease;
 }
-
-/* 滑鼠移過時，讓箭頭背景變深 */
 .carousel-control-prev:hover .carousel-control-prev-icon,
 .carousel-control-next:hover .carousel-control-next-icon {
-    background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(61, 43, 31, 0.9);
 }
 </style>
