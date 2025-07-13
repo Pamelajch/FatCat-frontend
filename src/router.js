@@ -76,7 +76,8 @@ const routes = [
     //登入頁面
     {
         path: "/login", component: LoginView, name: "login", meta: {
-            hideHeaderFooter: true //讓登入頁面不要套用Header及Footer(方法寫在app.vue)
+            hideHeaderFooter: true, //讓登入頁面不要套用Header及Footer(方法寫在app.vue)
+            isAdminPage: true //rr新增隱藏客服
         }
     },
     //註冊頁面
@@ -91,6 +92,42 @@ const routes = [
             hideHeaderFooter: true
         }
     },
+    // ---【rr 新增管理者路由區塊】 ---
+    {
+        path: '/admin/login',
+        name: 'AdminLogin',
+        component: () => import('./views/Admin/AdminLogin.vue'),
+        meta: { hideHeaderFooter: true ,// 隱藏使用者版的 Header/Footer
+            isAdminPage: true // 告訴 App.vue 這是管理頁面，不要載入使用者客服
+        } 
+    },
+    {
+        path: '/admin',
+        component: () => import('./views/Admin/AdminLayout.vue'),
+        meta: { hideHeaderFooter: true,isAdminPage: true }, // 整個後台都隱藏
+        children: [
+          {
+            // 當使用者瀏覽 /admin 時，自動重導向到 /admin/chat
+            path: '', 
+            redirect: '/admin/chat'
+          },
+          {
+            path: 'chat', // 對應到 /admin/chat
+            name: 'AdminChat',
+            component: () => import('./views/AdminChat.vue') 
+          }
+          // 未來可以新增更多子路由，例如 /admin/products
+        ],
+        // 路由守衛：進入 /admin 下任何頁面前，先檢查有沒有 token
+        beforeEnter: (to, from, next) => {
+          if (localStorage.getItem('token')) {
+            next(); // 有 token，放行
+          } else {
+            next('/admin/login'); // 沒有 token，強制導向到登入頁
+          }
+        }
+    },
+    
 
 
 

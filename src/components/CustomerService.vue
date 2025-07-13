@@ -14,9 +14,13 @@ let connection = null;
 
 const initConnection = async () => {
   connection = new signalR.HubConnectionBuilder()
-    .withUrl('https://localhost:7017/chatHub')
-    .configureLogging(signalR.LogLevel.Information)
-    .build();
+    .withUrl('https://localhost:7017/chatHub', {
+    // 建立一個函式，它會回傳儲存在 localStorage 的 token
+    // SignalR 在每次連線或重連時，都會自動執行這個函式來取得最新的 token
+    accessTokenFactory: () => localStorage.getItem('token')
+  })
+  .configureLogging(signalR.LogLevel.Information)
+  .build();
 
   connection.on('ReceiveMessage', (messageData) => {
     // 後端傳來的 messageData 是 { adminId, message, timestamp, type }
@@ -52,7 +56,7 @@ const initConnection = async () => {
   try {
     await connection.start();
     isConnected.value = true;
-    await connection.invoke('JoinAsUser', userId.value);
+    await connection.invoke('JoinAsUser');
   } catch (err) {
     console.error('SignalR 連線失敗:', err);
     isConnected.value = false;
@@ -85,7 +89,7 @@ const sendMessage = async () => {
   messages.value.push(messageData);
   
   try {
-    await connection.invoke('SendMessageToAdmin', userId.value, newMessage.value);
+    await connection.invoke('SendMessageToAdmin', newMessage.value);
     newMessage.value = '';
     scrollToBottom();
   } catch (err) {

@@ -21,9 +21,13 @@ const currentMessages = computed(() => {
 // --- SignalR 連線邏輯 ---
 const initConnection = async () => {
   connection.value = new signalR.HubConnectionBuilder()
-    .withUrl('https://localhost:7017/chatHub')
-    .configureLogging(signalR.LogLevel.Information)
-    .build();
+    .withUrl('https://localhost:7017/chatHub', {
+    // 建立一個函式，它會回傳儲存在 localStorage 的 token
+    // SignalR 在每次連線或重連時，都會自動執行這個函式來取得最新的 token
+    accessTokenFactory: () => localStorage.getItem('token')
+  })
+  .configureLogging(signalR.LogLevel.Information)
+  .build();
 
   // --- 註冊監聽事件 ---
  connection.value.on('ReceiveMessage', (messageData) => {
@@ -101,7 +105,7 @@ const initConnection = async () => {
     await connection.value.start();
     isConnected.value = true;
     connectionStatusText.value = '已連線';
-    await connection.value.invoke('JoinAsAdmin', adminId.value);
+    await connection.value.invoke('JoinAsAdmin');
   } catch (err) {
     console.error('SignalR 連線失敗:', err);
     connectionStatusText.value = '連線失敗';
@@ -137,7 +141,7 @@ const sendMessage = async () => {
   if (!newMessage.value.trim() || !currentUserId.value) return;
 
   try {
-    await connection.value.invoke('SendMessageToUser', adminId.value, currentUserId.value, newMessage.value);
+    await connection.value.invoke('SendMessageToUser',currentUserId.value, newMessage.value);
     
     // 將自己發送的訊息也顯示出來，統一使用小寫 key
     const messageData = {
