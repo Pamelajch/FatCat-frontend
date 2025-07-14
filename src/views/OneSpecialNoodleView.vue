@@ -51,6 +51,7 @@ const warningMessages = [
   '親愛的貓貓們請注意',
   '由於特殊款泡麵無法更換配料',
   '請留意過敏食材',
+  '如有疑問請洽肥貓客服',
   '肥貓麵舖感謝您 🐾'
 ]
 const currentWarning = ref(0)
