@@ -14,6 +14,8 @@ export const useCheckoutStore = defineStore('checkout', () => {
     const sameAsMember = ref(false)
 
     // 優惠 & 金額
+    const productTotal = ref(2000)
+
     const couponId = ref(null)
     const shippingFee = ref(0)
     const discount = ref(0)
@@ -53,6 +55,7 @@ export const useCheckoutStore = defineStore('checkout', () => {
         name, phone, email,
         shippingId, recipientName, recipientPhone, sameAsMember,
         couponId, shippingFee, discount, total,
+        productTotal,
         submitOrder
     }
 })
