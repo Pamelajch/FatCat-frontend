@@ -36,17 +36,22 @@ api.interceptors.response.use(
             // 檢查是否已經在登入頁面或是登入相關的 API 呼叫
             const isLoginPage = window.location.pathname === '/login'
             const isLoginAPI = error.config?.url?.includes('/auth/login') || error.config?.url?.endsWith('/auth/login')
-            
-            // 如果不是登入頁面且不是登入 API，才進行重新導向
-            if (!isLoginPage && !isLoginAPI) {
+            const isExternalLoginAPI = error.config?.url?.includes('/ExternalLogin')
+
+            // 如果不是登入頁面且不是登入/第三方登入 API，才進行重新導向
+            if (!isLoginPage && !isLoginAPI && !isExternalLoginAPI) {
                 localStorage.removeItem('token')
                 localStorage.removeItem('user')
                 //跳轉到登入頁
                 window.location.href = '/login'
             }
-            
-            // 如果是登入 API 失敗，不要清除本地存儲（因為用戶可能只是密碼錯誤）
-            console.log('登入失敗，但不重新導向頁面')
+
+            // 如果是登入或第三方登入 API 失敗，不要清除本地存儲
+            if (isExternalLoginAPI) {
+                console.log('第三方登入 API 失敗，但不重新導向頁面')
+            } else {
+                console.log('登入失敗，但不重新導向頁面')
+            }
         }
         return Promise.reject(error)
     }
