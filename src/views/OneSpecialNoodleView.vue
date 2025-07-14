@@ -65,6 +65,50 @@ onMounted(() => {
 onBeforeUnmount(() => {
   clearInterval(warningInterval)
 })
+
+// 數量
+const quantity = ref(1)
+
+// 商品規格：未來從 API 帶入這個陣列
+const productSpecs = ref([])
+
+// 預設顯示假資料（API 還沒完成前）
+onMounted(() => {
+  productSpecs.value = [
+    { label: '口味', value: '龍蝦海鮮風味' },
+    { label: '內容量', value: '150g ± 5%' },
+    { label: '保存期限', value: '6 個月' },
+    { label: '產地', value: '台灣' },
+    { label: '過敏原', value: '含蝦、麩質' }
+  ]
+})
+
+// 推薦商品清單：未來從 API 帶入這個陣列
+const recommendedProducts = ref([])
+
+// 預設假資料
+onMounted(() => {
+  recommendedProducts.value = [
+    {
+      id: 101,
+      name: '起司泡菜豚骨',
+      image: '/fakenoodle.jpg',
+      price: 159
+    },
+    {
+      id: 102,
+      name: '濃厚味噌拉麵',
+      image: '/pingu.png',
+      price: 149
+    },
+    {
+      id: 103,
+      name: '貓薄荷拉麵',
+      image: '/cat-logo.png',
+      price: 109
+    }
+  ]
+})
 </script>
 
 <template>
@@ -100,26 +144,59 @@ onBeforeUnmount(() => {
         </transition>
         <button class="nav-btn right" @click="showNext" :disabled="currentImageIndex === images.length - 1">›</button>
       </div>
-
+      <!-- 給r謙放使用者評論的地方 -->
+      <div>
+        <!-- r謙放這裡面 -->
+      </div>
       <!-- 資訊 -->
       <div class="info-box">
         <h1 class="product-name">天降龍蝦泡麵</h1>
         <p class="product-price">NT$ 199</p>
         <p class="product-description">濃厚海味拉麵，搭配整隻龍蝦，彷彿置身深海的溫柔擁抱 🦞🌊</p>
         <p class="product-stock">剩餘庫存：12 碗</p>
+        <!-- 商品規格 -->
+        <div class="product-specs-form">
+          <h3 class="spec-title">商品規格</h3>
+          <div class="spec-grid">
+            <div
+            class="spec-row"
+            v-for="(item, index) in productSpecs"
+            :key="index"
+            >
+              <label class="spec-label">{{ item.label }}</label>
+              <div class="spec-value">{{ item.value }}</div>
+            </div>
+          </div>
+        </div>
+        <!-- 數量選擇器 -->
+        <div class="quantity-box">
+          <label for="qty">數量：</label>
+          <input id="qty" type="number" v-model="quantity" min="1" />
+        </div>
         <div class="button-group">
-          <button class="cart-btn">加入購物車</button>
-          <button class="favorite-btn">加入最愛</button>
+          <button class="cart-btn">加入購物車</button> <!-- !!!!!!!給仔瑋的!!!!!!! -->
+          <button class="favorite-btn">加入最愛</button> <!-- !!!!!!!給r謙的!!!!!!! -->
         </div>
       </div>
     </div>
 
     <!-- 警語 -->
     <div class="warning-text">
-  <transition name="slide-up" mode="out-in">
+    <transition name="slide-up" mode="out-in">
     <p :key="currentWarning">{{ warningMessages[currentWarning] }}</p>
-  </transition>
-</div>
+    </transition>
+    </div>
+    <!-- 推薦商品 -->
+    <div class="recommendation-section">
+      <h3>你可能也會喜歡 🍜</h3>
+      <div class="recommendation-list">
+        <div class="recommend-card" v-for="item in recommendedProducts" :key="item.id">
+          <img :src="item.image" :alt="item.name" />
+          <p class="name">{{ item.name }}</p>
+          <p class="price">NT$ {{ item.price }}</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -382,5 +459,125 @@ onBeforeUnmount(() => {
 .slide-up-leave-to {
   transform: translateY(-100%);
   opacity: 0;
+}
+
+/* 商品規格 */
+.product-specs {
+  margin-top: 20px;
+}
+.product-specs ul {
+  padding-left: 20px;
+}
+.product-specs li {
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+/* 商品規格 - 表單樣式 */
+.product-specs-form {
+  margin-top: 30px;
+  padding: 25px 30px;
+  background-color: #fff0f9;
+  border: 2px dashed #e2a8d7;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px rgba(220, 160, 210, 0.15);
+}
+
+.spec-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #b046a6;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #f5c5ea;
+  padding-bottom: 8px;
+}
+
+.spec-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.spec-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 15px;
+  background-color: #ffeaf6;
+  border-radius: 12px;
+  transition: background-color 0.3s ease;
+}
+
+.spec-row:hover {
+  background-color: #fdd4ee;
+}
+
+.spec-label {
+  font-weight: bold;
+  color: #a343a2;
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.spec-value {
+  color: #444;
+  flex-grow: 1;
+  text-align: right;
+}
+
+/* 數量選擇器 */
+.quantity-box {
+  margin-top: 15px;
+  font-size: 16px;
+}
+.quantity-box input {
+  width: 60px;
+  margin-left: 10px;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* 推薦商品區塊 */
+.recommendation-section {
+  margin-top: 80px;
+}
+.recommendation-section h3 {
+  font-size: 24px;
+  color: #a43f96;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.recommendation-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+}
+.recommend-card {
+  width: 200px;
+  background-color: #fff0f8;
+  padding: 15px;
+  border-radius: 20px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+.recommend-card:hover {
+  transform: translateY(-5px);
+}
+.recommend-card img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+.recommend-card .name {
+  font-weight: bold;
+  color: #cc3c9b;
+}
+.recommend-card .price {
+  color: #888;
+  margin-top: 5px;
 }
 </style>
