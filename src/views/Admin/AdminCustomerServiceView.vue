@@ -279,10 +279,10 @@ const scrollToBottom = () => {
     font-size: 1.2rem;
 }
 .admin-info { background: white; padding: 15px 20px; border-bottom: 1px solid #e9ecef; }
-.admin-id-input { width: 100%; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; }
-.connection-status { padding: 10px 20px; text-align: center; font-size: 14px; background: #ffc107; color: #333; }
+.admin-id-input { width: 100%; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 18px; }
+.connection-status { padding: 10px 20px; text-align: center; font-size: 18px; background: #ffc107; color: #333; }
 .connection-status.connected { background: #198754; color: white; }
-.stats { padding: 15px 20px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; font-size: 14px; color: #6c757d; }
+.stats { padding: 15px 20px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; font-size: 16px; color: #6c757d; }
 .user-list { flex: 1; overflow-y: auto; }
 .user-item { padding: 15px 20px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background 0.2s; }
 .user-item:hover { background: #f8f9fa; }
@@ -290,10 +290,10 @@ const scrollToBottom = () => {
   background: #f3e3f4; /* 改為主題淺紫色 */
   color: #582b5e; /* 深紫色文字 */
 }
-.user-info { display: flex; align-items: center; gap: 10px; }
+.user-info { display: flex; align-items: center; gap: 12px; }
 .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: #6c757d; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
 .user-item.active .user-avatar { background-color: #582b5e; }
-.unread-count { background: #dc3545; color: white; border-radius: 50%; min-width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; padding: 2px; }
+.unread-count { background: #dc3545; color: white; border-radius: 50%; min-width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px; padding: 2px; }
 
 /* 右側聊天區樣式 */
 .chat-area { 
@@ -320,9 +320,9 @@ const scrollToBottom = () => {
 .user-message .message-content { background: rgb(218, 181, 230); color: #333; border: 1px solid #e9ecef; }
 .admin-message .message-content { background: #582b5e; color: white; } /* 管理員訊息改為主題深紫色 */
 .message-content p { margin: 0 0 5px 0; }
-.timestamp { font-size: 11px; opacity: 0.7; }
+.timestamp { font-size: 15px; opacity: 0.7; }
 .chat-input { display: flex; padding: 15px; background: rgb(255, 255, 255); border-top: 1px solid #e9ecef; }
-.chat-input input { flex: 1; border: 1px solid #e5e1e1; border-radius: 25px; padding: 12px 20px; outline: none; margin-right: 15px; font-size: 16px; }
+.chat-input input { flex: 1; border: 1px solid #e5e1e1; border-radius: 25px; padding: 12px 20px; outline: none; margin-right: 15px; font-size: 18px; }
 .chat-input input:focus { border-color: #582b5e; }
 .chat-input button { 
   background: #582b5e; /* 按鈕也改為主題深紫色 */
@@ -331,13 +331,13 @@ const scrollToBottom = () => {
   border-radius: 25px; 
   padding: 12px 24px; 
   cursor: pointer; 
-  font-size: 14px; 
+  font-size: 16px; 
   transition: background 0.3s;
 }
 .chat-input button:hover:not(:disabled) { background: #4a234e; } /* 加深的紫色 */
 .chat-input button:disabled { background: #ccc; cursor: not-allowed; }
-.empty-state { display: flex; align-items: center; justify-content: center; height: 100%; color: #6c757d; font-size: 18px; }
+.empty-state { display: flex; align-items: center; justify-content: center; height: 100%; color: #6c757d; font-size: 20px; }
 .message.system-message { justify-content: center; margin: 20px 0; }
-.system-message .message-content { background: #e9ecef; color: #6c757d; font-style: italic; font-size: 13px; text-align: center; box-shadow: none; }
+.system-message .message-content { background: #e9ecef; color: #6c757d; font-style: italic; font-size: 15px; text-align: center; box-shadow: none; }
 .system-message .timestamp { display: none; }
 </style>
