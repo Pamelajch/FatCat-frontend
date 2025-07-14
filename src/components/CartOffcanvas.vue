@@ -1,7 +1,38 @@
 <script setup>
 import { useCartStore } from '@/stores/cart'
+import { onMounted, onUnmounted } from 'vue'
+import * as bootstrap from 'bootstrap'
 
 const cartStore = useCartStore()
+
+let offcanvasInstance = null
+
+// 這段可選，確保 offcanvas 正確初始化（只初始化一次）
+onMounted(() => {
+  const el = document.getElementById('offcanvasExample')
+  if (el) {
+    offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(el)
+  }
+})
+
+onUnmounted(() => {
+  // 清除殘留 backdrop（進一步安全保險）
+  document.querySelectorAll('.offcanvas-backdrop').forEach(el => el.remove())
+  document.body.classList.remove('offcanvas-backdrop')
+  document.body.style.overflow = '' // 有時 bootstrap 加 overflow:hidden 也沒清掉
+})
+
+// 正確關閉 Offcanvas 並清理 backdrop
+function closeOffcanvas() {
+  const el = document.getElementById('offcanvasExample')
+  const instance = bootstrap.Offcanvas.getInstance(el)
+  if (instance) instance.hide()
+
+  // 安全移除殘留
+  document.querySelectorAll('.offcanvas-backdrop').forEach(el => el.remove())
+  document.body.classList.remove('offcanvas-backdrop')
+  document.body.style.overflow = ''
+}
 </script>
 
 <template>
@@ -42,12 +73,12 @@ const cartStore = useCartStore()
           總金額：<span class="text-danger">${{ cartStore.totalAmount }}</span>
         </div>
 
-        <router-link to="/cart" class="btn custom-purple-btn w-100">立刻結帳</router-link>
+        <router-link to="/cart" class="btn custom-purple-btn w-100" @click="closeOffcanvas">立刻結帳</router-link>
       </template>
 
       <template v-else>
         <div class="text-center">購物車內尚無商品</div>
-        <router-link to="/" class="btn custom-purple-outline-btn mt-3 w-100">前往購物</router-link>
+        <router-link to="/" class="btn custom-purple-outline-btn mt-3 w-100" @click="closeOffcanvas">前往購物</router-link>
       </template>
     </div>
   </div>
