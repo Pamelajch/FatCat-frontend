@@ -149,7 +149,7 @@ export const useAuthStore = defineStore('auth', () => {
             const result = await authService.updateProfile(userData)
 
             if (result.success) {
-                // 修正：直接使用 API 返回的最新資料更新本地狀態
+                // 直接使用 API 返回的最新資料更新本地狀態
                 if (user.value && result.data) {
                     // 使用展開運算符更新所有欄位
                     user.value = {
@@ -168,6 +168,29 @@ export const useAuthStore = defineStore('auth', () => {
         } catch (error) {
             console.error('更新用戶資料錯誤:', error)
             return { success: false, message: '更新失敗' }
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+    //密碼變更
+    const changePassword = async (passwordData) => {
+        try {
+            isLoading.value = true //開始載入狀態
+            error.value = null //清除之前的錯誤
+            //調用API服務
+            const response = await authService.changePassword(passwordData)
+
+            if (response.success) {
+                //統一的回應格式: { success: boolean, message: string }
+                return { success: true, message: response.message || '密碼變更成功' }
+            } else {
+                throw new Error(response.message || '密碼變更失敗a')
+            }
+        }
+        catch (err) {
+            error.value = err.message || '密碼變更失敗'
+            return { success: false, message: error.value }
         } finally {
             isLoading.value = false
         }
@@ -194,7 +217,8 @@ export const useAuthStore = defineStore('auth', () => {
         logout,
         fetchUserProfile,
         clearError,
-        updateProfile
+        updateProfile,
+        changePassword
     }
 })
 

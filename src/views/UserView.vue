@@ -2,8 +2,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import authService from '@/services/authService'
+import PasswordChangeModel from '@/components/PasswordChangeModel.vue'
+import { useexLoginStore } from '@/stores/exLogin'
+import Swal from 'sweetalert2'
 
 const authStore = useAuthStore()
+const passwordModal = ref(null)
 
 // 初始化標記，避免重複初始化
 const isInitialized = ref(false)
@@ -215,9 +219,45 @@ const saveField = async (field) => {
 
 // 開啟密碼變更對話框
 const openPasswordModal = () => {
-    // 這裡將來會開啟密碼變更模態窗
-    console.log('開啟密碼變更對話框')
-    alert('密碼變更功能將在下一階段實作')
+    if (passwordModal.value) {
+        passwordModal.value.showModal()
+    }
+}
+
+// 處理密碼變更
+const handlePasswordChange = async (passwordData) => {
+    try {
+        // 準備API請求數據
+        const changePasswordData = {
+            currentPassword: passwordData.currentPassword,
+            newPassword: passwordData.newPassword,
+            confirmPassword: passwordData.confirmPassword
+        }
+
+        // 調用狀態管理中的密碼變更方法
+        const result = await authStore.changePassword(changePasswordData)
+
+        if (result.success) {
+            // 成功提示
+            alert(result.message || '密碼變更成功！')
+
+            // 通知組件處理成功結果
+            if (passwordModal.value) {
+                passwordModal.value.handlePasswordChangeResult(true, result.message)
+            }
+        } else {
+           // 失敗時不顯示 alert，改為讓組件顯示錯誤訊息
+            if (passwordModal.value) {
+                passwordModal.value.handlePasswordChangeResult(false, result.message)
+            }
+        }
+    } catch (error) {
+        console.error('密碼變更錯誤:', error)
+        // 網絡錯誤或其他異常
+        if (passwordModal.value) {
+            passwordModal.value.handlePasswordChangeResult(false, '密碼變更時發生錯誤，請稍後再試')
+        }
+    }
 }
 
 // 檢查是否有變更
@@ -290,6 +330,124 @@ const saveAllChanges = async () => {
     }
 
 }
+
+//第三方登入相關-------------------------------------------------------------------
+const exLoginStore = useexLoginStore()
+const loadExloginConnections = async ()=>{
+    await exLoginStore.fetchConnections()
+}
+
+//FB 登入處理
+const handleFBLogin = async ()=>{
+    try{
+        const result = await exLoginStore.initFBLogin()
+        if(result.success){
+            Swal.fire({
+                icon:'success',
+                title:'綁定成功',
+                text:'Facebook帳號已成功綁定',
+                confirmButtonText:'確定'
+            })
+        }else{
+            throw new Error(result.message)
+        }
+    }catch(error){
+        Swal.fire({
+            icon:'error',
+            title:'綁定失敗',
+            text:error.message || 'Facebook帳號綁定失敗',
+            confirmButtonText:'確定'
+        })
+    }
+}
+
+// Google 登入處理
+const handleGoogleLogin = async () => {
+    try {
+        const result = await exLoginStore.initGoogleLogin()
+        if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: '綁定成功',
+                text: 'Google 帳號已成功綁定',
+                confirmButtonText: '確定'
+            })
+        } else {
+            throw new Error(result.message)
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: '綁定失敗',
+            text: error.message || 'Google 帳號綁定失敗',
+            confirmButtonText: '確定'
+        })
+    }
+}
+
+// LINE 登入處理
+const handleLineLogin = async () => {
+    try {
+        const result = await exLoginStore.initLineLogin()
+        if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: '綁定成功',
+                text: 'LINE 帳號已成功綁定',
+                confirmButtonText: '確定'
+            })
+        } else {
+            throw new Error(result.message)
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: '綁定失敗',
+            text: error.message || 'LINE 帳號綁定失敗',
+            confirmButtonText: '確定'
+        })
+    }
+}
+
+// 解除綁定處理
+const handleUnbind = async (provider) => {
+    try {
+        const result = await Swal.fire({
+            title: '確定要解除綁定嗎？',
+            text: `您確定要解除 ${provider} 帳號的綁定嗎？`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '確定解除',
+            cancelButtonText: '取消'
+        })
+
+        if (result.isConfirmed) {
+            const unbindResult = await exLoginStore.unbindAccount(provider)
+            if (unbindResult.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '解除綁定成功',
+                    text: `${provider} 帳號已成功解除綁定`,
+                    confirmButtonText: '確定'
+                })
+            } else {
+                throw new Error(unbindResult.message)
+            }
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: '解除綁定失敗',
+            text: error.message || `${provider} 帳號解除綁定失敗`,
+            confirmButtonText: '確定'
+        })
+    }
+}
+
+// 在組件掛載時載入第三方登入連結
+onMounted(async () => {
+    await loadSocialConnections()
+})
 
 </script>
 
@@ -451,18 +609,65 @@ const saveAllChanges = async () => {
                 <div class="social-binding-section mb-4">
                     <h6 class="text-center mb-3">綁定第三方登入：</h6>
                     <div class="social-icons d-flex justify-content-center gap-3">
-                        <button class="btn btn-outline-primary social-btn facebook">
+                        <!-- Facebook 按鈕 -->
+                        <button 
+                            class="btn btn-outline-primary social-btn facebook"
+                            @click="handleFBLogin"
+                            :disabled="exLoginStore.isLoading || exLoginStore.connections.some(c => c.loginProvider === 'Facebook')"
+                        >
                             <i class="bi bi-facebook"></i>
                             <span>Facebook</span>
+                            <span v-if="exLoginStore.connections.some(c => c.loginProvider === 'Facebook')" 
+                                  class="badge bg-success ms-2">已綁定</span>
                         </button>
-                        <button class="btn btn-outline-danger social-btn google">
+                        
+                        <!-- Google 按鈕 -->
+                        <button 
+                            class="btn btn-outline-danger social-btn google"
+                            @click="handleGoogleLogin"
+                            :disabled="exLoginStore.isLoading || exLoginStore.connections.some(c => c.loginProvider === 'Google')"
+                        >
                             <i class="bi bi-google"></i>
                             <span>Google</span>
+                            <span v-if="exLoginStore.connections.some(c => c.loginProvider === 'Google')" 
+                                  class="badge bg-success ms-2">已綁定</span>
                         </button>
-                        <button class="btn btn-outline-success social-btn line">
+
+
+                        <!-- LINE 按鈕 -->
+                        <button 
+                            class="btn btn-outline-success social-btn line"
+                            @click="handleLineLogin"
+                            :disabled="exLoginStore.isLoading || exLoginStore.connections.some(c => c.loginProvider === 'LINE')"
+                        >
                             <i class="bi bi-line"></i>
                             <span>LINE</span>
+                            <span v-if="exLoginStore.connections.some(c => c.loginProvider === 'LINE')" 
+                                  class="badge bg-success ms-2">已綁定</span>
                         </button>
+                    </div>
+
+                    <!-- 已綁定的帳號列表 -->
+                    <div v-if="exLoginStore.connections.length > 0" class="mt-4">
+                        <h6 class="text-center mb-3">已綁定的帳號：</h6>
+                        <div class="connected-accounts">
+                            <div v-for="connection in exLoginStore.connections" 
+                                 :key="connection.loginId" 
+                                 class="connected-account d-flex justify-content-between align-items-center p-2 mb-2 border rounded">
+                                <div class="d-flex align-items-center">
+                                    <i :class="'bi bi-' + connection.loginProvider.toLowerCase() + ' me-2'"></i>
+                                    <span>{{ connection.loginProvider }}</span>
+                                    <small class="text-muted ms-2">
+                                        綁定時間：{{ new Date(connection.createDate).toLocaleDateString() }}
+                                    </small>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        @click="handleUnbind(connection.loginProvider)"
+                                        :disabled="exLoginStore.isLoading">
+                                    解除綁定
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -474,6 +679,9 @@ const saveAllChanges = async () => {
                 </div>
             </div>
         </div>
+
+        <!-- 密碼變更 Modal -->
+        <password-change-model ref="passwordModal" @password-changed="handlePasswordChange"></password-change-model>
     </div>
 </template>
 
@@ -896,22 +1104,27 @@ const saveAllChanges = async () => {
     min-width: 120px;
 }
 
-.social-btn.facebook:hover {
-    background-color: #1877f2;
-    border-color: #1877f2;
-    color: white;
+.social-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
 }
 
-.social-btn.google:hover {
-    background-color: #db4437;
-    border-color: #db4437;
-    color: white;
+.social-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
-.social-btn.line:hover {
-    background-color: #00b900;
-    border-color: #00b900;
-    color: white;
+.connected-accounts {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.connected-account {
+    background-color: white;
+    transition: all 0.3s ease;
+}
+
+.connected-account:hover {
+    background-color: var(--light-gray);
 }
 
 /* 儲存按鈕區域樣式 */

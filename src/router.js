@@ -20,6 +20,7 @@ import FeedbackView from "./views/FeedbackView.vue"
 import ForgotPasswordView from "./views/ForgotPasswordView.vue"
 import SpecialNoodleView from "./views/SpecialNoodleView.vue"
 import OneSpecialNoodleView from "./views/OneSpecialNoodleView.vue"
+import JjtestView from "./views/jjtestView.vue"
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
@@ -87,6 +88,9 @@ const routes = [
             hideHeaderFooter: true
         }
     },
+    //通知 --佳馨
+    //http://localhost:5173/jjtest
+    { path: "/jjtest", component: JjtestView, name: "jjtest" },
 
 
 

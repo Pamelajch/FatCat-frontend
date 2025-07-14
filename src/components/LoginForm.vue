@@ -58,14 +58,26 @@
       return !hasError
     }
 
-    const handleLogin = async () => {
+    const handleLogin = async (event) => {
+      console.log('handleLogin 被觸發，event:', event)
+      
+      // 確保阻止表單的默認提交行為
+      if (event) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+      
       // 清除之前的錯誤
       errorMessage.value = ''
       
-      // 如果表單驗證成功 => 登入
+      // 如果表單驗證失敗，直接返回，不進行 API 呼叫
       if (!validateForm()) {
+          console.log('表單驗證失敗')
           return
       }
+      
+      console.log('開始呼叫登入 API')
+      
       try {
           // 呼叫登入
           const result = await authStore.login({
@@ -74,17 +86,30 @@
           rememberMe: loginForm.value.rememberMe
           })
 
+          console.log('登入結果:', result)
+
           if (result.success) {
           // 登入成功，跳轉到首頁
+          console.log('登入成功，準備跳轉')
           router.push('/')
           } else {
           // 登入失敗，顯示錯誤訊息
+          console.log('登入失敗，顯示錯誤訊息:', result.message)
           errorMessage.value = result.message || '登入失敗'
           }
       } catch (error) {
-          errorMessage.value = '網路錯誤，請稍後再試'
+          console.error('登入錯誤:', error)
+          errorMessage.value = error.message || '網路錯誤，請稍後再試'
       }
     }
+  // 處理表單提交事件
+  const handleFormSubmit = (event) => {
+    console.log('表單提交事件被觸發')
+    event.preventDefault()
+    event.stopPropagation()
+    handleLogin(event)
+  }
+
   // 清除錯誤訊息
   const clearErrors = () => {
     emailError.value = ''
@@ -94,7 +119,13 @@
 </script>
 
 <template>
-  <form @submit.prevent="handleLogin" class="login-form" novalidate>
+  <form @submit.prevent="handleFormSubmit" class="login-form" novalidate>
+    <!-- 整體錯誤訊息 -->
+    <div v-if="errorMessage" class="alert alert-danger error-alert mb-3" role="alert">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      {{ errorMessage }}
+    </div>
+
     <!-- Email 輸入 -->
     <div class="mb-3">
       <label for="email" class="form-label custom-label">電子郵件</label>
@@ -116,7 +147,7 @@
         <span class="input-group-text custom-input-group-text">
           <i class="bi bi-lock"></i>
         </span>
-        <input id="password" v-model="loginForm.password" :type="showPassword ? 'text' : 'password'" class="form-control custom-form-control" :class="{ 'is-invalid': passwordError }" placeholder="請輸入您的密碼" :disabled="isLoading" @input="passwordError = ''; errorMessage = ''">
+        <input id="password" v-model="loginForm.password" :type="showPassword ? 'text' : 'password'" class="form-control custom-form-control" :class="{ 'is-invalid': passwordError }" placeholder="請輸入您的密碼" :disabled="isLoading" @input="passwordError = ''; errorMessage = ''" @keyup.enter="handleLogin">
         <!-- 密碼顯示切換 -->
         <button type="button" class="btn custom-password-toggle" @click="togglePassword" :disabled="isLoading">
           <i :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
@@ -143,9 +174,10 @@
 
     <!-- 登入按鈕 -->
     <button
-      type="submit"
+      type="button"
       class="btn custom-login-btn w-100 mb-3"
       :disabled="isLoading"
+      @click="handleLogin"
     >
       <span v-if="isLoading" class="spinner-border spinner-border-sm me-2" role="status">
         <span class="visually-hidden">載入中...</span>

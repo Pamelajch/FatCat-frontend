@@ -60,6 +60,16 @@ export const authService = {
         }
     },
 
+    // 密碼變更
+    async changePassword(passwordData) {
+        try {
+            const response = await api.post('/auth/change-password', passwordData)
+            return response.data
+        } catch (error) {
+            throw error.response?.data || { message: '密碼變更失敗' }
+        }
+    },
+
     // 呼叫登出 API
     async logout() {
         try {
@@ -73,6 +83,7 @@ export const authService = {
             authService.clearAuthData()
         }
     },
+
     // 清除認證資料
     clearAuthData() {
         localStorage.removeItem('token')
