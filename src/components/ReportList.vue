@@ -1,8 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import api from '@/services/jjapi.js'; 
 
-const API_BASE_URL = 'https://localhost:7017/api';
 
 const reports = ref([]);
 const isLoading = ref(true);
@@ -10,7 +9,7 @@ const error = ref(null);
 
 onMounted(async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/feedback/reports`);
+    const response = await api.get('/feedback/reports'); 
     reports.value = response.data;
   } catch (err) {
     console.error("取得檢舉紀錄失敗:", err);

@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import axios from 'axios';
+import api from '@/services/jjapi.js';
 
 // --- Props & Emits ---
 const props = defineProps({
@@ -44,7 +45,7 @@ const vote = async (voteType) => {
   
   try {
     // 發送 API 請求
-    const response = await axios.post(`${API_BASE_URL}/reviews/${props.reviewId}/helpfulness`, {
+    const response = await api.post(`/reviews/${props.reviewId}/helpfulness`, {
       isHelpful: voteType
     });
     

@@ -7,7 +7,7 @@ import LoadingComponent from '@/components/LoadingComponent.vue';
 </script>
 
 <template>
-  <div class="home-view">
+  <div class="home-view"> 
     <LoadingComponent></LoadingComponent>
     <!-- 商品分類組件 --玥彤-->
     <ProductCategoryComponent></ProductCategoryComponent>

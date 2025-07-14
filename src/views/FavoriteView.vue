@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import api from '@/services/jjapi.js'; //要抓會員id token用的
 
 // --- 響應式狀態定義 ---
 const API_URL = 'https://localhost:7017/api/favorites'; 
@@ -15,7 +16,7 @@ const fetchFavorites = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    const response = await axios.get(API_URL);
+    const response = await api.get('/favorites');
     favorites.value = response.data;
   } catch (err) {
     console.error('取得收藏列表失敗:', err);
@@ -30,7 +31,7 @@ const removeFromFavorites = async (productId) => {
     return;
   }
   try {
-    await axios.delete(`${API_URL}/${productId}`);
+    await api.delete(`/favorites/${productId}`); // 改用 api，並使用相對路徑
     favorites.value = favorites.value.filter(item => item.productId !== productId);
   } catch (err) {
     console.error('移除收藏失敗:', err);
@@ -76,7 +77,7 @@ onMounted(() => {
       <div v-if="!isLoading && favorites.length > 0" class="row g-4">
         <div v-for="item in favorites" :key="item.productId" class="col-lg-3 col-md-4 col-sm-6">
           <div class="favorite-card card h-100 shadow-sm">
-            <img :src="`${BACKEND_URL}${item.productImageUrl}`" class="card-img-top" :alt="item.productName" onerror="this.onerror=null;this.src='https://placehold.co/400x300/6c757d/FFFFFF?text=Image'">
+            <img :src="`${BACKEND_URL}/ProductImages/${item.productImageUrl}`" class="card-img-top" :alt="item.productName" onerror="this.onerror=null;this.src='https://placehold.co/400x300/6c757d/FFFFFF?text=Image'">
             <div class="card-body d-flex flex-column">
               <h5 class="card-title">{{ item.productName }}</h5>
               <p class="card-text text-danger fs-5 fw-bold mt-auto">${{ item.productPrice }}</p>
