@@ -1,26 +1,43 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useOrderStore } from '@/stores/order'
 import OrderTab from '@/components/OrderTab.vue'
 
-// 模擬訂單資料
-const sampleOrders = [
-  { id: 1, orderNumber: 'ORD001', status: '未處理', amount: '$1,200' },
-  { id: 2, orderNumber: 'ORD002', status: '未處理', amount: '$980' }
-]
-
-const finishedOrders = [
-  { id: 3, orderNumber: 'ORD003', status: '已完成', amount: '$1,500' }
-]
-
+const orderStore = useOrderStore()
 const selectedTab = ref(0)
-
-const tabs = [
-  { id: 'pills-1', label: '未處理', orders: sampleOrders, showReview: false },
-  { id: 'pills-2', label: '處理中', orders: [], showReview: false },
-  { id: 'pills-3', label: '已完成', orders: finishedOrders, showReview: true },
-  { id: 'pills-4', label: '退貨', orders: [], showReview: false },
-  { id: 'pills-5', label: '已取消', orders: [], showReview: false }
-]
+// 模擬訂單資料
+const tabs = computed(() => [
+  {
+    id: 'pills-1',
+    label: '未處理',
+    orders: orderStore.orders.filter(o => o.status === '未處理'),
+    showReview: false
+  },
+  {
+    id: 'pills-2',
+    label: '處理中',
+    orders: orderStore.orders.filter(o => o.status === '處理中'),
+    showReview: false
+  },
+  {
+    id: 'pills-3',
+    label: '已完成',
+    orders: orderStore.orders.filter(o => o.status === '已完成'),
+    showReview: true
+  },
+  {
+    id: 'pills-4',
+    label: '退貨',
+    orders: orderStore.orders.filter(o => o.status === '退貨'),
+    showReview: false
+  },
+  {
+    id: 'pills-5',
+    label: '已取消',
+    orders: orderStore.orders.filter(o => o.status === '已取消'),
+    showReview: false
+  }
+])
 </script>
 
 <template>
