@@ -43,9 +43,18 @@ export const exLoginService = {
 
             window.FB.login((response) => {
                 if (response.authResponse) {
-                    resolve({
-                        accessToken: response.authResponse.accessToken,
-                        userID: response.authResponse.userID
+                    // 取得用戶基本資料
+                    window.FB.api('/me', { fields: 'name,email' }, (userInfo) => {
+                        if (userInfo && !userInfo.error) {
+                            resolve({
+                                accessToken: response.authResponse.accessToken,
+                                userID: response.authResponse.userID,
+                                email: userInfo.email || '',
+                                name: userInfo.name || ''
+                            })
+                        } else {
+                            reject(new Error('無法取得 Facebook 用戶資料'))
+                        }
                     })
                 } else {
                     reject(new Error('Facebook 登入失敗'))

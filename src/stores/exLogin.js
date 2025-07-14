@@ -24,7 +24,7 @@ export const useexLoginStore = defineStore('exlogin', () => {
     }
 
     //綁定第三方帳號
-    const bindAccount = async (provider, accessToken, providerId) => {
+    const bindAccount = async (provider, accessToken, providerId, email = '', name = '') => {
         try {
             isLoading.value = true
             error.value = null
@@ -32,7 +32,9 @@ export const useexLoginStore = defineStore('exlogin', () => {
             const bindData = {
                 loginProvider: provider,
                 providerId: providerId,
-                accessToken: accessToken
+                accessToken: accessToken,
+                email: email,
+                name: name
             }
             const response = await exLoginService.bindAccount(bindData)
 
@@ -78,7 +80,7 @@ export const useexLoginStore = defineStore('exlogin', () => {
     const initFBLogin = async () => {
         try {
             const fbResponse = await exLoginService.initFBLogin()
-            return await bindAccount('Facebook', fbResponse.accessToken, fbResponse.userID)
+            return await bindAccount('Facebook', fbResponse.accessToken, fbResponse.userID, fbResponse.email, fbResponse.name)
         } catch (err) {
             return { success: false, message: err.message }
         }
@@ -87,8 +89,8 @@ export const useexLoginStore = defineStore('exlogin', () => {
     // 初始化 Google 登入
     const initGoogleLogin = async () => {
         try {
-            const googleResponse = await socialService.initGoogleLogin()
-            return await bindAccount('Google', googleResponse.accessToken, googleResponse.userID)
+            const googleResponse = await exLoginService.initGoogleLogin()
+            return await bindAccount('Google', googleResponse.accessToken, googleResponse.userID, '', '')
         } catch (err) {
             return { success: false, message: err.message }
         }
@@ -97,8 +99,8 @@ export const useexLoginStore = defineStore('exlogin', () => {
     // 初始化 LINE 登入
     const initLineLogin = async () => {
         try {
-            const lineResponse = await socialService.initLineLogin()
-            return await bindAccount('LINE', lineResponse.accessToken, lineResponse.userID)
+            const lineResponse = await exLoginService.initLineLogin()
+            return await bindAccount('LINE', lineResponse.accessToken, lineResponse.userID, '', '')
         } catch (err) {
             return { success: false, message: err.message }
         }

@@ -61,11 +61,21 @@ onMounted(async () => {
     
     try {
         await initializeData()
+        console.log('用戶資料初始化完成')
     } catch (error) {
         console.error('Error initializing user data:', error)
         alert('載入用戶資料時發生錯誤，請重新登入')
         // 如果載入失敗，重定向到登入頁面
         window.location.href = '/login'
+        return
+    }
+    // 載入第三方登入連結（獨立處理）
+    try {
+        await loadExloginConnections()
+        console.log('第三方登入連結載入完成')
+    } catch (error) {
+        console.error('載入第三方登入連結失敗:', error)
+        // 不影響頁面載入
     }
 })
 
@@ -334,7 +344,15 @@ const saveAllChanges = async () => {
 //第三方登入相關-------------------------------------------------------------------
 const exLoginStore = useexLoginStore()
 const loadExloginConnections = async ()=>{
-    await exLoginStore.fetchConnections()
+    try {
+        await exLoginStore.fetchConnections()
+        console.log('✅ 第三方登入連結載入成功')
+    } catch (error) {
+        console.warn('⚠️ 第三方登入連結載入失敗，但不影響頁面：', error.message)
+        // 設定空的連結，避免 UI 錯誤
+        exLoginStore.connections = []
+        // 不拋出錯誤，讓頁面正常載入
+    }
 }
 
 //FB 登入處理
@@ -443,11 +461,6 @@ const handleUnbind = async (provider) => {
         })
     }
 }
-
-// 在組件掛載時載入第三方登入連結
-onMounted(async () => {
-    await loadSocialConnections()
-})
 
 </script>
 
@@ -620,7 +633,7 @@ onMounted(async () => {
                             <span v-if="exLoginStore.connections.some(c => c.loginProvider === 'Facebook')" 
                                   class="badge bg-success ms-2">已綁定</span>
                         </button>
-                        
+                        <div class="fb-login-button" data-width="" data-size="" data-button-type="" data-layout="" data-auto-logout-link="true" data-use-continue-as="false"></div>
                         <!-- Google 按鈕 -->
                         <button 
                             class="btn btn-outline-danger social-btn google"
