@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { watch } from 'vue'
 
 const router = useRouter()
 
@@ -34,12 +36,27 @@ const fetchFilterOptions = async () => {
   }
 }
 
+const filteredSorts = computed(() => {
+  if (!selectedCategory.value) {
+    return sorts.value // 沒選分類，顯示全部小分類
+  }
+  return sorts.value.filter(s => s.categoryId === parseInt(selectedCategory.value))
+})
+
+watch(selectedCategory, () => {
+  selectedSort.value = ''  // 主分類變動時，清空小分類選項
+})
+
 // 預設載入全部商品（透過 filter API）
 const fetchProducts = async () => {
   try {
     const res = await fetch('https://localhost:7017/api/Products/filter')
     const data = await res.json()
-    products.value = data
+    // 這裡加上圖片路徑補全
+    products.value = data.map(p => ({
+      ...p,
+      imageUrl: `/ProductImages/${p.imageUrl}`
+    }))
   } catch (error) {
     console.error('無法取得商品資料:', error)
   }
@@ -56,7 +73,11 @@ const applyFilters = async () => {
 
     const res = await fetch(`https://localhost:7017/api/Products/filter?${query.toString()}`)
     const data = await res.json()
-    products.value = data
+    // 一樣補上圖片路徑
+    products.value = data.map(p => ({
+      ...p,
+      imageUrl: `/ProductImages/${p.imageUrl}`
+    }))
   } catch (error) {
     console.error('篩選商品失敗:', error)
   }
@@ -74,12 +95,19 @@ const onDragStart = (product, from = 'list') => {
   event.dataTransfer.setData('from', from)
 }
 
-// 拖曳到碗裡
+const showBubbles = ref(false)
+
 const onDrop = (event) => {
   const id = parseInt(event.dataTransfer.getData('product-id'))
   const product = products.value.find(p => p.productsId === id)
   if (product && !bowl.value.some(i => i.productsId === id)) {
     bowl.value.push(product)
+
+    // 🫧 觸發泡泡動畫
+    showBubbles.value = true
+    setTimeout(() => {
+      showBubbles.value = false
+    }, 800) // 泡泡動畫持續 0.8 秒
   }
 }
 
@@ -98,6 +126,8 @@ const onDropToList = (event) => {
 </script>
 
 <template>
+  <div class="page-wrapper">
+  <div class="blur-overlay"></div> <!-- 全頁毛玻璃層 -->
   <div class="container">
     <!-- 篩選區 -->
 <div class="filter-box">
@@ -115,7 +145,7 @@ const onDropToList = (event) => {
     <label>商品小分類</label>
     <select v-model="selectedSort">
       <option value="">全部</option>
-      <option v-for="sort in sorts" :key="sort.sortId" :value="sort.sortId">
+      <option v-for="sort in filteredSorts" :key="sort.sortId" :value="sort.sortId">
         {{ sort.name }}
       </option>
     </select>
@@ -142,7 +172,7 @@ const onDropToList = (event) => {
   @dragstart="onDragStart(product, 'list')"
   @dblclick="goToProductDetail(product.productsId)"
 >
-  <img :src="`/ProductImages/${product.imageUrl}`" alt="product image" />
+  <img :src="product.imageUrl" />
   <p>{{ product.name }}</p>
 </div>
 </div>
@@ -160,26 +190,51 @@ const onDropToList = (event) => {
         @dragstart="onDragStart(item, 'bowl')"
         />
       </div>
+      <div v-if="showBubbles" class="bubble-effect"></div> <!-- 泡泡動畫 -->
     </div>
     <button @click="bowl = []" class="clear-button">清空碗</button>
     <RouterLink :to="{name:'specialnoodle'}"><button class="clear-button">查看特殊款泡麵 ➜</button></RouterLink>
-  </div>
   <div>
     <!-- 給梓瑋的放加入購物車按鈕連結的地方 -->
   </div>
   <div>
     <!-- 給如謙的放加入購物車按鈕連結的地方 -->
   </div>
+  </div>
+  </div>
 </template>
 
 
 <style scoped>
+.page-wrapper {
+  position: relative;
+  min-height: 100vh;
+  background-image: url('/catnightcar.png');
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+.blur-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(10px); /* 毛玻璃效果 */
+  -webkit-backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.1); /* 微透明白，讓毛玻璃更柔和 */
+  z-index: 0;
+}
+
 .container {
+  position: relative;
+  z-index: 1; /* 確保在毛玻璃上層 */
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 40px;
-  padding-bottom: 60px; /* 下方空間，避免壓到 footer */
+  padding: 40px;
+  padding-bottom: 60px;
 }
 
 .product-list {
@@ -198,6 +253,12 @@ const onDropToList = (event) => {
   background-color: #fff6fa;
   box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
   cursor: grab;
+  transition: all 0.2s ease-in-out;
+}
+
+.product:active {
+  cursor: grabbing;
+  transform: scale(1.05);
 }
 
 .product img {
@@ -311,5 +372,31 @@ const onDropToList = (event) => {
 
 .filter-button:hover {
   background-color: #ff922b;
+}
+
+.bubble-effect {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  background-image: radial-gradient(circle at 30% 70%, rgba(255,255,255,0.4) 0%, transparent 30%),
+                    radial-gradient(circle at 60% 60%, rgba(255,255,255,0.3) 0%, transparent 25%),
+                    radial-gradient(circle at 50% 80%, rgba(255,255,255,0.5) 0%, transparent 35%);
+  background-repeat: no-repeat;
+  animation: bubble-float 0.8s ease-out forwards;
+  border-radius: 50%;
+}
+
+@keyframes bubble-float {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-80px) scale(1.5);
+  }
 }
 </style>
