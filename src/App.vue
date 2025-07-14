@@ -11,7 +11,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 import HeaderComponent from './components/HeaderComponent.vue'
 import FooterComponent from './components/FooterComponent.vue'
 import CustomerService from './components/CustomerService.vue'
-
+      
 // 應用載入狀態
 const appLoading = ref(true)
 
