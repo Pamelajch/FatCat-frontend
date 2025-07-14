@@ -4,7 +4,7 @@
     import { computed } from 'vue'
     import { useCartStore } from '@/stores/cart'
     import CartOffcanvas from '@/components/CartOffcanvas.vue'
-
+    import * as bootstrap from 'bootstrap'  // 新增這行
     import Swal from 'sweetalert2'
     //登入登出功能區------------------------------------------
     // 使用auth store和router
@@ -18,6 +18,14 @@
     const isAuthenticated = computed(() => authStore.isAuthenticated)
     const user = computed(() => authStore.user)
 
+    // 新增：控制開啟購物車 Offcanvas
+    function openOffcanvas() {
+      const el = document.getElementById('offcanvasExample')
+      if (el) {
+        const instance = bootstrap.Offcanvas.getOrCreateInstance(el)
+        instance.show()
+      }
+    }
     // 登出處理
     const handleLogout = async () => {
       // 1. 確認對話框
@@ -116,8 +124,8 @@
         <RouterLink :to="{name:'_reviewtest'}" class="icon-btn" title="通知"><i>rr測試站</i></RouterLink>
         <RouterLink :to="{name:'home'}" class="icon-btn" title="首頁"><i class="bi bi-house-door"></i></RouterLink>
         <RouterLink :to="{name:'productlist'}" class="icon-btn" title="商品"><i class="fa-solid fa-bowl-food"></i></RouterLink>
-        <button class="icon-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" aria-controls="offcanvasExample" title="購物車">
-          <i class="bi bi-cart"></i>
+        <button class="icon-btn" @click="openOffcanvas" title="購物車">
+        <i class="fa fa-shopping-cart"></i>
         </button>
         <RouterLink :to="{name:'favorite'}" class="icon-btn" title="我的最愛"><i class="bi bi-heart-fill"></i></RouterLink>
 
