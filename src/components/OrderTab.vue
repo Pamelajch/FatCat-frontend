@@ -7,7 +7,7 @@
           <div>
             訂單編號: {{ order.orderNumber }}<br>
             訂單狀態: {{ order.status }}<br>
-            訂單金額: {{ order.amount }}
+            訂單金額: {{ checkout.total }}
           </div>
           <div>
             <router-link to="/orderdetail">
@@ -41,8 +41,9 @@ defineProps({
     default: false
   }
 })
+import { useCheckoutStore } from '@/stores/checkout'
 
-
+const checkout = useCheckoutStore()
 </script>
 
 
