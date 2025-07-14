@@ -46,12 +46,12 @@ import PaymentInfo from '@/components/PaymentInfo.vue'
 
         <!-- 下方按鈕 -->
         <div class="mt-3 text-end">
-          <router-link to="/checkoutfinish">
-            <button type="button" class="btn custom-purple-btn">確定結帳</button>
-          </router-link>
-
           <router-link to="/cart">
             <button type="button" class="btn custom-purple-outline-btn btn-space">購物車確認</button>
+          </router-link>
+          
+          <router-link to="/checkoutfinish">
+            <button type="button" class="btn custom-purple-btn">確定結帳</button>
           </router-link>
         </div>
       </div>
