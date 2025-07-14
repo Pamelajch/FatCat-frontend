@@ -30,14 +30,18 @@ const images = ref([
 
 const currentImageIndex = ref(0)
 
+const direction = ref('next') // 控制滑動方向
+
 const showPrev = () => {
   if (currentImageIndex.value > 0) {
+    direction.value = 'prev'
     currentImageIndex.value--
   }
 }
 
 const showNext = () => {
   if (currentImageIndex.value < images.value.length - 1) {
+    direction.value = 'next'
     currentImageIndex.value++
   }
 }
@@ -85,7 +89,14 @@ onBeforeUnmount(() => {
       <!-- 圖片 -->
       <div class="image-slider">
         <button class="nav-btn left" @click="showPrev" :disabled="currentImageIndex === 0">‹</button>
-        <img :src="images[currentImageIndex]" class="product-image" alt="泡麵圖片" />
+        <transition :name="direction" mode="out-in">
+          <img
+          :key="images[currentImageIndex]"
+          :src="images[currentImageIndex]"
+          class="product-image"
+          alt="泡麵圖片"
+          />
+        </transition>
         <button class="nav-btn right" @click="showNext" :disabled="currentImageIndex === images.length - 1">›</button>
       </div>
 
@@ -209,6 +220,41 @@ onBeforeUnmount(() => {
   border-radius: 20px;
   box-shadow: 0 0 10px rgba(0,0,0,0.15);
   user-select: none;
+}
+
+/* 滑動動畫（下一張） */
+.next-enter-active, .next-leave-active,
+.prev-enter-active, .prev-leave-active {
+  transition: all 0.5s ease;
+  position: absolute;
+}
+.next-enter-from {
+  transform: translateX(100%);
+  opacity: 0;
+}
+.next-leave-to {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+/* 滑動動畫（上一張） */
+.prev-enter-from {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+.prev-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+/* 容器確保滑動不爆版 */
+.image-slider {
+  position: relative;
+  overflow: hidden;
+}
+.product-image {
+  position: relative;
+  z-index: 1;
 }
 
 /* 左右切換按鈕 */
