@@ -164,6 +164,7 @@
 .custom-header {
   background-color: #c286cf; /* 紫色背景 */
   color: white;
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Logo 大小 */
