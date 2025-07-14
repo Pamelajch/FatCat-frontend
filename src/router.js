@@ -20,7 +20,7 @@ import FeedbackView from "./views/FeedbackView.vue"
 import ForgotPasswordView from "./views/ForgotPasswordView.vue"
 import SpecialNoodleView from "./views/SpecialNoodleView.vue"
 import OneSpecialNoodleView from "./views/OneSpecialNoodleView.vue"
-import AdminChat from "./views/AdminChat.vue"
+import AdminChat from "./views/Admin/AdminChat.vue"
 import JjtestView from "./views/jjtestView.vue"
 
 const routes = [
@@ -92,47 +92,49 @@ const routes = [
         path: "/forgot-password", component: ForgotPasswordView, name: "forgot-password", meta: {
             hideHeaderFooter: true
         }
-    },
-    // ---【rr 新增管理者路由區塊】 ---
+    },    
+    //通知 --佳馨
+    //http://localhost:5173/jjtest
+    { path: "/jjtest", component: JjtestView, name: "jjtest" }, 
+    //===================================================================
+    // --- rr 管理者後台路由區塊 ---
+    //===================================================================
     {
         path: '/admin/login',
         name: 'AdminLogin',
         component: () => import('./views/Admin/AdminLogin.vue'),
-        meta: {
-            hideHeaderFooter: true,// 隱藏使用者版的 Header/Footer
-            isAdminPage: true // 告訴 App.vue 這是管理頁面，不要載入使用者客服
-        }
+        meta: { hideHeaderFooter: true, isAdminPage: true }
     },
     {
         path: '/admin',
         component: () => import('./views/Admin/AdminLayout.vue'),
-        meta: { hideHeaderFooter: true, isAdminPage: true }, // 整個後台都隱藏
-        children: [
-            {
-                // 當使用者瀏覽 /admin 時，自動重導向到 /admin/chat
-                path: '',
-                redirect: '/admin/chat'
-            },
-            {
-                path: 'chat', // 對應到 /admin/chat
-                name: 'AdminChat',
-                component: () => import('./views/AdminChat.vue')
-            }
-            // 未來可以新增更多子路由，例如 /admin/products
-        ],
-        // 路由守衛：進入 /admin 下任何頁面前，先檢查有沒有 token
+        meta: { hideHeaderFooter: true, isAdminPage: true },
         beforeEnter: (to, from, next) => {
             if (localStorage.getItem('token')) {
-                next(); // 有 token，放行
+                next();
             } else {
-                next('/admin/login'); // 沒有 token，強制導向到登入頁
+                next('/admin/login');
             }
-        }
+        },
+        children: [
+            { path: '', redirect: '/admin/dashboard' },
+            { path: 'dashboard', name: 'AdminDashboard', component: () => import('./views/Admin/DashboardView.vue') },
+            { path: 'members', name: 'AdminMembers', component: () => import('./views/Admin/AdminMemberView.vue') },
+            { path: 'orders', name: 'AdminOrders', component: () => import('./views/Admin/AdminOrderView.vue') },
+            { path: 'shipping', name: 'AdminShipping', component: () => import('./views/Admin/AdminShippingView.vue') },
+            { path: 'products', name: 'AdminProducts', component: () => import('./views/Admin/AdminProductListView.vue') },
+            { path: 'coupons', name: 'AdminCoupons', component: () => import('./views/Admin/AdminCouponView.vue') },
+            { path: 'customer-service', name: 'AdminCustomerService', component: () => import('./views/Admin/AdminCustomerServiceView.vue') },
+            { path: 'complaints', name: 'AdminComplaints', component: () => import('./views/Admin/AdminComplaintView.vue') },
+            { path: 'reviews', name: 'AdminReviews', component: () => import('./views/Admin/AdminReviewView.vue') },
+            { path: 'analysis', name: 'AdminAnalysis', component: () => import('./views/Admin/AdminAnalysisView.vue') },
+            { path: 'store-setup', name: 'AdminStoreSetup', component: () => import('./views/Admin/AdminStoreSetupView.vue') },
+            { path: 'settings', name: 'AdminSettings', component: () => import('./views/Admin/AdminSettingsView.vue') },
+            { path: 'logs', name: 'AdminLogs', component: () => import('./views/Admin/AdminLogsView.vue') },
+            { path: 'notifications', name: 'AdminNotifications', component: () => import('./views/Admin/AdminNotificationView.vue') },
+            { path: 'stream', name: 'AdminStream', component: () => import('./views/Admin/AdminStreamView.vue') },
+        ]
     },
-
-    //通知 --佳馨
-    //http://localhost:5173/jjtest
-    { path: "/jjtest", component: JjtestView, name: "jjtest" },
 
 
 

@@ -16,13 +16,13 @@ const handleLogin = async () => {
   error.value = null;
   try {
     const response = await api.post('/admin/login', credentials);
-  
-    localStorage.setItem('token', response.data.token);
-    
-    // 登入成功後不再需要儲存 admin 資訊
-    localStorage.removeItem('admin'); 
 
-    router.push('/admin/chat');
+    localStorage.setItem('token', response.data.token);
+    localStorage.setItem('admin', JSON.stringify(response.data.admin)); 
+
+    // 👇👇👇【已刪除這裡的 removeItem】👇👇👇
+
+    router.push('/admin/dashboard');
 
   } catch (err) {
     error.value = '登入失敗，請檢查您的帳號密碼。';
@@ -32,11 +32,10 @@ const handleLogin = async () => {
   }
 };
 </script>
-
 <template>
   <div class="login-container">
     <div class="login-card">
-      <h2 class="text-center mb-4">肥貓客服系統後台</h2>
+      <h2 class="text-center mb-4">肥貓管理者後台</h2>
       <form @submit.prevent="handleLogin">
         <div class="mb-3">
           <label for="email" class="form-label">Email</label>

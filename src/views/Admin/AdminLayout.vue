@@ -1,43 +1,41 @@
+<script setup>
+// 把所有邏輯都移到子元件，讓 Layout 只負責排版
+import AdminSidebar from '@/components/Admin/AdminSidebar.vue';
+import AdminHeader from '@/components/Admin/AdminHeader.vue';
+import AdminFooter from '@/components/Admin/AdminFooter.vue';
+</script>
+
 <template>
   <div class="admin-layout">
-    <header class="admin-header">
-      <h3>肥貓管理後台</h3>
-      <nav>
-        <RouterLink to="/admin/chat" class="nav-link">客服系統</RouterLink>
-        </nav>
-      <button @click="logout" class="btn btn-sm btn-outline-light">登出</button>
-    </header>
-    <main class="admin-main-content">
-      <RouterView />
-    </main>
+    <AdminSidebar />
+    <div class="main-wrapper">
+      <AdminHeader />
+      <main class="admin-main-content">
+        <RouterView />
+      </main>
+      <AdminFooter />
+    </div>
   </div>
 </template>
 
-<script setup>
-import { useRouter } from 'vue-router';
-const router = useRouter();
 
-const logout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('admin');
-  router.push('/admin/login');
-};
-</script>
 
 <style scoped>
-.admin-layout { display: flex; flex-direction: column; height: 100vh; }
-.admin-header {
+.admin-layout {
   display: flex;
-  align-items: center;
-  padding: 0 1.5rem;
-  background-color: #343a40;
-  color: white;
-  flex-shrink: 0;
-  height: 60px;
+  height: 100vh;
+  background-color: #f4f7f6; /* 內容區的淺灰底色 */
 }
-.admin-header h3 { margin: 0; font-size: 1.2rem; }
-.admin-header nav { margin: 0 auto; }
-.nav-link { color: #ccc; text-decoration: none; padding: 0 1rem; }
-.nav-link.router-link-active { color: white; font-weight: bold; }
-.admin-main-content { flex-grow: 1; overflow: auto; }
+.main-wrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+.admin-main-content {
+  flex-grow: 1;
+  padding: 2rem;
+  overflow-y: auto; /* 讓內容區可以滾動 */
+}
 </style>
