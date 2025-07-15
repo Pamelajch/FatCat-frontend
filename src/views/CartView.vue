@@ -1,7 +1,7 @@
 <script setup>
 import { useCartStore } from '@/stores/cart'
 import CartItemList from '@/components/CartItemList.vue'
-
+import CouponSection from '@/components/CouponSection.vue'  // 匯入
 const cartStore = useCartStore()
 </script>
 
@@ -37,19 +37,7 @@ const cartStore = useCartStore()
       <div class="row">
         <!-- 優惠區塊 -->
         <div class="col-12 col-md-6">
-          <ul class="list-group mb-3">
-            <li class="list-group-item">
-              <h3>優惠&促銷</h3>
-            </li>
-            <li class="list-group-item">
-              已享有優惠&可用優惠券
-              <div></div>
-            </li>
-            <li class="list-group-item">
-              優惠促銷
-              <div>指定系列滿XXX元可折XX元 再買XX元即享優惠</div>
-            </li>
-          </ul>
+           <CouponSection />
         </div>
 
         <!-- 猜你喜歡區塊 -->
