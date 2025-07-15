@@ -64,8 +64,10 @@ const validCouponOptions = computed(() =>
 onMounted(async () => {
   try {
     const res = await axios.get('https://localhost:7017/api/Coupons')
-    couponOptions.value = res.data
-    console.log('✅ Coupon API 成功:', couponOptions.value)
+    const now = new Date()
+    couponOptions.value = res.data.filter(c => new Date(c.expirydate) >= now)
+
+    console.log('✅ Coupon API 成功（未過期的）:', couponOptions.value)
     recalculateTotal()
   } catch (error) {
     console.error('❌ 載入優惠券失敗:', error)
