@@ -30,7 +30,7 @@
           <div>{{ selectedCoupon?.description || '未使用' }}</div>
         </li>
         <li class="list-group-item">
-          訂單總金額：{{ checkout.productTotal }} 元
+            訂單總金額：{{ productTotal }} 元
           <div>
             運費：{{ checkout.shippingFee }} 元<br />
             折扣金額：-{{ checkout.discount }} 元
@@ -47,11 +47,17 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { useCheckoutStore } from '@/stores/checkout'
+import { useOrderStore } from '@/stores/order'
 
 const checkout = useCheckoutStore()
 
 const couponOptions = ref([])
 const shippingOptions = ref([])
+const orderStore = useOrderStore()
+
+const productTotal = computed(() =>
+  orderStore.latestOrderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+)
 
 // 載入對應資料名稱
 onMounted(async () => {

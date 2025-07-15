@@ -40,9 +40,8 @@ const { selectedCoupon, selectedShipping } = useOrderLookup()
         <li class="list-group-item"><h3>付款資料</h3></li>
         <li class="list-group-item">使用優惠券：<div>{{ selectedCoupon?.description || '未使用' }}</div></li>
         <li class="list-group-item">
-          訂單總金額：
           <div>
-            商品小計：{{ checkout.productTotal }} 元<br />
+            訂單總金額：{{ checkout.productTotal }} 元<br />
             運費：{{ checkout.shippingFee }} 元<br />
             折扣金額：-{{ checkout.discount }} 元
             <hr />

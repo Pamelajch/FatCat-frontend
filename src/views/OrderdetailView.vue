@@ -2,7 +2,7 @@
 import { onMounted } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useOrderStore } from '@/stores/order'
-import CartItemList from '@/components/CartItemList.vue'
+import OrderItemList from '@/components/OrderItemList.vue' // ✅ 要引入！
 import OrderDetail from '@/components/OrderDetail.vue'
 
 const cartStore = useCartStore()
@@ -26,7 +26,7 @@ const orderStore = useOrderStore()
             aria-labelledby="panelsStayOpen-headingOne">
             <div class="accordion-body">
               <!-- 訂單商品列表 -->
-              <CartItemList :items="orderStore.latestOrderItems" />
+              <OrderItemList :items="orderStore.latestOrderItems" />
             </div>
           </div>
         </div>

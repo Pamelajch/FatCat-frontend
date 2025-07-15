@@ -2,7 +2,7 @@
 import { onMounted } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useOrderStore } from '@/stores/order'
-import CartItemList from '@/components/CartItemList.vue'
+import OrderItemList from '@/components/OrderItemList.vue' // ✅ 要引入！
 import OrderSummary from '@/components/OrderSummary.vue' // ⬅️ 加入整合後的元件
 
 const cartStore = useCartStore()
@@ -41,7 +41,8 @@ onMounted(() => {
             aria-labelledby="panelsStayOpen-headingOne"
           >
             <div class="accordion-body">
-              <CartItemList :items="orderStore.latestOrderItems" />
+             <!-- 替換 CartItemList -->
+              <OrderItemList :items="orderStore.latestOrderItems" />
             </div>
           </div>
         </div>
