@@ -259,10 +259,11 @@ const addSmartRandomIngredients = () => {
 
 <!-- 改為左右按鈕 -->
 <div class="button-group">
-  <button @click="bowl = []" class="clear-button">清空碗</button>
-  <button @click="addSmartRandomIngredients" class="clear-button">隨機抽選食材 🎯</button>
+  <button @click="bowl = []" class="action-button">清空碗</button>
+  <button @click="addSmartRandomIngredients" class="action-button">隨機抽選食材 🎯</button>
+  <button class="action-button">加入購物車</button>
   <RouterLink :to="{ name: 'specialnoodle' }">
-    <button class="clear-button">查看特殊款泡麵 ➜</button>
+    <button class="action-button">查看特殊款泡麵 ➜</button>
   </RouterLink>
 </div>
   </div>
@@ -466,23 +467,28 @@ const addSmartRandomIngredients = () => {
   box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.clear-button {
-  margin-top: 30px;
-  background-color: #f79c6a;
+.action-button {
+  background: linear-gradient(to right, #ffa94d, #ff6f61);
   border: none;
-  padding: 14px 28px;         /* 加大按鈕內部空間 */
-  border-radius: 14px;        /* 邊角更圓潤 */
   color: white;
+  padding: 14px 28px;
+  font-size: 20px;
+  font-weight: bold;
+  border-radius: 14px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   cursor: pointer;
-  font-size: 20px;            /* 字體變大 */
-  font-weight: bold;          /* 更有力道 */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* 加點陰影感 */
   transition: all 0.2s ease-in-out;
 }
 
-.clear-button:hover {
-  background-color: #ffad7f;
-  transform: scale(1.05);     /* 滑鼠移上去微微放大 */
+.action-button:hover {
+  background: linear-gradient(to right, #ffb96b, #ff8677);
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+.action-button:active {
+  transform: scale(0.98);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .filter-box {
