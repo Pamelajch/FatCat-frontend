@@ -235,8 +235,7 @@ const addSmartRandomIngredients = () => {
 </div>
 
 <!-- 碗區標題與提示 -->
-<h3 class="section-title">🍜 你的泡麵碗</h3>
-<p class="bowl-hint">拖曳你想吃的食材進碗裡 🍥</p>
+<h3 class="section-title">🍜 你的泡麵碗</h3> <!-- 置中 -->
 
 <!-- 桌子背景容器以及碗 -->
 <div class="table-wrapper">
@@ -392,9 +391,17 @@ const addSmartRandomIngredients = () => {
 .section-title {
   font-size: 24px;
   font-weight: bold;
-  color: whitesmoke;
-  margin: 40px 0 20px;
-  text-align: center;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.6); /* 半透明深底 */
+  padding: 10px 20px;
+  border: 2px solid #ffcc70;
+  border-radius: 6px;
+  display: inline-block;
+  text-shadow:
+    2px 2px 0px #663399,
+   -2px -2px 0px #663399; /* 紫色描邊感 */
+  margin-bottom: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* 底部陰影 */
 }
 
 .table-wrapper {
