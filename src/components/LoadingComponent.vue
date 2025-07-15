@@ -131,15 +131,17 @@ onMounted(() => {
     </div>
 
     <!-- 抽出結果 -->
-    <div v-if="mode === 'result'" class="draw-result">
+    <div v-if="mode === 'result'" class="result-wrapper">
+      <div class="draw-result">
       <h1 class="result-name-overlay">{{ selectedNoodle.name }}</h1>
       <img :src="selectedNoodle.image" :alt="selectedNoodle.name" class="result-img" />
     </div>
 
-    <!-- 結果按鈕 -->
-    <div v-if="mode === 'result'" class="result-buttons">
-      <button class="draw-again-btn" @click="mode = 'loading'">再抽一次</button>
-      <button class="add-to-cart-btn" @click="addToCart(selectedNoodle)">加入購物車</button>
+  <!-- 結果按鈕 -->
+      <div class="result-buttons">
+        <button class="draw-again-btn" @click="mode = 'loading'">再抽一次</button>
+        <button class="add-to-cart-btn" @click="addToCart(selectedNoodle)">加入購物車</button>
+      </div>
     </div>
   </div>
 </template>
@@ -147,7 +149,7 @@ onMounted(() => {
 <style scoped>
 .loading-container {
   background-color: #c286cf;
-  height: 100vh;
+  min-height: 100vh;
   width: 100vw;
   display: flex;
   flex-direction: column;
@@ -204,6 +206,7 @@ onMounted(() => {
   flex-wrap: nowrap;
   margin-top: 20px;
   padding: 10px;
+  min-height: 200px;
 }
 .noodle-img {
   width: 300px;
@@ -213,6 +216,12 @@ onMounted(() => {
 }
 .logo {
   width: 400px;
+}
+
+.result-wrapper {
+  width: 100%;
+  position: relative;
+  margin-bottom: 50px; /* 防止按鈕擠到底部 */
 }
 
 .draw-result {
