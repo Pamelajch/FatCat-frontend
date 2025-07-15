@@ -36,7 +36,7 @@ const fetchReportReasons = async () => {
 
 const submitReport = async () => {
   if (!currentReport.reasonTypeId) {
-    alert('請選擇一個檢舉原因');
+    alert('請選擇一個檢舉原因。');
     return;
   }
   try {

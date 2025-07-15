@@ -1,24 +1,26 @@
 <script setup>
 // --- 區塊 1：Setup & 引入 ---
-import { ref, onMounted, computed, reactive } from 'vue';
+import { ref, onMounted, computed, reactive, watch } from 'vue';
 import axios from 'axios';
 
 // --- 區塊 2：響應式狀態 (Reactive State) ---
-const reports = ref([]);
+const allReports = ref([]);
+const reports = ref([]); // 維持原樣，用來顯示在表格上
 const selectedReport = ref(null);
 const isLoading = ref(true);
 const error = ref(null);
-const filterStatus = ref(null);
+const activeStatus = ref(0);
+const searchTerm = ref('');
 
-const statusOptions = [
-  { id: null, name: '所有狀態' },
-  { id: 0, name: '待處理' },
-  { id: 1, name: '成立 (評論已隱藏)' },
-  { id: 2, name: '不成立 (評論保留)' },
+const statusButtons = [
+  { id: null, name: '全部', color: 'btn-warning' },
+  { id: 0, name: '待處理', color: 'btn-secondary' },
+  { id: 1, name: '成立', color: 'btn-success' },
+  { id: 2, name: '不成立', color: 'btn-danger' },
 ];
 
 // --- 區塊 3：Toast 通知相關狀態與方法 ---
-const isProcessing = ref(false); // 僅用於「單一審核操作」的處理狀態
+const isProcessing = ref(false);
 const toast = reactive({
   show: false,
   message: '',
@@ -34,30 +36,49 @@ const showToast = (message, type = 'success') => {
   }, 3000);
 };
 
-// --- 區塊 4：計算屬性 (Computed Properties) ---
-const selectedStatusName = computed(() => {
-    const found = statusOptions.find(opt => opt.id === filterStatus.value);
-    return found ? found.name : '所有';
-});
+// --- 區塊 4：主要方法 (Methods) ---
 
-// --- 區塊 5：主要方法 (Methods) ---
-
+/**
+ * @description 從後端 API 獲取檢舉列表資料 (只獲取，不過濾)
+ */
 const fetchReports = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    const params = new URLSearchParams();
-    if (filterStatus.value !== null) {
-        params.append('statusId', filterStatus.value);
-    }
-    const response = await axios.get(`/api/ReviewReports/admin-view?${params.toString()}`);
-    reports.value = response.data;
+    const response = await axios.get('/api/ReviewReports/admin-view');
+    allReports.value = response.data; // 只更新原始資料備份
+    // 【修改】不再自動呼叫 applyFilters
   } catch (err) {
     console.error("Failed to fetch reports:", err);
     error.value = "無法載入檢舉資料，請稍後再試。";
   } finally {
     isLoading.value = false;
   }
+};
+
+/**
+ * @description 根據 activeStatus 和 searchTerm 在前端進行篩選和搜尋
+ */
+const applyFilters = () => {
+    let result = [...allReports.value];
+    if (activeStatus.value !== null) {
+        result = result.filter(r => r.reportStatusId === activeStatus.value);
+    }
+    if (searchTerm.value.trim() !== '') {
+        const lowerCaseSearchTerm = searchTerm.value.toLowerCase();
+        result = result.filter(r => 
+            r.reporterUserName && r.reporterUserName.toLowerCase().includes(lowerCaseSearchTerm)
+        );
+    }
+    reports.value = result;
+};
+
+/**
+ * @description 點擊狀態按鈕時的處理函式
+ */
+const selectStatus = (statusId) => {
+    activeStatus.value = statusId;
+    applyFilters(); // 點擊按鈕時，只需要根據已有的資料進行篩選
 };
 
 const selectReport = (report) => {
@@ -68,72 +89,66 @@ const closeDetailView = () => {
   selectedReport.value = null;
 };
 
-// ========================================================================
-// vvvvvvvvvvvv 【處理審核的核心邏輯，包含完整註解】 vvvvvvvvvvvv
-// ========================================================================
 /**
- * @description 處理審核操作（通過/駁回），並呼叫後端 API
- * @param {number} reportId - 要處理的檢舉 ID
- * @param {number} newStatusId - 新的狀態 ID (1=成立, 2=不成立)
+ * @description 處理審核操作的核心邏輯
  */
 const processReport = async (reportId, newStatusId) => {
-    // 1. 防止在處理中時重複點擊
     if (isProcessing.value) return;
-
-    // 2. 彈出確認對話框，如果使用者按取消則中止
     if (!confirm(`確定要將此案件狀態更改嗎?`)) return;
 
-    // 3. 從 localStorage 獲取當前登入的管理員資訊
+    // 獲取 adminId 的程式碼 ...
     const storedAdmin = localStorage.getItem('admin');
     const adminInfo = storedAdmin ? JSON.parse(storedAdmin) : null;
-    
-    // 4. 驗證管理員資訊是否存在且完整
     if (!adminInfo || !adminInfo.adminId) {
         showToast('錯誤：找不到管理員登入資訊，請重新登入。', 'error');
         return;
     }
     const currentAdminId = adminInfo.adminId;
-
-    // 5. 開始處理，進入處理中狀態 (按鈕會被禁用)
     isProcessing.value = true;
 
     try {
-        // 6. 準備要發送到後端的資料 (Payload)
-        const payload = {
-            NewStatusId: newStatusId,
-            AdminId: currentAdminId,
-        };
-        
-        // 7. 呼叫後端 API，更新資料庫
+        const payload = { NewStatusId: newStatusId, AdminId: currentAdminId };
         await axios.put(`/api/ReviewReports/${reportId}/status`, payload);
-        
-        // 8. 顯示成功的 Toast 通知
         showToast('操作成功！', 'success');
 
-        // 9. 優化體驗：刷新後保持視窗開啟，並更新內容
+        // vvvvvvvvvv 【核心修改】調整非同步流程 vvvvvvvvvv
         const reportIdToKeepOpen = selectedReport.value.reportId;
+        
+        // 1. 先從後端獲取最新的「全部」資料，更新到 allReports
         await fetchReports();
-        const updatedReport = reports.value.find(r => r.reportId === reportIdToKeepOpen);
+        
+        // 2. 從最新的「全部」資料中，找到我們剛剛更新的那一筆
+        const updatedReport = allReports.value.find(r => r.reportId === reportIdToKeepOpen);
+        
+        // 3. 更新右側詳情面板的顯示內容
         selectedReport.value = updatedReport || null;
+        
+        // 4. 最後，才根據當前的篩選條件，去更新左側的列表
+        applyFilters();
 
     } catch (err) {
-        // 10. 如果發生錯誤，顯示失敗的 Toast 通知
         const errorMessage = err.response?.data || "發生未知錯誤";
         showToast(`操作失敗：${errorMessage}`, 'error');
         console.error("Failed to process report:", err);
     } finally {
-        // 11. 無論成功或失敗，最後都結束處理中狀態
         isProcessing.value = false;
     }
 };
-// ========================================================================
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+// --- 區塊 5：監聽器 (Watchers) ---
+watch(searchTerm, () => {
+    applyFilters();
+});
 
 // --- 區塊 6：生命週期鉤子 (Lifecycle Hooks) ---
-onMounted(() => {
-  fetchReports();
+onMounted(async () => {
+  activeStatus.value = 0; 
+  await fetchReports(); // 等待資料獲取完成
+  applyFilters();       // 然後再執行第一次篩選
 });
 </script>
+
+
 
 <template>
   <div class="report-management">
@@ -148,13 +163,21 @@ onMounted(() => {
     
     <header class="page-header">
       <h3>評論檢舉管理</h3>
-      <div class="filters">
-        <label for="status-filter">篩選狀態：</label>
-        <select id="status-filter" v-model="filterStatus" @change="fetchReports">
-          <option v-for="status in statusOptions" :key="status.id" :value="status.id">
-            {{ status.name }}
-          </option>
-        </select>
+      <div class="filters-and-search">
+        <div class="search-bar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></svg>
+            <input type="text" v-model.trim="searchTerm" placeholder="搜尋檢舉人姓名...">
+        </div>
+        <div class="status-buttons">
+            <button
+                v-for="status in statusButtons"
+                :key="status.id"
+                class="btn"
+                :class="[status.color, { 'active': activeStatus === status.id }]"
+                @click="selectStatus(status.id)">
+                {{ status.name }}
+            </button>
+        </div>
       </div>
     </header>
 
@@ -164,7 +187,7 @@ onMounted(() => {
     <div v-else class="content-layout">
 
       <div class="report-list">
-        <h4>{{ selectedStatusName }} 案件列表 ({{ reports.length }} 筆)</h4>
+        <h4>{{ statusButtons.find(s => s.id === activeStatus)?.name || '所有' }} 案件列表 ({{ reports.length }} 筆)</h4>
         <table>
           <thead>
             <tr>
@@ -250,7 +273,6 @@ onMounted(() => {
     </div>
   </div>
 </template>
-
 
 
 <style lang="css" scoped>
@@ -421,4 +443,50 @@ tbody tr.selected {
   background-color: #6c757d;
   cursor: not-allowed;
 }
+
+.filters-and-search {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap; /* 允許換行 */
+}
+.search-bar {
+  display: flex;
+  align-items: center;
+  background-color: #f8f9fa;
+  border: 1px solid #4e0466;
+  border-radius: 20px;
+  padding: 0.4rem 1rem;
+}
+.search-bar i {
+  color: #620457;
+  margin-right: 8px;
+}
+.search-bar input {
+  border: none;
+  background: none;
+  outline: none;
+}
+.status-buttons {
+    display: flex;
+    gap: 10px;
+}
+.status-buttons .btn {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+.status-buttons .btn.active {
+    opacity: 1;
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+/* Bootstrap 按鈕顏色 */
+.btn-warning { background-color: #ffc107; color: #212529; }
+.btn-secondary { background-color: #6c757d; color: white; }
+.btn-success { background-color: #198754; color: white; }
+.btn-danger { background-color: #dc3545; color: white; }
+
 </style>
