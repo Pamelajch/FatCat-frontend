@@ -30,8 +30,8 @@ onMounted(() => {
 <template>
     <!-- .login-page：整個頁面容器 -->
 <div class="login-page">  
-    <div class="container-fluid vh-100">
-      <div class="row h-100">
+    <div class="container-fluid">
+      <div class="row min-vh-100">
 
         <!-- 左側 - 登入表單 -->
 <div class="col-md-6 col-lg-5 d-flex align-items-center justify-content-center">
@@ -78,7 +78,7 @@ onMounted(() => {
 
          <!-- 右側 - 背景圖片 d-none d-md-block 在小螢幕隱藏 -->
         <div class="col-md-6 col-lg-7 d-none d-md-block">
-          <div class="login-bg h-100 d-flex align-items-center justify-content-center">
+          <div class="login-bg min-vh-100 d-flex align-items-center justify-content-center">
             <div class="text-center text-white">
               <h1 class="display-4 fw-bold mb-4">Fat Cat 購物商城</h1>
               <p class="lead">發現最好的商品，享受最棒的購物體驗</p>
@@ -100,6 +100,7 @@ onMounted(() => {
   --deep-gray: #686868;
   --light-gray: #f6f6f6;
   
+  min-height: 100vh;
   background: linear-gradient(135deg, var(--light-purple) 0%, var(--light-gray) 100%);
 }
 
