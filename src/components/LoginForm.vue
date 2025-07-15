@@ -451,47 +451,50 @@
       <div class="divider-line"></div>
     </div>
 
-    <!-- Facebook 登入按鈕 -->
-    <button
-      type="button"
-      class="btn custom-facebook-btn w-100 mb-3"
-      :disabled="isLoadingFB || isLoading"
-      @click="handleFacebookLogin"
-    >
-      <span v-if="isLoadingFB" class="spinner-border spinner-border-sm me-2" role="status">
-        <span class="visually-hidden">載入中...</span>
-      </span>
-      <i v-else class="bi bi-facebook me-2"></i>
-      {{ isLoadingFB ? 'Facebook 登入中...' : '使用 Facebook 登入' }}
-    </button>
+    <!-- 第三方登入圖標按鈕 -->
+    <div class="social-login-buttons d-flex justify-content-center gap-3 mb-3">
+      <!-- Facebook 登入 -->
+      <button
+        type="button"
+        class="btn social-btn facebook-btn"
+        :disabled="isLoadingFB || isLoading"
+        @click="handleFacebookLogin"
+        title="使用 Facebook 登入"
+      >
+        <span v-if="isLoadingFB" class="spinner-border spinner-border-sm" role="status">
+          <span class="visually-hidden">載入中...</span>
+        </span>
+        <i v-else class="fa-brands fa-square-facebook"></i>
+      </button>
 
-    <!-- Google 登入按鈕 -->
-    <button
-      type="button"
-      class="btn custom-google-btn w-100 mb-3"
-      :disabled="isLoadingGoogle || isLoading"
-      @click="handleGoogleLogin"
-    >
-      <span v-if="isLoadingGoogle" class="spinner-border spinner-border-sm me-2" role="status">
-        <span class="visually-hidden">載入中...</span>
-      </span>
-      <img v-else class="google-icon me-2" src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo">
-      {{ isLoadingGoogle ? 'Google 登入中...' : '使用 Google 登入' }}
-    </button>
+      <!-- Google 登入 -->
+      <button
+        type="button"
+        class="btn social-btn google-btn"
+        :disabled="isLoadingGoogle || isLoading"
+        @click="handleGoogleLogin"
+        title="使用 Google 登入"
+      >
+        <span v-if="isLoadingGoogle" class="spinner-border spinner-border-sm" role="status">
+          <span class="visually-hidden">載入中...</span>
+        </span>
+        <i v-else class="fa-brands fa-google"></i>
+      </button>
 
-    <!-- LINE 登入按鈕 -->
-    <button
-      type="button"
-      class="btn custom-line-btn w-100 mb-3"
-      :disabled="isLoadingLine || isLoading"
-      @click="handleLineLogin"
-    >
-      <span v-if="isLoadingLine" class="spinner-border spinner-border-sm me-2" role="status">
-        <span class="visually-hidden">載入中...</span>
-      </span>
-      <i v-else class="bi bi-line me-2"></i>
-      {{ isLoadingLine ? 'LINE 登入中...' : '使用 LINE 登入' }}
-    </button>
+      <!-- LINE 登入 -->
+      <button
+        type="button"
+        class="btn social-btn line-btn"
+        :disabled="isLoadingLine || isLoading"
+        @click="handleLineLogin"
+        title="使用 LINE 登入"
+      >
+        <span v-if="isLoadingLine" class="spinner-border spinner-border-sm" role="status">
+          <span class="visually-hidden">載入中...</span>
+        </span>
+        <i v-else class="fa-brands fa-line"></i>
+      </button>
+    </div>
 
     <!-- 忘記密碼 -->
     <div class="text-center">
@@ -631,89 +634,70 @@
   padding: 0 0.5rem;
 }
 
-/* Facebook 登入按鈕樣式 */
-.custom-facebook-btn {
-  background: #1877f2;
-  border: 1px solid #1877f2;
-  color: white;
-  padding: 0.75rem 1rem;
-  font-weight: 500;
-  border-radius: 0.375rem;
-  transition: all 0.3s ease;
+/* 第三方登入圖標按鈕樣式 */
+.social-login-buttons {
+  margin: 1rem 0;
 }
 
-.custom-facebook-btn:hover:not(:disabled) {
-  background: #166fe5;
-  border-color: #166fe5;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(24, 119, 242, 0.3);
-}
-
-.custom-facebook-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Google 登入按鈕樣式 */
-.custom-google-btn {
-  background-color: white;
-  border: 1px solid #ccc;
-  color: #333;
-  padding: 0.75rem 1rem;
-  font-weight: 500;
-  border-radius: 5px;
-  transition: background-color 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.custom-google-btn:hover:not(:disabled) {
-  background-color: #f7f7f7;
-  border-color: #ccc;
-  color: #333;
-  transform: none;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
-.custom-google-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background-color: #f5f5f5;
-}
-
-/* Google 圖標樣式 */
-.google-icon {
-  height: 20px;
-  width: 20px;
-}
-
-/* LINE 登入按鈕樣式 */
-.custom-line-btn {
-  background: #00B900;
-  color: white;
+.social-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
   border: none;
-  font-weight: 500;
-  border-radius: 0.375rem;
-  transition: all 0.3s ease;
+  font-size: 1.8rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 185, 0, 0.2);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
-.custom-line-btn:hover:not(:disabled) {
-  background: #00A000;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 185, 0, 0.3);
+.social-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.social-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Facebook 按鈕 */
+.facebook-btn {
+  background: #1877F2;
   color: white;
 }
 
-.custom-line-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background-color: #9E9E9E;
+.facebook-btn:hover:not(:disabled) {
+  background: #166fe5;
+  color: white;
+  box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
+}
+
+/* Google 按鈕 */
+.google-btn {
+  background: #dd4b39;
+  color: white;
+}
+
+.google-btn:hover:not(:disabled) {
+  background: #c23321;
+  color: white;
+  box-shadow: 0 4px 15px rgba(221, 75, 57, 0.4);
+}
+
+/* LINE 按鈕 */
+.line-btn {
+  background: #00B900;
+  color: white;
+}
+
+.line-btn:hover:not(:disabled) {
+  background: #00A000;
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 185, 0, 0.4);
 }
 
 /* 忘記密碼連結 */

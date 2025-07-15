@@ -35,7 +35,7 @@ onMounted(() => {
 
         <!-- 左側 - 登入表單 -->
 <div class="col-md-6 col-lg-5 d-flex align-items-center justify-content-center">
-  <div class="login-form-container w-100" style="max-width: 400px;">
+  <div class="login-form-container w-100" style="max-width: 420px;">
     
     <!-- 如果已登入，顯示重導向訊息 -->
     <div v-if="!showLoginForm" class="text-center">
