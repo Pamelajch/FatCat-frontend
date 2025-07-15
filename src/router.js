@@ -42,7 +42,7 @@ const routes = [
     //http://localhost:5173/cart
     { path: "/cart", component: CartView, name: "cart" },
     //我的最愛 --如謙
-    //http://localhost:5173/favorite
+    //http://localhost:5180/favorite
     { path: "/favorite", component: FavoriteView, name: "favorite" },
     //會員中心 --佳馨
     //http://localhost:5173/user
@@ -51,16 +51,16 @@ const routes = [
     //http://localhost:5173/notification
     { path: "/notification", component: NotificationView, name: "notification" },
     //活動 --如謙
-    //http://localhost:5173/campaigns
+    //http://localhost:5180/campaigns
     { path: "/campaigns", component: CampaignsView, name: "campaigns" },
     //rr測試站 --如謙
-    //http://localhost:5173/_reviewtest
+    //http://localhost:5180/_reviewtest
     { path: "/_reviewtest", component: _ReviewTestView, name: "_reviewtest" },
     //進度追蹤 --如謙
-    //http://localhost:5173/feedback
+    //http://localhost:5180/feedback
     { path: "/feedback", component: FeedbackView, name: "feedback" },
     //客服管理者 --如謙 meta 標籤，告訴系統「這是管理頁面」。
-    //http://localhost:5173/AdminChat
+    //http://localhost:5180/AdminChat
     { path: "/AdminChat", component: AdminChat, name: "AdminChat", meta: { isAdminPage: true } },
     //訂單結帳 -- 梓瑋
     //http://localhost:5173/checkout
@@ -78,26 +78,31 @@ const routes = [
     {
         path: "/login", component: LoginView, name: "login", meta: {
             hideHeaderFooter: true, //讓登入頁面不要套用Header及Footer(方法寫在app.vue)
-            isAdminPage: true //rr新增隱藏客服
+            isAdminPage: true, //rr新增隱藏客服
+            title: ' Fat Cat 購物商城'
         }
     },
     //註冊頁面
     {
         path: "/register", component: RegisterView, name: "register", meta: {
-            hideHeaderFooter: true //讓註冊頁面不要套用Header及Footer
+            hideHeaderFooter: true, //讓註冊頁面不要套用Header及Footer
+            isAdminPage: true, //rr新增隱藏客服
+            title: ' Fat Cat 購物商城'
         }
     },
     //忘記密碼頁面
     {
         path: "/forgot-password", component: ForgotPasswordView, name: "forgot-password", meta: {
-            hideHeaderFooter: true
+            hideHeaderFooter: true,
+            isAdminPage: true, //rr新增隱藏客服
+            title: ' Fat Cat 購物商城'
         }
-    },    
+    },
     //通知 --佳馨
     //http://localhost:5173/jjtest
-    { path: "/jjtest", component: JjtestView, name: "jjtest" }, 
+    { path: "/jjtest", component: JjtestView, name: "jjtest" },
     //===================================================================
-    // --- rr 管理者後台路由區塊 ---
+    // --- rr 管理者後台路由區塊 ---//http://localhost:5180/admin/login
     //===================================================================
     {
         path: '/admin/login',
@@ -163,6 +168,22 @@ const routes = [
 const router = createRouter({
     history: createWebHistory(),
     routes,
-})
+});
+
+router.afterEach((to, from) => {
+    // 1. 優先檢查：這個頁面有沒有自己指定的標題？
+    if (to.meta.title) {
+        document.title = to.meta.title;
+    }
+    // 2. 如果沒有，再檢查是不是管理頁面
+    else if (to.meta.isAdminPage) {
+        document.title = '肥貓後台管理系統';
+    }
+    // 3. 如果以上都不是，就用預設的前台標題
+    else {
+        document.title = 'Fat Cat 購物商城';
+    }
+});
+
 
 export default router
