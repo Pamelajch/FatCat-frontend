@@ -257,13 +257,15 @@ const addSmartRandomIngredients = () => {
 </div>
 
 <!-- 改為左右按鈕 -->
-<div class="button-group">
-  <button @click="bowl = []" class="action-button">清空碗</button>
-  <button @click="addSmartRandomIngredients" class="action-button">隨機抽選食材 🎯</button>
-  <button class="action-button">加入購物車</button>
-  <RouterLink :to="{ name: 'specialnoodle' }">
-    <button class="action-button">查看特殊款泡麵 ➜</button>
-  </RouterLink>
+<div class="action-panel">
+  <div class="button-group">
+    <button @click="bowl = []" class="action-button">清空碗</button>
+    <button @click="addSmartRandomIngredients" class="action-button">隨機抽選食材 🎯</button>
+    <button class="action-button">加入購物車</button>
+    <RouterLink :to="{ name: 'specialnoodle' }">
+      <button class="action-button">查看特殊款泡麵 ➜</button>
+    </RouterLink>
+  </div>
 </div>
   </div>
   </div>
@@ -446,12 +448,29 @@ const addSmartRandomIngredients = () => {
   margin-bottom: 20px; /* 可調整碗跟桌面的距離 */
 }
 
-.button-group {
+.action-panel {
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 3px solid #ffcc70;
+  border-radius: 10px;
+  padding: 20px 30px;
+  margin-top: 30px;
+  margin-bottom: 60px;
+  width: fit-content;
+  max-width: 95%;
   display: flex;
   justify-content: center;
-  gap: 20px;
-  margin-top: 20px;
+  align-items: center;
   flex-wrap: wrap;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.button-group {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .bowl-items {
