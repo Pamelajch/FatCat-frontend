@@ -160,6 +160,7 @@ const routes = [
 
 
 
+
     //404頁面 !!一定要放在最下面!! 若要新增頁面請放上面↑↑
     // (.*)* 任意字元
     { path: "/:pathMatch(.*)*", component: NofundView, name: 'NotFund', meta: { hideHeaderFooter: true } }
