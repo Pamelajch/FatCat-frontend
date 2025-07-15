@@ -64,6 +64,10 @@ function recalculateTotal() {
   } else if (selectedCoupon.coupontypeId === 3) {
     // ✅ 免運券 → 折扣等於 shippingFee
     checkout.discount = checkout.shippingFee
+  } else if (selectedCoupon.coupontypeId === 4) {
+    // ✅ 打折券 → 折扣 = 商品金額 * (1 - 折扣百分比)
+    const discountRate = selectedCoupon.discountAmount / 100  // 假設 discountAmount = 90 → 九折
+    checkout.discount = Math.round(productTotal.value * (1 - discountRate))
   } else {
     checkout.discount = selectedCoupon.discountAmount ?? 0
   }
