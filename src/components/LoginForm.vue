@@ -394,7 +394,7 @@
       <span v-if="isLoadingGoogle" class="spinner-border spinner-border-sm me-2" role="status">
         <span class="visually-hidden">載入中...</span>
       </span>
-      <i v-else class="bi bi-google me-2"></i>
+      <img v-else class="google-icon me-2" src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo">
       {{ isLoadingGoogle ? 'Google 登入中...' : '使用 Google 登入' }}
     </button>
 
@@ -561,25 +561,37 @@
 
 /* Google 登入按鈕樣式 */
 .custom-google-btn {
-  background: #4285f4;
-  border: 1px solid #4285f4;
-  color: white;
+  background-color: white;
+  border: 1px solid #ccc;
+  color: #333;
   padding: 0.75rem 1rem;
   font-weight: 500;
-  border-radius: 0.375rem;
-  transition: all 0.3s ease;
+  border-radius: 5px;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .custom-google-btn:hover:not(:disabled) {
-  background: #3367d6;
-  border-color: #3367d6;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(66, 133, 244, 0.3);
+  background-color: #f7f7f7;
+  border-color: #ccc;
+  color: #333;
+  transform: none;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .custom-google-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  background-color: #f5f5f5;
+}
+
+/* Google 圖標樣式 */
+.google-icon {
+  height: 20px;
+  width: 20px;
 }
 
 /* 忘記密碼連結 */
