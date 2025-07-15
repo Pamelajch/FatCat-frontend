@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import ReportList from '../components/ReportList.vue'; // 引入我們等下要做的子元件
+import ComplaintHistory from '@/components/ComplaintHistory.vue';
 
 const activeTab = ref('reports'); // 'reports' 或 'appeals'
 </script>
@@ -38,8 +39,10 @@ const activeTab = ref('reports'); // 'reports' 或 'appeals'
       </div>
 
       <div v-if="activeTab === 'appeals'" class="text-center text-muted p-5">
-        <p class="fs-4">申訴功能還沒寫ㄎㄎ！</p>
+        <ComplaintHistory></ComplaintHistory>
+        <hr>        
       </div>
+    
     </div>
   </div>
 </template>
