@@ -336,8 +336,8 @@ const addSmartRandomIngredients = () => {
   top: 20%;
   left: 50%;
   transform: translateX(-50%);
-  width: 160px;
-  height: 168px;
+  width: 155px;
+  height: 150px;
   object-fit: cover;
   z-index: 1;
   pointer-events: none;
@@ -492,16 +492,18 @@ const addSmartRandomIngredients = () => {
 }
 
 .filter-box {
-  background-color: #fff5e1;
-  border: 2px solid #fcd38a;
+  background-color: rgba(255, 165, 0, 0.2); /* 半透明橘色 */
+  border: 2px solid #ffa94d;               /* 同色系邊框 */
   padding: 20px;
   margin-bottom: 30px;
-  border-radius: 16px;
+  border-radius: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
   justify-content: center;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 0 8px rgba(255, 140, 0, 0.2); /* 內陰影 */
+  backdrop-filter: blur(4px);                      /* 毛玻璃效果 */
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .filter-group {
@@ -512,8 +514,11 @@ const addSmartRandomIngredients = () => {
 
 .filter-group label {
   font-weight: bold;
-  color: #ff8c42;
-  margin-bottom: 6px;
+  color: #fff;
+  font-size: 14px;
+  text-shadow:
+    1px 1px 0 #663399,
+   -1px -1px 0 #663399;  /* 紫色描邊 */
 }
 
 .filter-group select,
@@ -532,18 +537,28 @@ const addSmartRandomIngredients = () => {
 }
 
 .filter-button {
-  background-color: #ffa94d;
+  background-color: rgba(255, 165, 0, 0.85);  /* 橘色半透明 */
   color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 12px 20px;
+  border: 2px solid #ffd280;                 /* 黃橘邊框 */
+  border-radius: 4px;
+  padding: 10px 20px;
   font-weight: bold;
+  font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease-in-out;
+  text-shadow: 1px 1px #aa4c00;              /* 描邊*/
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);  /* 陰影 */
 }
 
 .filter-button:hover {
-  background-color: #ff922b;
+  background-color: rgba(255, 190, 100, 0.95); /* Hover 淺一點橘 */
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(255, 180, 100, 0.4);
+}
+
+.filter-button:active {
+  transform: scale(0.97);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .bubble-effect {
