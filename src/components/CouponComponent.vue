@@ -63,6 +63,10 @@ const handleClaim = (coupon) => {
             <h5 class="card-title">{{ coupon.name }}</h5>
             <p class="card-text">
               {{ coupon.description }}<br>
+
+               <span v-if="coupon.minimumPurchase > 0">
+                  低消：NT$ {{ coupon.minimumPurchase }}<br>
+              </span>
               <span v-if="coupon.coupontypeId === 3 && shippings.length > 0">
                 運費：免費
               </span>
