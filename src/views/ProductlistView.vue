@@ -63,6 +63,16 @@ const fetchProducts = async () => {
   }
 }
 
+const slider = ref(null)
+
+const scrollLeft = () => {
+  slider.value.scrollLeft -= 200
+}
+
+const scrollRight = () => {
+  slider.value.scrollLeft += 200
+}
+
 // 套用使用者篩選條件
 const applyFilters = async () => {
   try {
@@ -77,7 +87,8 @@ const applyFilters = async () => {
     // 一樣補上圖片路徑
     products.value = data.map(p => ({
       ...p,
-      imageUrl: `/ProductImages/${p.imageUrl}`
+      imageUrl: `/ProductImages/${p.imageUrl}`,
+      categoryId: p.categoryId
     }))
   } catch (error) {
     console.error('篩選商品失敗:', error)
@@ -201,19 +212,26 @@ const addSmartRandomIngredients = () => {
     <!-- 篩選區下方加標題 -->
 <h3 class="section-title">🧂 可拖曳食材區</h3>
 
-<!-- 食材清單 -->
-<div class="product-list" @dragover.prevent @drop="onDropToList">
-  <div
-    v-for="product in products"
-    :key="product.productsId"
-    class="product"
-    draggable="true"
-    @dragstart="onDragStart(product, 'list')"
-    @dblclick="goToProductDetail(product.productsId)"
-  >
-    <img :src="product.imageUrl" />
-    <p>{{ product.name }}</p>
+<!-- 食材清單，可滑動容器 + 左右按鈕 -->
+<div class="product-slider-container">
+  <button class="scroll-btn left" @click="scrollLeft">‹</button>
+
+  <div class="product-slider" ref="slider" @dragover.prevent @drop="onDropToList">
+    <div
+      v-for="product in products"
+      :key="product.productsId"
+      class="ironbox"
+      draggable="true"
+      @dragstart="onDragStart(product, 'list')"
+      @dblclick="goToProductDetail(product.productsId)"
+    >
+      <img class="ironbox-bg" src="/ironbox.png" alt="鐵盒背景" />
+      <img class="ironbox-item" :src="product.imageUrl" :alt="product.name" />
+      <p class="ironbox-name">{{ product.name }}</p>
+    </div>
   </div>
+
+  <button class="scroll-btn right" @click="scrollRight">›</button>
 </div>
 
 <!-- 碗區標題與提示 -->
@@ -281,32 +299,85 @@ const addSmartRandomIngredients = () => {
   padding-bottom: 60px;
 }
 
-.product-list {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+.product-slider-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
   margin-bottom: 30px;
 }
 
-.product {
-  width: 100px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  padding: 8px;
-  text-align: center;
-  background-color: #fff6fa;
-  box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+.product-slider {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 10px 20px;
+}
+
+.ironbox {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
   cursor: grab;
-  transition: all 0.2s ease-in-out;
 }
 
-.product:active {
-  cursor: grabbing;
+.ironbox-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
 }
 
-.product img {
-  width: 60px;
-  height: 60px;
+.ironbox-item {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.ironbox-name {
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: #663399;
+  z-index: 2;
+}
+
+/* 左右捲動按鈕 */
+.scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.7);
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+  padding: 6px 12px;
+  cursor: pointer;
+  z-index: 10;
+  border-radius: 8px;
+}
+
+.scroll-btn.left {
+  left: 0;
+}
+
+.scroll-btn.right {
+  right: 0;
+}
+
+.scroll-btn:hover {
+  background-color: #ffe0e0;
 }
 
 .section-title {
