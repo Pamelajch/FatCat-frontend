@@ -63,7 +63,7 @@ onMounted(() => {
       <!-- 登入表單組件 -->
       <LoginForm></LoginForm>
 
-      <!-- 註冊連結 -->
+      <!-- 註冊連結 ----->
       <div class="text-center mt-4">
         <p class="register-text">
           還沒有帳戶？ 
