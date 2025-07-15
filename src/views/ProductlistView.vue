@@ -162,44 +162,51 @@ const onDropToList = (event) => {
 
   <button class="filter-button" @click="applyFilters">套用篩選</button>
 </div>
-    <!-- 食材清單 -->
-    <div class="product-list" @dragover.prevent @drop="onDropToList">
-      <div
-  v-for="product in products"
-  :key="product.productsId"
-  class="product"
-  draggable="true"
-  @dragstart="onDragStart(product, 'list')"
-  @dblclick="goToProductDetail(product.productsId)"
->
-  <img :src="product.imageUrl" />
-  <p>{{ product.name }}</p>
-</div>
+    <!-- 篩選區下方加標題 -->
+<h3 class="section-title">🧂 可拖曳食材區</h3>
+
+<!-- 食材清單 -->
+<div class="product-list" @dragover.prevent @drop="onDropToList">
+  <div
+    v-for="product in products"
+    :key="product.productsId"
+    class="product"
+    draggable="true"
+    @dragstart="onDragStart(product, 'list')"
+    @dblclick="goToProductDetail(product.productsId)"
+  >
+    <img :src="product.imageUrl" />
+    <p>{{ product.name }}</p>
+  </div>
 </div>
 
-    <!-- 拖曳進來的碗（用 pot.jpg 當背景）-->
-    <div class="bowl" @dragover.prevent @drop="onDrop">
-      <div class="bowl-items">
-        <img
-        v-for="item in bowl"
-        :key="item.productsId"
-        :src="item.imageUrl"
-        :alt="item.name"
-        class="bowl-img"
-        draggable="true"
-        @dragstart="onDragStart(item, 'bowl')"
-        />
-      </div>
-      <div v-if="showBubbles" class="bubble-effect"></div> <!-- 泡泡動畫 -->
-    </div>
-    <button @click="bowl = []" class="clear-button">清空碗</button>
-    <RouterLink :to="{name:'specialnoodle'}"><button class="clear-button">查看特殊款泡麵 ➜</button></RouterLink>
-  <div>
-    <!-- 給梓瑋的放加入購物車按鈕連結的地方 -->
+<!-- 碗區標題與提示 -->
+<h3 class="section-title">🍜 你的泡麵碗</h3>
+<p class="bowl-hint">拖曳你想吃的食材進碗裡 🍥</p>
+
+<!-- 碗 -->
+<div class="bowl" @dragover.prevent @drop="onDrop">
+  <div class="bowl-items">
+    <img
+      v-for="item in bowl"
+      :key="item.productsId"
+      :src="item.imageUrl"
+      :alt="item.name"
+      class="bowl-img"
+      draggable="true"
+      @dragstart="onDragStart(item, 'bowl')"
+    />
   </div>
-  <div>
-    <!-- 給如謙的放加入購物車按鈕連結的地方 -->
-  </div>
+  <div v-if="showBubbles" class="bubble-effect"></div> <!-- 泡泡動畫 -->
+</div>
+
+<!-- 改為左右按鈕 -->
+<div class="button-group">
+  <button @click="bowl = []" class="clear-button">清空碗</button>
+  <RouterLink :to="{ name: 'specialnoodle' }">
+    <button class="clear-button">查看特殊款泡麵 ➜</button>
+  </RouterLink>
+</div>
   </div>
   </div>
 </template>
@@ -258,7 +265,6 @@ const onDropToList = (event) => {
 
 .product:active {
   cursor: grabbing;
-  transform: scale(1.05);
 }
 
 .product img {
@@ -266,18 +272,42 @@ const onDropToList = (event) => {
   height: 60px;
 }
 
+.section-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #663399;
+  margin: 40px 0 20px;
+  text-align: center;
+}
+
+.bowl-hint {
+  text-align: center;
+  font-size: 18px;
+  color: #995577;
+  margin-bottom: 10px;
+}
+
 .bowl {
-  width: 800px;
-  height: 800px;
+  width: 600px; /* 原本 800 改小一點更緊湊 */
+  height: 600px;
   background-image: url('/pot.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  position: relative;  /* 讓子元素可以絕對定位 */
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   margin: 20px auto;
+  /* overflow: hidden; */
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+  flex-wrap: wrap;
 }
 
 .bowl-items {
@@ -298,6 +328,7 @@ const onDropToList = (event) => {
   object-fit: cover;
   border-radius: 6px;
   box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+  /* flex-shrink: 0; */
 }
 
 .clear-button {
