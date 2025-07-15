@@ -55,7 +55,8 @@ const fetchProducts = async () => {
     // 這裡加上圖片路徑補全
     products.value = data.map(p => ({
       ...p,
-      imageUrl: `/ProductImages/${p.imageUrl}`
+      imageUrl: `/ProductImages/${p.imageUrl}`,
+      categoryId: p.categoryId
     }))
   } catch (error) {
     console.error('無法取得商品資料:', error)
@@ -121,6 +122,41 @@ const onDropToList = (event) => {
     if (index !== -1) {
       bowl.value.splice(index, 1)
     }
+  }
+}
+
+const addSmartRandomIngredients = () => {
+  const grouped = {}
+
+  for (const product of products.value) {
+    const isInBowl = bowl.value.some(b => b.productsId === product.productsId)
+    if (isInBowl) continue
+
+    const catId = product.categoryId
+    if (!grouped[catId]) {
+      grouped[catId] = []
+    }
+    grouped[catId].push(product)
+  }
+
+  let added = false
+  for (const catId in grouped) {
+    const items = grouped[catId]
+    if (items.length > 0) {
+      const randomIndex = Math.floor(Math.random() * items.length)
+      const selected = items[randomIndex]
+      bowl.value.push(selected)
+      added = true
+    }
+  }
+
+  if (added) {
+    showBubbles.value = true
+    setTimeout(() => {
+      showBubbles.value = false
+    }, 800)
+  } else {
+    alert('每個分類都已經有一個食材囉～無法再抽了 😺')
   }
 }
 </script>
@@ -203,6 +239,7 @@ const onDropToList = (event) => {
 <!-- 改為左右按鈕 -->
 <div class="button-group">
   <button @click="bowl = []" class="clear-button">清空碗</button>
+  <button @click="addSmartRandomIngredients" class="clear-button">隨機抽選食材 🎯</button>
   <RouterLink :to="{ name: 'specialnoodle' }">
     <button class="clear-button">查看特殊款泡麵 ➜</button>
   </RouterLink>
