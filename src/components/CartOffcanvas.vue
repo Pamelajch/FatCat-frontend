@@ -33,10 +33,25 @@ function closeOffcanvas() {
   document.body.classList.remove('offcanvas-backdrop')
   document.body.style.overflow = ''
 }
-function onQtyInput(event, item) {
-  const newQty = parseInt(event.target.value)
-  if (!isNaN(newQty) && newQty > 0) {
-    cartStore.setQty(item, newQty)
+
+const onQtyInput = debounce((event, item) => {
+  let value = parseInt(event.target.value)
+
+  // 非數字或小於1就自動還原
+  if (isNaN(value) || value < 1) {
+    event.target.value = item.quantity
+    return
+  }
+
+  cartStore.setQty(item, value)
+}, 300)
+
+
+function debounce(fn, delay = 300) {
+  let timeout
+  return (...args) => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => fn(...args), delay)
   }
 }
 
@@ -78,6 +93,7 @@ function onQtyInput(event, item) {
                 @input="onQtyInput($event, item)"
                 min="1"
               />
+
               
               <button class="btn btn-outline-secondary btn-sm" @click="cartStore.increaseQty(item)">+</button>
             </div>
