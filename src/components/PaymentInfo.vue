@@ -35,7 +35,8 @@ import { useCartStore } from '@/stores/cart'
 
 const checkout = useCheckoutStore()
 const cartStore = useCartStore()
-const productTotal = ref(2000)
+// 改用 computed 商品總金額（即時來自 cartStore）
+const productTotal = computed(() => cartStore.total)
 const couponOptions = ref([])
 const shippingOptions = ref([])
 
@@ -69,6 +70,13 @@ watch(shippingOptions, recalculateTotal)
 //商品總金額變動時也要重新計算
 watch(productTotal, recalculateTotal) 
 
+// ✅ 每次商品金額、運費、折扣變動都觸發
+watch(
+  [() => checkout.shippingId, () => checkout.couponId, productTotal],
+  recalculateTotal
+)
+
+
 // ✅ 統一的運費與折扣重計邏輯
 function recalculateTotal() {
   const selectedShipping = shippingOptions.value.find(s => s.shippingId === Number(checkout.shippingId))
@@ -86,8 +94,7 @@ function recalculateTotal() {
     checkout.discount = selectedCoupon.discountAmount ?? 0
   }
 
+// ✅ 使用最新的 cartStore.total 計算
   checkout.total = productTotal.value + checkout.shippingFee - checkout.discount
-
-
 }
 </script>
