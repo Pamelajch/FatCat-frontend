@@ -69,7 +69,7 @@ onMounted(() => {
           還沒有帳戶？ 
           <router-link to="/register" class="register-link">
             立即註冊
-          </router-link>
+          </router-link>   
         </p>
       </div>
     </div>
