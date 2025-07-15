@@ -468,11 +468,11 @@ const faqData = {
   display: flex;
   flex-direction: column;
   flex: 1; /*  讓這個整個聊天畫面區塊，填滿 chat-window 中除了 header 以外的所有剩餘空間 */
-  overflow: hidden; /* 關鍵#2: 防止這個容器自己產生不必要的捲軸 */
+  overflow: hidden; /*  防止這個容器自己產生不必要的捲軸 */
 }
 .chat-messages {
-  flex: 1; /* 關鍵#3: 在 .live-chat-view 內部，讓訊息區塊佔滿所有剩餘空間 */
-  overflow-y: auto; /* 關鍵#4: 只有這個訊息區塊，在內容超出時可以垂直捲動 */
+  flex: 1; /* 在 .live-chat-view 內部，讓訊息區塊佔滿所有剩餘空間 */
+  overflow-y: auto; /*  只有這個訊息區塊，在內容超出時可以垂直捲動 */
   padding: 20px;
   background-color: var(--accent-yellow, #ffffff); 
 }
