@@ -398,7 +398,8 @@ const addSmartRandomIngredients = () => {
 
 .table-wrapper {
   position: relative;
-  width: 100%;
+  width: 1050px;              /* 調整寬度 */
+  overflow: hidden;          /* 防止圖片溢出 */
   display: flex;
   justify-content: center;
   align-items: flex-end;
@@ -408,8 +409,8 @@ const addSmartRandomIngredients = () => {
 .table-bg {
   position: absolute;
   bottom: 0;
-  width: 100%;
-  height: auto;
+  width: 1050px;              /* 圖片寬度 */
+  height: auto;              /* 高度自動 */
   z-index: 0;
   pointer-events: none;
 }
