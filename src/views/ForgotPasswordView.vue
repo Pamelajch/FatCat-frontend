@@ -1,6 +1,7 @@
 <script setup>
     import { ref } from 'vue'
     import { useRouter } from 'vue-router'
+    import { authService } from '../services/authService'
 
     const router = useRouter()
 
@@ -9,6 +10,7 @@
     const isLoading = ref(false)
     const isSubmitted = ref(false)
     const errorMessage = ref('')
+    
     // 驗證email格式
     const validateEmail = (email) => {
         const emailPattern = /^[^\s@]+@[^\s@]+$/
@@ -18,6 +20,7 @@
     // 處理表單提交
     const handleSubmit = async () => {
         errorMessage.value = ''
+        
         // 驗證email
         if (!email.value) {
             errorMessage.value = '請輸入電子郵件'
@@ -32,19 +35,22 @@
         try {
             isLoading.value = true
             
-            // TODO: 呼叫忘記密碼 API
             console.log('發送重設密碼請求:', email.value)
             
-            // 模擬API呼叫
-            await new Promise(resolve => setTimeout(resolve, 2000))
+            // 呼叫忘記密碼 API
+            const result = await authService.forgotPassword(email.value)
             
-            // 顯示成功狀態
-            isSubmitted.value = true
-
+            if (result.success) {
+                // 顯示成功狀態
+                isSubmitted.value = true
+                console.log('忘記密碼郵件發送成功')
+            } else {
+                errorMessage.value = result.message || '發送失敗，請稍後再試'
+            }
                 
         } catch (error) {
             console.error('發送失敗:', error)
-            errorMessage.value = '發送失敗，請稍後再試'
+            errorMessage.value = error.message || '發送失敗，請稍後再試'
         } finally {
             isLoading.value = false
         }

@@ -99,6 +99,14 @@ const routes = [
             title: ' Fat Cat 購物商城'
         }
     },
+    //重設密碼頁面
+    {
+        path: "/reset-password", component: () => import('./views/ResetPasswordView.vue'), name: "reset-password", meta: {
+            hideHeaderFooter: true,
+            isAdminPage: true, //rr新增隱藏客服
+            title: '重設密碼 - Fat Cat 購物商城'
+        }
+    },
     // LINE 登入回調頁面
     {
         path: "/line-callback", component: LineCallbackView, name: "line-callback", meta: {

@@ -70,6 +70,26 @@ export const authService = {
         }
     },
 
+    // 忘記密碼 - 發送重設密碼郵件
+    async forgotPassword(email) {
+        try {
+            const response = await api.post('/auth/forgot-password', { email })
+            return response.data
+        } catch (error) {
+            throw error.response?.data || { message: '發送重設密碼郵件失敗' }
+        }
+    },
+
+    // 重設密碼 - 使用令牌重設密碼
+    async resetPassword(resetData) {
+        try {
+            const response = await api.post('/auth/reset-password', resetData)
+            return response.data
+        } catch (error) {
+            throw error.response?.data || { message: '重設密碼失敗' }
+        }
+    },
+
     // 呼叫登出 API
     async logout() {
         try {
