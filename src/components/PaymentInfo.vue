@@ -35,66 +35,39 @@ import { useCartStore } from '@/stores/cart'
 
 const checkout = useCheckoutStore()
 const cartStore = useCartStore()
-// 改用 computed 商品總金額（即時來自 cartStore）
+
 const productTotal = computed(() => cartStore.total)
 const couponOptions = ref([])
-const shippingOptions = ref([])
 
 onMounted(async () => {
   try {
-    const [couponRes, shippingRes] = await Promise.all([
-      axios.get('https://localhost:7017/api/Coupons'),
-      axios.get('https://localhost:7017/api/Shippings')
-    ])
-    couponOptions.value = couponRes.data
-    shippingOptions.value = shippingRes.data
-
+    const res = await axios.get('https://localhost:7017/api/Coupons')
+    couponOptions.value = res.data
     console.log('✅ Coupon API 成功:', couponOptions.value)
-    console.log('✅ Shipping API 成功:', shippingOptions.value)
-
     recalculateTotal()
   } catch (error) {
-    console.error('❌ 載入優惠券與送貨方式失敗:', error)
+    console.error('❌ 載入優惠券失敗:', error)
   }
 })
 
-// 當 shippingId 改變
-watch(() => checkout.shippingId, recalculateTotal)
-
-// 當 couponId 改變
+// ✅ 單純監看必要變數變化即可
 watch(() => checkout.couponId, recalculateTotal)
+watch(() => checkout.shippingFee, recalculateTotal)
+watch(productTotal, recalculateTotal)
 
-// shippingOptions 載入完成也要再算一次（初始）
-watch(shippingOptions, recalculateTotal)
-
-//商品總金額變動時也要重新計算
-watch(productTotal, recalculateTotal) 
-
-// ✅ 每次商品金額、運費、折扣變動都觸發
-watch(
-  [() => checkout.shippingId, () => checkout.couponId, productTotal],
-  recalculateTotal
-)
-
-
-// ✅ 統一的運費與折扣重計邏輯
+// ✅ 計算折扣與總金額
 function recalculateTotal() {
-  const selectedShipping = shippingOptions.value.find(s => s.shippingId === Number(checkout.shippingId))
   const selectedCoupon = couponOptions.value.find(c => c.couponId === Number(checkout.couponId))
-
-  checkout.shippingFee = selectedShipping?.shippingFee ?? 0
 
   if (!selectedCoupon) {
     checkout.discount = 0
-  } else if (selectedCoupon.couponTypeId === 3) {
-    // 🎯 免運券 → 折扣 = 運費
+  } else if (selectedCoupon.coupontypeId === 3) {
+    // ✅ 免運券 → 折扣等於 shippingFee
     checkout.discount = checkout.shippingFee
   } else {
-    // 🎯 一般折價券
     checkout.discount = selectedCoupon.discountAmount ?? 0
   }
 
-// ✅ 使用最新的 cartStore.total 計算
   checkout.total = productTotal.value + checkout.shippingFee - checkout.discount
 }
 </script>

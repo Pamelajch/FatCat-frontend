@@ -66,6 +66,9 @@ const handleClaim = (coupon) => {
               <span v-if="coupon.coupontypeId === 3 && shippings.length > 0">
                 運費：免費
               </span>
+              <span v-else-if="coupon.coupontypeId === 4 && shippings.length > 0">
+                打折：{{ coupon.discountAmount }}%
+              </span>
               <span v-else>
                 折扣金額：NT$ {{ coupon.discountAmount }}
               </span><br>
