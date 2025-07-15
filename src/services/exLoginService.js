@@ -72,12 +72,41 @@ export const exLoginService = {
                 return
             }
 
-            // 這裡需要實作 Google 登入邏輯
-            // 目前先回傳 mock 資料
-            resolve({
-                accessToken: 'mock_google_token',
-                userID: 'mock_google_id'
-            })
+            try {
+                // 初始化 Google OAuth
+                window.google.accounts.oauth2.initTokenClient({
+                    client_id: window.googleClientId,
+                    scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+                    callback: async (response) => {
+                        if (response.error) {
+                            reject(new Error(`Google 登入失敗: ${response.error}`))
+                            return
+                        }
+
+                        try {
+                            // 使用 access_token 取得用戶資訊
+                            const userInfoResponse = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${response.access_token}`)
+                            
+                            if (!userInfoResponse.ok) {
+                                throw new Error('無法取得 Google 用戶資料')
+                            }
+
+                            const userInfo = await userInfoResponse.json()
+                            
+                            resolve({
+                                accessToken: response.access_token,
+                                userID: userInfo.id,
+                                email: userInfo.email || '',
+                                name: userInfo.name || ''
+                            })
+                        } catch (error) {
+                            reject(new Error('處理 Google 用戶資料時發生錯誤: ' + error.message))
+                        }
+                    }
+                }).requestAccessToken()
+            } catch (error) {
+                reject(new Error('初始化 Google 登入時發生錯誤: ' + error.message))
+            }
         })
     },
 

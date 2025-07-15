@@ -3,6 +3,7 @@
     import { useRouter } from 'vue-router'
     import { useAuthStore } from '../stores/auth'
     import { facebookAuthService } from '../services/facebookAuthService'
+    import { googleAuthService } from '../services/googleAuthService'
 
     // 路由和狀態管理
     const router = useRouter()
@@ -179,6 +180,119 @@
       isLoadingFB.value = false
     }
   }
+
+  // Google 登入處理
+  const isLoadingGoogle = ref(false)
+  
+  const handleGoogleLogin = async () => {
+    try {
+      isLoadingGoogle.value = true
+      clearErrors()
+      
+      console.log('開始 Google 登入流程...')
+      
+      // 檢查 Google SDK 是否已載入
+      if (!window.google) {
+        errorMessage.value = 'Google SDK 尚未載入，請稍後再試'
+        return
+      }
+
+      // 使用 Google OAuth 2.0 獲取 access token
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: window.googleClientId,
+        scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+        callback: async (response) => {
+          if (response.error) {
+            console.error('Google 授權失敗:', response.error)
+            errorMessage.value = `Google 登入失敗: ${response.error}`
+            isLoadingGoogle.value = false
+            return
+          }
+
+          try {
+            console.log('Google 授權成功，獲取用戶資訊...')
+            
+            // 使用 access_token 取得用戶資訊
+            const userInfoResponse = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${response.access_token}`)
+            
+            if (!userInfoResponse.ok) {
+              throw new Error('無法取得 Google 用戶資料')
+            }
+
+            const userInfo = await userInfoResponse.json()
+            console.log('Google 用戶資訊:', userInfo)
+            
+            // 準備登入資料
+            const googleLoginData = {
+              accessToken: response.access_token,
+              providerId: userInfo.id,
+              email: userInfo.email,
+              name: userInfo.name,
+              picture: userInfo.picture
+            }
+            
+            // 使用 Google 認證服務
+            const result = await googleAuthService.googleLogin(googleLoginData)
+            
+            if (result.success) {
+              // 登入成功
+              console.log('Google 登入成功:', result)
+              
+              // 設置認證狀態
+              const authResult = authStore.setExternalLoginAuth(result.loginData)
+              
+              if (!authResult.success) {
+                console.error('設置認證狀態失敗:', authResult.message)
+                errorMessage.value = '登入狀態設置失敗，請重新登入'
+                return
+              }
+              
+              // 顯示歡迎訊息
+              const welcomeMessage = result.isNewUser ? 
+                `歡迎加入 Fat Cat，${result.loginData.name}！` : 
+                `歡迎回來，${result.loginData.name}！`
+              
+              alert(welcomeMessage)
+              
+              // 跳轉到首頁
+              router.push('/')
+            } else if (result.needsManualBinding) {
+              // Email 已被其他帳號使用，需要手動綁定
+              const confirmed = confirm(
+                `${result.message}\n\n` +
+                `您可以選擇：\n` +
+                `1. 用現有帳號（${result.email}）登入後，在個人設定中綁定 Google\n` +
+                `2. 取消並使用其他登入方式\n\n` +
+                `是否繼續使用傳統登入方式？`
+              )
+              
+              if (!confirmed) {
+                // 儲存 Google 資料以便後續綁定
+                googleAuthService.storeGoogleDataForRegistration(googleLoginData)
+              }
+            } else {
+              // 其他錯誤情況
+              errorMessage.value = result.message || 'Google 登入失敗'
+            }
+            
+          } catch (error) {
+            console.error('處理 Google 用戶資料時發生錯誤:', error)
+            errorMessage.value = '處理 Google 用戶資料時發生錯誤: ' + error.message
+          } finally {
+            isLoadingGoogle.value = false
+          }
+        }
+      })
+      
+      // 請求授權
+      client.requestAccessToken()
+      
+    } catch (error) {
+      console.error('Google 登入失敗:', error)
+      errorMessage.value = error.message || 'Google 登入失敗，請稍後再試'
+      isLoadingGoogle.value = false
+    }
+  }
 </script>
 
 <template>
@@ -268,6 +382,20 @@
       </span>
       <i v-else class="bi bi-facebook me-2"></i>
       {{ isLoadingFB ? 'Facebook 登入中...' : '使用 Facebook 登入' }}
+    </button>
+
+    <!-- Google 登入按鈕 -->
+    <button
+      type="button"
+      class="btn custom-google-btn w-100 mb-3"
+      :disabled="isLoadingGoogle || isLoading"
+      @click="handleGoogleLogin"
+    >
+      <span v-if="isLoadingGoogle" class="spinner-border spinner-border-sm me-2" role="status">
+        <span class="visually-hidden">載入中...</span>
+      </span>
+      <i v-else class="bi bi-google me-2"></i>
+      {{ isLoadingGoogle ? 'Google 登入中...' : '使用 Google 登入' }}
     </button>
 
     <!-- 忘記密碼 -->
@@ -427,6 +555,29 @@
 }
 
 .custom-facebook-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Google 登入按鈕樣式 */
+.custom-google-btn {
+  background: #4285f4;
+  border: 1px solid #4285f4;
+  color: white;
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+}
+
+.custom-google-btn:hover:not(:disabled) {
+  background: #3367d6;
+  border-color: #3367d6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(66, 133, 244, 0.3);
+}
+
+.custom-google-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

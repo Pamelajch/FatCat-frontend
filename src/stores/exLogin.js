@@ -90,7 +90,7 @@ export const useexLoginStore = defineStore('exlogin', () => {
     const initGoogleLogin = async () => {
         try {
             const googleResponse = await exLoginService.initGoogleLogin()
-            return await bindAccount('Google', googleResponse.accessToken, googleResponse.userID, '', '')
+            return await bindAccount('Google', googleResponse.accessToken, googleResponse.userID, googleResponse.email, googleResponse.name)
         } catch (err) {
             return { success: false, message: err.message }
         }
