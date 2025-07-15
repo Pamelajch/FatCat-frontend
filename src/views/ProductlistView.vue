@@ -227,7 +227,7 @@ const addSmartRandomIngredients = () => {
     >
       <img class="ironbox-bg" src="/ironbox.png" alt="鐵盒背景" />
       <img class="ironbox-item" :src="product.imageUrl" :alt="product.name" />
-      <p class="ironbox-name">{{ product.name }}</p>
+      <div class="ironbox-name">{{ product.name }}</div>
     </div>
   </div>
 
@@ -238,20 +238,23 @@ const addSmartRandomIngredients = () => {
 <h3 class="section-title">🍜 你的泡麵碗</h3>
 <p class="bowl-hint">拖曳你想吃的食材進碗裡 🍥</p>
 
-<!-- 碗 -->
-<div class="bowl" @dragover.prevent @drop="onDrop">
-  <div class="bowl-items">
-    <img
-      v-for="item in bowl"
-      :key="item.productsId"
-      :src="item.imageUrl"
-      :alt="item.name"
-      class="bowl-img"
-      draggable="true"
-      @dragstart="onDragStart(item, 'bowl')"
-    />
+<!-- 桌子背景容器以及碗 -->
+<div class="table-wrapper">
+  <img src="/mytable.png" class="table-bg" alt="桌子背景" />
+  <div class="bowl" @dragover.prevent @drop="onDrop">
+    <div class="bowl-items">
+      <img
+        v-for="item in bowl"
+        :key="item.productsId"
+        :src="item.imageUrl"
+        :alt="item.name"
+        class="bowl-img"
+        draggable="true"
+        @dragstart="onDragStart(item, 'bowl')"
+      />
+    </div>
+    <div v-if="showBubbles" class="bubble-effect"></div>
   </div>
-  <div v-if="showBubbles" class="bubble-effect"></div> <!-- 泡泡動畫 -->
 </div>
 
 <!-- 改為左右按鈕 -->
@@ -308,16 +311,14 @@ const addSmartRandomIngredients = () => {
 
 .product-slider {
   display: flex;
-  gap: 16px;
-  overflow-x: auto;
+  overflow-x: hidden;
   scroll-behavior: smooth;
-  padding: 10px 20px;
 }
 
 .ironbox {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 250px;
+  height: 250px;
   flex-shrink: 0;
   cursor: grab;
 }
@@ -334,8 +335,8 @@ const addSmartRandomIngredients = () => {
   top: 20%;
   left: 50%;
   transform: translateX(-50%);
-  width: 50px;
-  height: 50px;
+  width: 160px;
+  height: 168px;
   object-fit: cover;
   z-index: 1;
   pointer-events: none;
@@ -349,8 +350,15 @@ const addSmartRandomIngredients = () => {
   text-align: center;
   font-size: 14px;
   font-weight: bold;
-  color: #663399;
+  color: white;
   z-index: 2;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none; /* 避免 hover 停在名字上就卡住 */
+}
+
+.ironbox:hover .ironbox-name {
+  opacity: 1;
 }
 
 /* 左右捲動按鈕 */
@@ -383,15 +391,34 @@ const addSmartRandomIngredients = () => {
 .section-title {
   font-size: 24px;
   font-weight: bold;
-  color: #663399;
+  color: whitesmoke;
   margin: 40px 0 20px;
   text-align: center;
+}
+
+.table-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin-top: 40px;
+}
+
+.table-bg {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: auto;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .bowl-hint {
   text-align: center;
   font-size: 18px;
-  color: #995577;
+  color: whitesmoke;
+  font-weight: bold;
   margin-bottom: 10px;
 }
 
@@ -406,8 +433,8 @@ const addSmartRandomIngredients = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 20px auto;
-  /* overflow: hidden; */
+  z-index: 1;
+  margin-bottom: 20px; /* 可調整碗跟桌面的距離 */
 }
 
 .button-group {
@@ -436,7 +463,6 @@ const addSmartRandomIngredients = () => {
   object-fit: cover;
   border-radius: 6px;
   box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
-  /* flex-shrink: 0; */
 }
 
 .clear-button {
