@@ -33,6 +33,14 @@ function closeOffcanvas() {
   document.body.classList.remove('offcanvas-backdrop')
   document.body.style.overflow = ''
 }
+function onQtyInput(event, item) {
+  const newQty = parseInt(event.target.value)
+  if (!isNaN(newQty) && newQty > 0) {
+    cartStore.setQty(item, newQty)
+  }
+}
+
+
 </script>
 
 <template>
@@ -60,10 +68,19 @@ function closeOffcanvas() {
               <h6 class="mb-1">{{ item.name }}</h6>
               <div>單價：${{ item.price }}</div>
               <div class="d-flex align-items-center mt-1">
-                <button class="btn btn-outline-secondary btn-sm" @click="cartStore.decreaseQty(item)">-</button>
-                <span class="mx-2">{{ item.quantity }}</span>
-                <button class="btn btn-outline-secondary btn-sm" @click="cartStore.increaseQty(item)">+</button>
-              </div>
+              <button class="btn btn-outline-secondary btn-sm" @click="cartStore.decreaseQty(item)">-</button>
+              
+              <input
+                type="number"
+                class="form-control form-control-sm mx-2"
+                style="width: 60px;"
+                :value="item.quantity"
+                @input="onQtyInput($event, item)"
+                min="1"
+              />
+              
+              <button class="btn btn-outline-secondary btn-sm" @click="cartStore.increaseQty(item)">+</button>
+            </div>
             </div>
             <button class="btn btn-sm btn-danger" @click="cartStore.removeItem(item.id)"><i class="fa-solid fa-trash-can"></i>移除</button>
           </div>

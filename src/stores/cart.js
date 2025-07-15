@@ -24,11 +24,20 @@ export const useCartStore = defineStore('cart', () => {
     )
 
     const increaseQty = (item) => {
-        item.quantity++
+        const found = items.value.find(i => i.id === item.id)
+        if (found) found.quantity++
     }
 
     const decreaseQty = (item) => {
-        if (item.quantity > 1) item.quantity--
+        const found = items.value.find(i => i.id === item.id)
+        if (found && found.quantity > 1) found.quantity--
+    }
+
+    function setQty(item, newQty) {
+        const target = items.value.find(i => i.id === item.id)
+        if (target) {
+            target.quantity = newQty
+        }
     }
 
     const removeItem = (itemId) => {
@@ -44,7 +53,8 @@ export const useCartStore = defineStore('cart', () => {
         totalAmount,
         increaseQty,
         decreaseQty,
+        setQty,
         removeItem,
-        clearCart  // ✅ 新增這個
+        clearCart,
     }
 })
