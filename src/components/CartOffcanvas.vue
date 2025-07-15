@@ -103,7 +103,7 @@ function debounce(fn, delay = 300) {
         </div>
 
         <div class="fw-bold text-end mb-3">
-          總金額：<span class="text-danger">${{ cartStore.totalAmount }}</span>
+          總金額：<span class="text-danger">${{ cartStore.total }}</span>
         </div>
 
         <router-link to="/cart" class="btn custom-purple-btn w-100" @click="closeOffcanvas">立刻結帳</router-link>

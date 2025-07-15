@@ -1,7 +1,9 @@
+// stores/cart.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const useCartStore = defineStore('cart', () => {
+    // ✅ 預設的假資料（開發用）
     const items = ref([
         {
             id: 1,
@@ -19,10 +21,12 @@ export const useCartStore = defineStore('cart', () => {
         }
     ])
 
-    const totalAmount = computed(() =>
+    // ✅ 商品總金額
+    const total = computed(() =>
         items.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
     )
 
+    // 以下是操作方法
     const increaseQty = (item) => {
         const found = items.value.find(i => i.id === item.id)
         if (found) found.quantity++
@@ -35,9 +39,7 @@ export const useCartStore = defineStore('cart', () => {
 
     function setQty(item, newQty) {
         const target = items.value.find(i => i.id === item.id)
-        if (target) {
-            target.quantity = newQty
-        }
+        if (target) target.quantity = newQty
     }
 
     const removeItem = (itemId) => {
@@ -50,7 +52,7 @@ export const useCartStore = defineStore('cart', () => {
 
     return {
         items,
-        totalAmount,
+        total, // ✅ 這是給 PaymentInfo.vue 用的
         increaseQty,
         decreaseQty,
         setQty,

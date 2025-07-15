@@ -15,9 +15,9 @@
     </li>
 
     <!-- 金額明細 -->
-    <li class="list-group-item">訂單總金額:
+    <li class="list-group-item">
       <div>
-        商品小計: {{ productTotal }} 元<br />
+        商品總金額: {{ cartStore.total }} 元<br />
         運費: {{ checkout.shippingFee }} 元<br />
         折扣金額: -{{ checkout.discount }} 元
         <hr />
@@ -28,11 +28,13 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { useCheckoutStore } from '@/stores/checkout'
+import { useCartStore } from '@/stores/cart'
 
 const checkout = useCheckoutStore()
+const cartStore = useCartStore()
 const productTotal = ref(2000)
 const couponOptions = ref([])
 const shippingOptions = ref([])
@@ -64,6 +66,9 @@ watch(() => checkout.couponId, recalculateTotal)
 // shippingOptions 載入完成也要再算一次（初始）
 watch(shippingOptions, recalculateTotal)
 
+//商品總金額變動時也要重新計算
+watch(productTotal, recalculateTotal) 
+
 // ✅ 統一的運費與折扣重計邏輯
 function recalculateTotal() {
   const selectedShipping = shippingOptions.value.find(s => s.shippingId === Number(checkout.shippingId))
@@ -83,9 +88,6 @@ function recalculateTotal() {
 
   checkout.total = productTotal.value + checkout.shippingFee - checkout.discount
 
-  // Debug log
-  console.log('📦 運費:', checkout.shippingFee)
-  console.log('💰 折扣:', checkout.discount)
-  console.log('💳 總金額:', checkout.total)
+
 }
 </script>
