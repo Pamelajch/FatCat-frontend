@@ -103,7 +103,7 @@ const onDrop = (event) => {
   if (product && !bowl.value.some(i => i.productsId === id)) {
     bowl.value.push(product)
 
-    // 🫧 觸發泡泡動畫
+    // 觸發泡泡動畫
     showBubbles.value = true
     setTimeout(() => {
       showBubbles.value = false
