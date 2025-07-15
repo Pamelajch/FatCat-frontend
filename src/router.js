@@ -16,6 +16,7 @@ import LoginView from "./views/LoginView.vue"
 import NofundView from "./views/NofundView.vue"
 import RegisterView from "./views/RegisterView.vue"
 import FeedbackView from "./views/FeedbackView.vue"
+import LineCallbackView from "./views/LineCallbackView.vue"
 
 import ForgotPasswordView from "./views/ForgotPasswordView.vue"
 import SpecialNoodleView from "./views/SpecialNoodleView.vue"
@@ -96,6 +97,14 @@ const routes = [
             hideHeaderFooter: true,
             isAdminPage: true, //rr新增隱藏客服
             title: ' Fat Cat 購物商城'
+        }
+    },
+    // LINE 登入回調頁面
+    {
+        path: "/line-callback", component: LineCallbackView, name: "line-callback", meta: {
+            hideHeaderFooter: true,
+            isAdminPage: true,
+            title: 'LINE 登入處理中...'
         }
     },
     //通知 --佳馨
