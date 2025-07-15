@@ -1,12 +1,15 @@
 <script setup>
-    import { ref, computed } from 'vue'
+    import { ref, computed, onMounted } from 'vue'
     import { useRouter } from 'vue-router'
     import { useAuthStore } from '../stores/auth'
+    import { facebookAuthService } from '../services/facebookAuthService'
+    import { useexLoginStore } from '../stores/exLogin'
     import Swal from 'sweetalert2'  //引用sweetAlert2
 
     // 路由和狀態管理
     const router = useRouter()
     const authStore = useAuthStore()
+    const exLoginStore = useexLoginStore()
 
     // 表單數據
     const registerForm = ref({
@@ -17,6 +20,29 @@
         phone: '',
         gender: null,
         birthdate: null
+    })
+
+    // Facebook 資料相關
+    const facebookData = ref(null)
+    const hasFacebookData = ref(false)
+
+    // 檢查並載入 Facebook 資料
+    onMounted(() => {
+        const pendingFacebookData = facebookAuthService.getPendingFacebookData()
+        if (pendingFacebookData) {
+            facebookData.value = pendingFacebookData
+            hasFacebookData.value = true
+            
+            // 自動填入表單資料
+            if (pendingFacebookData.name) {
+                registerForm.value.name = pendingFacebookData.name
+            }
+            if (pendingFacebookData.email) {
+                registerForm.value.email = pendingFacebookData.email
+            }
+            
+            console.log('已載入 Facebook 資料:', pendingFacebookData)
+        }
     })
 
     //控制密碼可見性
@@ -132,27 +158,81 @@
             const result = await authStore.register(registerData)
 
             if (result.success) {
-            // 註冊成功 - 顯示 SweetAlert
-            await Swal.fire({
-                icon: 'success',
-                title: '註冊成功！',
-                text: '請重新登入',
-                confirmButtonText: '前往登入',
-                confirmButtonColor: '#92559c',
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                timer: 5000,
-                timerProgressBar: true,
-                showClass: {
-                    popup: 'animate__animated animate__fadeInDown'
-                },
-                hideClass: {
-                    popup: 'animate__animated animate__fadeOutUp'
+                // 如果有 Facebook 資料，先嘗試綁定
+                if (hasFacebookData.value && facebookData.value) {
+                    try {
+                        // 先登入以獲取認證
+                        const loginResult = await authStore.login({
+                            email: registerData.email,
+                            password: registerData.password,
+                            rememberMe: false
+                        })
+                        
+                        if (loginResult.success) {
+                            // 登入成功後綁定 Facebook 帳號
+                            const bindResult = await exLoginStore.bindAccount(
+                                'Facebook',
+                                facebookData.value.accessToken,
+                                facebookData.value.facebookUserId,
+                                facebookData.value.email,
+                                facebookData.value.name
+                            )
+                            
+                            // 清除待處理的 Facebook 資料
+                            facebookAuthService.clearPendingFacebookData()
+                            
+                            if (bindResult.success) {
+                                // 註冊成功且 Facebook 綁定成功
+                                await Swal.fire({
+                                    icon: 'success',
+                                    title: '註冊成功！',
+                                    text: 'Facebook 帳號已自動綁定，歡迎加入 Fat Cat！',
+                                    confirmButtonText: '前往首頁',
+                                    confirmButtonColor: '#92559c',
+                                    allowOutsideClick: false,
+                                    allowEscapeKey: false,
+                                    timer: 5000,
+                                    timerProgressBar: true
+                                })
+                                
+                                // 跳轉到首頁
+                                router.push('/')
+                                return
+                            } else {
+                                console.warn('Facebook 綁定失敗:', bindResult.message)
+                            }
+                        }
+                    } catch (error) {
+                        console.warn('自動綁定 Facebook 過程中發生錯誤:', error)
+                    }
                 }
-            })
-            
-            // 跳轉到登入頁面
-            router.push('/login')
+                
+                // 標準註冊成功流程（沒有 Facebook 資料或綁定失敗）
+                await Swal.fire({
+                    icon: 'success',
+                    title: '註冊成功！',
+                    text: hasFacebookData.value ? '請重新登入，您可以在個人設定中手動綁定 Facebook 帳號' : '請重新登入',
+                    confirmButtonText: '前往登入',
+                    confirmButtonColor: '#92559c',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    timer: 5000,
+                    timerProgressBar: true,
+                    showClass: {
+                        popup: 'animate__animated animate__fadeInDown'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOutUp'
+                    }
+                })
+                
+                // 清除 Facebook 資料
+                if (hasFacebookData.value) {
+                    facebookAuthService.clearPendingFacebookData()
+                }
+                
+                // 跳轉到登入頁面
+                router.push('/login')
             } else {
                 // 註冊失敗 - 顯示錯誤 SweetAlert
             await Swal.fire({
@@ -198,6 +278,13 @@
 </script>
 
 <template>
+<!-- Facebook 資料提示 -->
+    <div v-if="hasFacebookData" class="alert alert-info mb-3">
+        <i class="bi bi-facebook me-2"></i>
+        <strong>Facebook 登入偵測</strong><br>
+        已自動填入您的 Facebook 姓名和電子郵件。註冊成功後，Facebook 帳號將自動綁定到您的新會員帳戶。
+    </div>
+
 <!-- 顯示整體錯誤訊息 -->
     <div v-if="errorMessage" class="alert alert-danger mb-3">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
@@ -485,6 +572,21 @@
     padding: 0.75rem 1rem;
     border-radius: 0.375rem;
     font-size: 0.875rem;
+}
+
+/* Facebook 提示樣式 */
+.alert-info {
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.alert-info .bi-facebook {
+    color: #1877f2;
+    font-size: 1rem;
 }
 /* 註冊按鈕樣式 */
 .custom-register-btn {

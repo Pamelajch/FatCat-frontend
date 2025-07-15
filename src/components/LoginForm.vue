@@ -2,6 +2,7 @@
     import { ref, computed } from 'vue'
     import { useRouter } from 'vue-router'
     import { useAuthStore } from '../stores/auth'
+    import { facebookAuthService } from '../services/facebookAuthService'
 
     // 路由和狀態管理
     const router = useRouter()
@@ -116,6 +117,68 @@
     passwordError.value = ''
     errorMessage.value = ''
   }
+
+  // Facebook 登入處理
+  const isLoadingFB = ref(false)
+  
+  const handleFacebookLogin = async () => {
+    try {
+      isLoadingFB.value = true
+      clearErrors()
+      
+      console.log('開始 Facebook 登入流程...')
+      
+      // 使用 Facebook 認證服務
+      const result = await facebookAuthService.facebookLogin()
+      
+      if (result.success) {
+        // 登入成功 - 設置認證狀態並跳轉
+        console.log('Facebook 登入成功:', result)
+        
+        // 使用專門的第三方登入狀態設置方法
+        const authResult = authStore.setExternalLoginAuth(result.loginData)
+        
+        if (!authResult.success) {
+          console.error('設置認證狀態失敗:', authResult.message)
+          errorMessage.value = '登入狀態設置失敗，請重新登入'
+          return
+        }
+        
+        // 顯示歡迎訊息
+        const welcomeMessage = result.isNewUser ? 
+          `歡迎加入 Fat Cat，${result.loginData.name}！` : 
+          `歡迎回來，${result.loginData.name}！`
+        
+        alert(welcomeMessage)
+        
+        // 跳轉到首頁
+        router.push('/')
+      } else if (result.needsManualBinding) {
+        // Email 已被其他帳號使用，需要手動綁定
+        const confirmed = confirm(
+          `${result.message}\n\n` +
+          `您可以選擇：\n` +
+          `1. 用現有帳號（${result.email}）登入後，在個人設定中綁定 Facebook\n` +
+          `2. 取消並使用其他登入方式\n\n` +
+          `是否繼續使用傳統登入方式？`
+        )
+        
+        if (!confirmed) {
+          // 儲存 Facebook 資料以便後續綁定
+          facebookAuthService.storeFacebookDataForRegistration(result.facebookData)
+        }
+      } else {
+        // 其他錯誤情況
+        errorMessage.value = result.message || 'Facebook 登入失敗'
+      }
+      
+    } catch (error) {
+      console.error('Facebook 登入失敗:', error)
+      errorMessage.value = error.message || 'Facebook 登入失敗，請稍後再試'
+    } finally {
+      isLoadingFB.value = false
+    }
+  }
 </script>
 
 <template>
@@ -184,6 +247,27 @@
       </span>
       <i v-else class="bi bi-box-arrow-in-right me-2"></i>
       {{ isLoading ? '登入中...' : '登入' }}
+    </button>
+
+    <!-- 分隔線 -->
+    <div class="divider-container mb-3">
+      <div class="divider-line"></div>
+      <span class="divider-text">或者</span>
+      <div class="divider-line"></div>
+    </div>
+
+    <!-- Facebook 登入按鈕 -->
+    <button
+      type="button"
+      class="btn custom-facebook-btn w-100 mb-3"
+      :disabled="isLoadingFB || isLoading"
+      @click="handleFacebookLogin"
+    >
+      <span v-if="isLoadingFB" class="spinner-border spinner-border-sm me-2" role="status">
+        <span class="visually-hidden">載入中...</span>
+      </span>
+      <i v-else class="bi bi-facebook me-2"></i>
+      {{ isLoadingFB ? 'Facebook 登入中...' : '使用 Facebook 登入' }}
     </button>
 
     <!-- 忘記密碼 -->
@@ -298,6 +382,51 @@
 }
 
 .custom-login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 分隔線樣式 */
+.divider-container {
+  display: flex;
+  align-items: center;
+  margin: 1rem 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: var(--deep-gray);
+  opacity: 0.3;
+}
+
+.divider-text {
+  margin: 0 1rem;
+  color: var(--deep-gray);
+  font-size: 0.875rem;
+  background-color: var(--light-gray);
+  padding: 0 0.5rem;
+}
+
+/* Facebook 登入按鈕樣式 */
+.custom-facebook-btn {
+  background: #1877f2;
+  border: 1px solid #1877f2;
+  color: white;
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+}
+
+.custom-facebook-btn:hover:not(:disabled) {
+  background: #166fe5;
+  border-color: #166fe5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(24, 119, 242, 0.3);
+}
+
+.custom-facebook-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

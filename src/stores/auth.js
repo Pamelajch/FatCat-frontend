@@ -201,6 +201,28 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = null
     }
 
+    // 設置第三方登入狀態
+    const setExternalLoginAuth = (loginData) => {
+        try {
+            // 設置狀態
+            token.value = loginData.token
+            user.value = {
+                userId: loginData.userId,
+                name: loginData.name,
+                email: loginData.email,
+                picPath: loginData.picPath
+            }
+
+            // 儲存到 localStorage
+            authService.saveAuthData(loginData)
+
+            return { success: true, message: '認證狀態設置成功' }
+        } catch (err) {
+            error.value = err.message || '設置認證狀態失敗'
+            return { success: false, message: error.value }
+        }
+    }
+
     // 返回狀態和方法
     return {
         // 狀態
@@ -218,7 +240,8 @@ export const useAuthStore = defineStore('auth', () => {
         fetchUserProfile,
         clearError,
         updateProfile,
-        changePassword
+        changePassword,
+        setExternalLoginAuth
     }
 })
 
