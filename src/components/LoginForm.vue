@@ -4,6 +4,7 @@
     import { useAuthStore } from '../stores/auth'
     import { facebookAuthService } from '../services/facebookAuthService'
     import { googleAuthService } from '../services/googleAuthService'
+    import { lineAuthService } from '../services/lineAuthService'
 
     // 路由和狀態管理
     const router = useRouter()
@@ -293,6 +294,86 @@
       isLoadingGoogle.value = false
     }
   }
+
+  // LINE 登入處理
+  const isLoadingLine = ref(false)
+
+  const handleLineLogin = async () => {
+    try {
+      isLoadingLine.value = true
+      clearErrors()
+
+      console.log('開始 LINE 登入流程...')
+
+      // 檢查 LINE Channel ID 是否已設定
+      if (!window.lineChannelId) {
+        errorMessage.value = 'LINE Channel ID 尚未設定，請稍後再試'
+        return
+      }
+
+      // 使用 LINE 認證服務初始化登入
+      const authResult = await lineAuthService.initLineLogin()
+      
+      if (!authResult.success) {
+        throw new Error('LINE 授權失敗')
+      }
+
+      console.log('LINE 授權成功，處理登入...')
+
+      // 使用 LINE 認證服務
+      const result = await lineAuthService.lineLogin(authResult.lineData)
+
+      if (result.success) {
+        console.log('LINE 登入成功:', result)
+
+        // 使用專門的第三方登入狀態設置方法
+        const authResult = authStore.setExternalLoginAuth(result.loginData)
+        
+        if (!authResult.success) {
+          console.error('設置認證狀態失敗:', authResult.message)
+          errorMessage.value = '登入狀態設置失敗，請重新登入'
+          return
+        }
+        
+        if (result.isNewUser) {
+          // 新用戶註冊成功
+          console.log('LINE 新用戶註冊並登入成功')
+          
+          // 顯示歡迎訊息並導向首頁
+          alert('🎉 歡迎加入 Fat Cat 購物商城！\nLINE 帳號註冊並登入成功')
+          router.push('/')
+        } else {
+          // 現有用戶登入成功
+          console.log('LINE 現有用戶登入成功')
+          router.push('/')
+        }
+      } else if (result.needsManualBinding) {
+        // 需要手動綁定的情況
+        console.log('需要手動綁定 LINE 帳號')
+        
+        const shouldRegisterNew = confirm(
+          `${result.message}\n\n` +
+          `選擇操作：\n` +
+          `1. 用現有帳號（${result.email}）登入後，在個人設定中綁定 LINE\n` +
+          `2. 或點擊「取消」創建新帳號\n\n` +
+          `點擊「確定」前往登入，點擊「取消」創建新帳號`
+        )
+
+        if (!shouldRegisterNew) {
+          // 儲存 LINE 資料以便後續綁定
+          lineAuthService.storeLineDataForRegistration(result.lineData)
+          router.push('/register')
+        }
+      } else {
+        errorMessage.value = result.message || 'LINE 登入失敗'
+      }
+    } catch (error) {
+      console.error('LINE 登入失敗:', error)
+      errorMessage.value = error.message || 'LINE 登入失敗，請稍後再試'
+    } finally {
+      isLoadingLine.value = false
+    }
+  }
 </script>
 
 <template>
@@ -396,6 +477,20 @@
       </span>
       <img v-else class="google-icon me-2" src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo">
       {{ isLoadingGoogle ? 'Google 登入中...' : '使用 Google 登入' }}
+    </button>
+
+    <!-- LINE 登入按鈕 -->
+    <button
+      type="button"
+      class="btn custom-line-btn w-100 mb-3"
+      :disabled="isLoadingLine || isLoading"
+      @click="handleLineLogin"
+    >
+      <span v-if="isLoadingLine" class="spinner-border spinner-border-sm me-2" role="status">
+        <span class="visually-hidden">載入中...</span>
+      </span>
+      <i v-else class="bi bi-line me-2"></i>
+      {{ isLoadingLine ? 'LINE 登入中...' : '使用 LINE 登入' }}
     </button>
 
     <!-- 忘記密碼 -->
@@ -592,6 +687,33 @@
 .google-icon {
   height: 20px;
   width: 20px;
+}
+
+/* LINE 登入按鈕樣式 */
+.custom-line-btn {
+  background: #00B900;
+  color: white;
+  border: none;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 185, 0, 0.2);
+}
+
+.custom-line-btn:hover:not(:disabled) {
+  background: #00A000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 185, 0, 0.3);
+  color: white;
+}
+
+.custom-line-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #9E9E9E;
 }
 
 /* 忘記密碼連結 */
