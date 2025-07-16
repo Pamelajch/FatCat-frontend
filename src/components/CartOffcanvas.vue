@@ -13,6 +13,10 @@ onMounted(() => {
   if (el) {
     offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(el)
   }
+
+  
+  // ✅ 載入購物車商品圖片
+  cartStore.loadImagesForCartItems()
 })
 
 onUnmounted(() => {

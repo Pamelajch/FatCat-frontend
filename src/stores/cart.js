@@ -1,32 +1,51 @@
-// stores/cart.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import axios from 'axios'
 
 export const useCartStore = defineStore('cart', () => {
-    // ✅ 預設的假資料（開發用）
     const items = ref([
         {
             id: 1,
             name: '一般般牛肉片',
             price: 5,
             quantity: 2,
-            image: '/images/product1.jpg'
+            image: '' // 將圖片欄位設為空，待 API 填入
         },
         {
             id: 2,
             name: '一般般豬肉片',
             price: 4,
             quantity: 1,
-            image: '/images/product2.jpg'
+            image: ''
         }
     ])
 
-    // ✅ 商品總金額
     const total = computed(() =>
         items.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
     )
 
-    // 以下是操作方法
+    // ✅ 抓主圖片 (呼叫 /api/ProductImages/byProduct/{id})
+    async function fetchMainImage(productId) {
+        try {
+            const res = await axios.get(`/api/ProductImages/byProduct/${productId}`)
+            const images = res.data
+
+            // 找主圖 isMain = 1，如果沒有就取第一張
+            const mainImage = images.find(img => img.isMain === 1) || images[0]
+            return mainImage?.imageUrl || '/default.jpg'
+        } catch (error) {
+            console.error('取圖片失敗', error)
+            return '/default.jpg'
+        }
+    }
+
+    // ✅ 批次載入所有商品圖片
+    async function loadImagesForCartItems() {
+        for (const item of items.value) {
+            item.image = await fetchMainImage(item.id)
+        }
+    }
+
     const increaseQty = (item) => {
         const found = items.value.find(i => i.id === item.id)
         if (found) found.quantity++
@@ -52,11 +71,12 @@ export const useCartStore = defineStore('cart', () => {
 
     return {
         items,
-        total, // ✅ 這是給 PaymentInfo.vue 用的
+        total,
         increaseQty,
         decreaseQty,
         setQty,
         removeItem,
         clearCart,
+        loadImagesForCartItems // ✅ 暴露給外部使用
     }
 })
