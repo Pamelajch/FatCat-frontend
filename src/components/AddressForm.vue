@@ -46,9 +46,8 @@
                     required
                 >
                     <option value="">請選擇地址類型</option>
-                    <option value="1">住家</option>
-                    <option value="2">公司</option>
-                    <option value="3">超商</option>
+                    <option value="0">一般宅配地址</option>
+                    <option value="1">超商取貨地址</option>
                 </select>
                 <div v-if="errors.addressType" class="invalid-feedback">
                     {{ errors.addressType }}
@@ -56,7 +55,27 @@
             </div>
 
             <!-- 超商相關欄位 -->
-            <div v-if="form.addressType === '3'" class="store-fields">
+            <div v-if="form.addressType === '1'" class="store-fields">
+                <div class="form-group">
+                    <label for="storeType" class="form-label">超商類型 *</label>
+                    <select
+                        id="storeType"
+                        v-model="form.storeType"
+                        class="form-select"
+                        :class="{ 'is-invalid': errors.storeType }"
+                        required
+                    >
+                        <option value="">請選擇超商類型</option>
+                        <option value="0">7-Eleven</option>
+                        <option value="1">FamilyMart</option>
+                        <option value="2">OK</option>
+                        <option value="3">Hi-Life</option>
+                    </select>
+                    <div v-if="errors.storeType" class="invalid-feedback">
+                        {{ errors.storeType }}
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="storeName" class="form-label">超商名稱 *</label>
                     <input
@@ -200,6 +219,7 @@ const form = reactive({
     recipientName: '',
     phoneNumber: '',
     addressType: '',
+    storeType: null, // 新增超商類型，使用 null 而不是空字串
     storeName: '',
     storeBranch: '',
     city: '',
@@ -213,6 +233,7 @@ const errors = reactive({
     recipientName: '',
     phoneNumber: '',
     addressType: '',
+    storeType: '', // 新增超商類型
     storeName: '',
     storeBranch: '',
     city: '',
@@ -229,6 +250,7 @@ watch(() => props.address, (newAddress) => {
         form.recipientName = newAddress.recipientName || ''
         form.phoneNumber = newAddress.phoneNumber || ''
         form.addressType = newAddress.addressType?.toString() || ''
+        form.storeType = newAddress.storeType || null // 編輯模式時設定超商類型
         form.storeName = newAddress.storeName || ''
         form.storeBranch = newAddress.storeBranch || ''
         form.city = newAddress.city || ''
@@ -272,7 +294,11 @@ const validateForm = () => {
     }
 
     // 驗證超商相關欄位
-    if (form.addressType === '3') {
+    if (form.addressType === '1') {
+        if (form.storeType === null || form.storeType === '') {
+            errors.storeType = '請選擇超商類型'
+            isValid = false
+        }
         if (!form.storeName.trim()) {
             errors.storeName = '超商名稱為必填欄位'
             isValid = false
@@ -322,7 +348,8 @@ const handleSubmit = () => {
     }
 
     // 如果是超商類型，添加超商相關欄位
-    if (form.addressType === '3') {
+    if (form.addressType === '1') {
+        submitData.storeType = parseInt(form.storeType)
         submitData.storeName = form.storeName.trim()
         submitData.storeBranch = form.storeBranch.trim()
     }
