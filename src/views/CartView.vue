@@ -1,9 +1,34 @@
 <script setup>
 import { useCartStore } from '@/stores/cart'
 import CartItemList from '@/components/CartItemList.vue'
-import CouponSection from '@/components/CouponSection.vue'  // 匯入
+import CouponSection from '@/components/CouponSection.vue'
+import { ref } from 'vue'
+import GueseeULikeSection from '@/components/GueseeULikeSection.vue'
+
 const cartStore = useCartStore()
+
+const products = ref([
+  {
+    id: 101,
+    name: '社畜最愛宵夜麵',
+    imageUrl: '/fakenoodle.jpg',
+    tag: '強檔'
+  },
+  {
+    id: 102,
+    name: '小女友泡麵套餐',
+    imageUrl: '/fakenoodle.jpg',
+    tag: '推薦'
+  },
+  {
+    id: 103,
+    name: '16塊腹肌指定口味',
+    imageUrl: '/fakenoodle.jpg',
+    tag: '人氣'
+  }
+])
 </script>
+
 
 <template>
   <div class="page-content-wrapper pt-5 pb-5">
@@ -42,16 +67,9 @@ const cartStore = useCartStore()
 
         <!-- 猜你喜歡區塊 -->
         <div class="col-12 col-md-6">
-          <ul class="list-group mb-3">
-            <li class="list-group-item">
-              <h3>猜你喜歡</h3>
-            </li>
             <li class="list-group-item d-flex gap-2">
-              <button type="button" class="btn btn-danger">Left</button>
-              <button type="button" class="btn btn-warning">Middle</button>
-              <button type="button" class="btn btn-success">Right</button>
+              <GueseeULikeSection/>
             </li>
-          </ul>
           
           <!-- 結帳按鈕 -->
           <router-link to="/checkout">
@@ -94,5 +112,50 @@ const cartStore = useCartStore()
 }
 .btn-space {
   margin-right: 10px; /* 可以依需求微調距離 */
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+}
+
+.product-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  margin-top: 10px; /* 圖片上方間距 */
+}
+
+.product-info {
+  padding: 1rem;
+  text-align: center;
+}
+
+.product-tag {
+  display: inline-block;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.6rem;
+  background-color: #ff8c00;
+  color: white;
+  border-radius: 999px;
+  margin-bottom: 0.5rem;
+}
+
+.product-name {
+  font-size: 1.1rem;
+  color: #4a2e6e;
+  font-weight: bold;
+}
+.product-grid {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between; /* 或 center / flex-start */
+}
+.product-card {
+  flex: 1 1 30%;
+  max-width: 30%;
+}
+
+.product-section {
+  flex: 1;
 }
 </style>
