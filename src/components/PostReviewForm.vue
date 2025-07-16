@@ -1,15 +1,14 @@
 <script setup>
 import { reactive } from 'vue';
-import axios from 'axios';
+// 【重要】請確認你引入的是設定好 token 攔截器的 axios 實例
+import api from '@/services/jjapi.js'; 
 
 const props = defineProps({
   productId: { type: Number, required: true },
-  orderId: { type: Number, required: true } // 假設需要訂單ID來驗證
+  orderId: { type: Number, required: true }
 });
 
 const emit = defineEmits(['review-submitted']);
-
-const API_BASE_URL = 'https://localhost:7017/api';
 
 const newReview = reactive({
   rating: 5,
@@ -23,6 +22,9 @@ const handleFileChange = (event) => {
 
 const submitReview = async () => {
   const formData = new FormData();
+  
+  // 【重要】確保有將 OrderId 加進去
+  formData.append('OrderId', props.orderId);
   formData.append('Rating', newReview.rating);
   formData.append('Comment', newReview.comment);
   if (newReview.files.length > 0) {
@@ -32,16 +34,23 @@ const submitReview = async () => {
   }
 
   try {
-    // 我們呼叫的是針對特定產品的 POST API
-    await axios.post(`${API_BASE_URL}/products/${props.productId}/reviews`, formData);
+    // 【修改】改用 api 實例來發送請求
+    await api.post(`/products/${props.productId}/reviews`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
     alert('感謝您的評論！');
-    emit('review-submitted'); // 發送事件，通知父層更新列表
+    emit('review-submitted');
   } catch (err) {
+    // 提供更友善的錯誤提示
+    const errorMessage = err.response?.data?.message || err.response?.data || '提交評論失敗，請稍後再試。';
+    alert(errorMessage);
     console.error('提交評論失敗:', err);
-    alert('提交評論失敗，請稍後再試。');
   }
 };
 </script>
+
 
 <template>
   <div class="add-review-form card mt-5">

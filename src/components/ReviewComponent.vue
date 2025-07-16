@@ -1,9 +1,8 @@
 <script setup>
-import { ref, onMounted, computed, reactive } from 'vue';
-import HelpfulnessVoting from './HelpfulnessVoting.vue';
-import axios from 'axios';
-import ReportModal from './ReportModal.vue';
+import { ref, onMounted, computed } from 'vue';
 import api from '@/services/jjapi.js'; 
+import HelpfulnessVoting from './HelpfulnessVoting.vue';
+import ReportModal from './ReportModal.vue';
 
 // --- Props ---
 const props = defineProps({
@@ -15,19 +14,11 @@ const props = defineProps({
 
 // --- 響應式狀態定義 ---
 const BACKEND_URL = 'https://localhost:7017';
-
 const reviews = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
-
-// 新評論的表單資料
-const newReview = reactive({
-  rating: 5,
-  comment: '',
-  files: [] // 用來儲存使用者選擇的檔案
-});
-
-
+const showReportModal = ref(false); 
+const reportingReviewId = ref(null);
 
 // --- 計算屬性 ---
 const averageRating = computed(() => {
@@ -41,9 +32,12 @@ const fetchReviews = async () => {
   isLoading.value = true;
   error.value = null;
   try {
+    // 確保 productId 是有效的數字
+    if (isNaN(props.productId)) {
+        throw new Error("無效的商品 ID。");
+    }
     const response = await api.get(`/products/${props.productId}/reviews`);
-    // 直接使用後端回傳的資料，因為後端已經幫我們算好 currentUserVote 了
-    reviews.value = response.data; // <--- 
+    reviews.value = response.data;
   } catch (err) {
     console.error(`取得商品 ${props.productId} 的評論失敗:`, err);
     error.value = '無法載入評論。';
@@ -52,38 +46,20 @@ const fetchReviews = async () => {
   }
 };
 
-const handleFileChange = (event) => {
-  newReview.files = Array.from(event.target.files);
-};
-
-
-// --- 👇👇👇【檢舉】 👇👇👇 ---
-
-// 控制 Modal 是否顯示
-const showReportModal = ref(false); 
-// 儲存當前正在被檢舉的評論 ID
-const reportingReviewId = ref(null);
-
-// 開啟 Modal 的函式
+// --- 檢舉 Modal 相關方法 ---
 const openReportModal = (reviewId) => {
-  console.log('準備檢舉評論 ID:', reviewId); // 除錯用
-  reportingReviewId.value = reviewId; // 記下要檢舉的 ID
-  showReportModal.value = true;       // 把 Modal 打開
+  reportingReviewId.value = reviewId;
+  showReportModal.value = true;
 };
-
-// 關閉 Modal 的函式
 const closeReportModal = () => {
-  showReportModal.value = false;      // 把 Modal 關閉
-  reportingReviewId.value = null;     // 清空 ID
+  showReportModal.value = false;
+  reportingReviewId.value = null;
 };
-
-
 
 // --- 生命週期鉤子 ---
 onMounted(() => {
   fetchReviews();
 });
-
 </script>
 
 <template>
@@ -122,14 +98,13 @@ onMounted(() => {
               </div>
               <!-- 互動按鈕區 -->
               <div class="review-actions d-flex align-items-center gap-2">
-                 <!-- 嵌入有用 沒用 -->
                 <HelpfulnessVoting
                   :review-id="review.reviewId"
                   :initial-count="review.helpfulnessCount"
-                  :initial-user-vote="review.currentUserVote"  
+                  :initial-user-vote="review.currentUserVote" 
                 />
                 <button @click="openReportModal(review.reviewId)" class="btn btn-sm btn-link text-danger p-0" title="檢舉此評論">
-                <i class="fas fa-flag"></i> 檢舉
+                  <i class="fas fa-flag"></i> 檢舉
                 </button>
               </div>
             </div>
@@ -153,24 +128,16 @@ onMounted(() => {
     <div v-if="!isLoading && reviews.length === 0" class="text-center text-muted py-4">
       <p>還沒有任何評論，快來搶頭香！</p>
     </div>
-
     
+    <ReportModal 
+      v-if="showReportModal" 
+      :review-id="reportingReviewId"
+      @close="closeReportModal" 
+    />
   </div>
-
-  <!-- 👇 6. 在這裡使用你的新元件 -->
-  <!-- 
-    - v-if="showReportModal": 根據狀態決定是否顯示
-    - :reviewId="reportingReviewId": 把要檢舉的 ID 傳給子元件
-    - @close="closeReportModal": 監聽子元件發出的 'close' 事件
-  -->
-  <ReportModal 
-    v-if="showReportModal" 
-    :review-id="reportingReviewId"
-    @close="closeReportModal" 
-  />
-
-  
 </template>
+
+
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
