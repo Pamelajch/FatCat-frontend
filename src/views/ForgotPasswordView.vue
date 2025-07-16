@@ -41,8 +41,8 @@
             const result = await authService.forgotPassword(email.value)
             
             if (result.success) {
-                // 顯示成功狀態
-                isSubmitted.value = true
+            // 顯示成功狀態
+            isSubmitted.value = true
                 console.log('忘記密碼郵件發送成功')
             } else {
                 errorMessage.value = result.message || '發送失敗，請稍後再試'
