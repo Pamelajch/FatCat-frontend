@@ -17,6 +17,17 @@
         <li class="list-group-item">送貨方式：
           <div>{{ selectedShipping?.name || '未選擇' }}</div>
         </li>
+        <!-- 顯示宅配地址 -->
+        <li class="list-group-item" v-if="selectedShipping?.shippingTypeId === 1">
+          收件地址：
+          <div>{{ checkout.recipientAddress || '未填寫' }}</div>
+        </li>
+
+        <!-- 顯示超商門市名稱 -->
+        <li class="list-group-item" v-else-if="selectedShipping?.shippingTypeId === 2">
+          超商門市：
+          <div>{{ checkout.storeName || '未選擇' }}</div>
+        </li>
         <li class="list-group-item">收件人姓名：<div>{{ checkout.recipientName }}</div></li>
         <li class="list-group-item">收件人電話：<div>{{ checkout.recipientPhone }}</div></li>
       </ul>
