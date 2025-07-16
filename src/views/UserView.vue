@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import authService from '@/services/authService'
 import PasswordChangeModel from '@/components/PasswordChangeModel.vue'
+import AddressManager from '@/components/AddressManager.vue'
 import { useexLoginStore } from '@/stores/exLogin'
 import Swal from 'sweetalert2'
 
@@ -30,9 +31,7 @@ const initializeData = async () => {
                     editForm.value = {
                         name: authStore.user.name || '',
                         birthdate: authStore.user.birthdate ? new Date(authStore.user.birthdate).toISOString().split('T')[0] : '',
-                        phone: authStore.user.phone || '',
-                        address1: '', // 暫時留空，等地址功能完善
-                        address2: ''  // 暫時留空，等地址功能完善
+                        phone: authStore.user.phone || ''
                     }
                 }
                 // 標記為已初始化
@@ -83,18 +82,14 @@ onMounted(async () => {
 const editMode = ref({
     name: false,
     birthdate: false,
-    phone: false,
-    address1: false,
-    address2: false
+    phone: false
 })
 
 // 編輯表單數據
 const editForm = ref({
     name: '',
     birthdate: '',
-    phone: '',
-    address1: '',
-    address2: ''
+    phone: ''
 })
 
 // 檔案上傳相關
@@ -320,9 +315,7 @@ const saveAllChanges = async () => {
                 editForm.value = {
                     name: authStore.user.name || '',
                     birthdate: authStore.user.birthdate ? new Date(authStore.user.birthdate).toISOString().split('T')[0] : '',
-                    phone: authStore.user.phone || '',
-                    address1: '', // 暫時留空，等地址功能完善
-                    address2: ''  // 暫時留空，等地址功能完善
+                    phone: authStore.user.phone || ''
                 }
             }
             
@@ -588,34 +581,11 @@ const handleUnbind = async (provider) => {
                         </div>
                     </div>
 
-                    <!-- 第四行：地址1 + 地址2 -->
-                    <div class="info-row-group row mb-0">
-                        <!-- 地址1 -->
-                        <div class="col-md-6">
-                            <div class="info-row">
-                                <label class="info-label">地址1：</label>
-                                <span v-if="!editMode.address1" class="info-value">{{ editForm.address1 || '未設定' }}</span>
-                                <input v-else v-model="editForm.address1" type="text" class="form-control info-input" 
-                                    placeholder="請輸入主要地址">
-                                <button class="btn btn-link btn-sm" @click="toggleEdit('address1')">
-                                    <i class="bi" :class="editMode.address1 ? 'bi-check-lg' : 'bi-pencil-fill'"></i>
-                                </button>
-                            </div>
-                        </div>
+                </div>
 
-                        <!-- 地址2 -->
-                        <div class="col-md-6">
-                            <div class="info-row">
-                                <label class="info-label">地址2：</label>
-                                <span v-if="!editMode.address2" class="info-value">{{ editForm.address2 || '未設定' }}</span>
-                                <input v-else v-model="editForm.address2" type="text" class="form-control info-input" 
-                                    placeholder="請輸入次要地址">
-                                <button class="btn btn-link btn-sm" @click="toggleEdit('address2')">
-                                    <i class="bi" :class="editMode.address2 ? 'bi-check-lg' : 'bi-pencil-fill'"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                <!-- 地址管理區域 -->
+                <div class="address-management-section mb-4">
+                    <AddressManager />
                 </div>
 
                 <!-- 第三方登入綁定區域 -->
@@ -1142,6 +1112,13 @@ const handleUnbind = async (provider) => {
 
 /* 儲存按鈕區域樣式 */
 .save-button-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.address-management-section {
     background: white;
     border-radius: 12px;
     padding: 1.5rem;
