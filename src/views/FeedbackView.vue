@@ -69,12 +69,12 @@ const handleReviewSubmitted = () => {
         <ReportList />
       </div>
 
-      <div v-if="activeTab === 'appeals'" class="text-center text-muted p-5">
+      <div v-if="activeTab === 'appeals'" class="text-muted p-5">
         <ComplaintHistory></ComplaintHistory>
         <hr>        
       </div>
 
-      <div v-if="activeTab === 'reviews'" class="text-center text-muted p-5">
+      <div v-if="activeTab === 'reviews'" class="text-muted p-5">
         <ReviewComponent :product-id="testProductId" />
         <hr>        
       </div>

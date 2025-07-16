@@ -79,7 +79,6 @@ onMounted(() => {
         
         <span class="badge fs-6" :class="{
             'bg-warning text-dark': complaint.complaintStatusName === '待處理',
-            'bg-info text-dark': complaint.complaintStatusName === '處理中',
             'bg-success': complaint.complaintStatusName === '已回覆',
             'bg-secondary': complaint.complaintStatusName === '已結案'
         }">

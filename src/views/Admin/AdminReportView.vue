@@ -1,16 +1,22 @@
 <script setup>
-// --- 區塊 1：Setup & 引入 ---
+// ========================================================================
+// 區塊 1：Setup & 引入
+// ========================================================================
 import { ref, onMounted, computed, reactive, watch } from 'vue';
 import axios from 'axios';
 
-// --- 區塊 2：響應式狀態 (Reactive State) ---
+// ========================================================================
+// 區塊 2：響應式狀態 (Reactive State)
+// ========================================================================
 const allReports = ref([]);
-const reports = ref([]); // 維持原樣，用來顯示在表格上
+const reports = ref([]);
 const selectedReport = ref(null);
 const isLoading = ref(true);
 const error = ref(null);
 const activeStatus = ref(0);
 const searchTerm = ref('');
+const currentPage = ref(1);
+const itemsPerPage = 10;
 
 const statusButtons = [
   { id: null, name: '全部', color: 'btn-warning' },
@@ -19,7 +25,7 @@ const statusButtons = [
   { id: 2, name: '不成立', color: 'btn-danger' },
 ];
 
-// --- 區塊 3：Toast 通知相關狀態與方法 ---
+// --- Toast 通知相關狀態 ---
 const isProcessing = ref(false);
 const toast = reactive({
   show: false,
@@ -27,27 +33,43 @@ const toast = reactive({
   type: 'success',
 });
 
-const showToast = (message, type = 'success') => {
-  toast.message = message;
-  toast.type = type;
-  toast.show = true;
-  setTimeout(() => {
-    toast.show = false;
-  }, 3000);
-};
+// ========================================================================
+// 區塊 3：計算屬性 (Computed Properties)
+// ========================================================================
+const totalPages = computed(() => {
+  return Math.ceil(reports.value.length / itemsPerPage);
+});
 
-// --- 區塊 4：主要方法 (Methods) ---
+const paginatedReports = computed(() => {
+  if (reports.value.length === 0) return [];
+  const startIndex = (currentPage.value - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  return reports.value.slice(startIndex, endIndex);
+});
+
+// ========================================================================
+// 區塊 4：主要方法 (Methods)
+// ========================================================================
 
 /**
- * @description 從後端 API 獲取檢舉列表資料 (只獲取，不過濾)
+ * @description 從後端 API 獲取檢舉列表資料
  */
 const fetchReports = async () => {
   isLoading.value = true;
   error.value = null;
   try {
     const response = await axios.get('/api/ReviewReports/admin-view');
-    allReports.value = response.data; // 只更新原始資料備份
-    // 【修改】不再自動呼叫 applyFilters
+
+    // ============================================================
+    // vvvvvvvvvvvv 【核心偵錯步驟】 vvvvvvvvvvvv
+    // ============================================================
+    // 我們在這裡印出從後端收到的最原始的資料，看看究竟有幾筆
+    console.log('從後端收到的原始資料:', response.data);
+    console.log('收到的總筆數:', response.data.length);
+    // ============================================================
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    allReports.value = response.data;
   } catch (err) {
     console.error("Failed to fetch reports:", err);
     error.value = "無法載入檢舉資料，請稍後再試。";
@@ -71,14 +93,18 @@ const applyFilters = () => {
         );
     }
     reports.value = result;
+    currentPage.value = 1;
 };
 
-/**
- * @description 點擊狀態按鈕時的處理函式
- */
 const selectStatus = (statusId) => {
     activeStatus.value = statusId;
-    applyFilters(); // 點擊按鈕時，只需要根據已有的資料進行篩選
+    applyFilters();
+};
+
+const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page;
+    }
 };
 
 const selectReport = (report) => {
@@ -89,14 +115,18 @@ const closeDetailView = () => {
   selectedReport.value = null;
 };
 
-/**
- * @description 處理審核操作的核心邏輯
- */
+const showToast = (message, type = 'success') => {
+  toast.message = message;
+  toast.type = type;
+  toast.show = true;
+  setTimeout(() => {
+    toast.show = false;
+  }, 3000);
+};
+
 const processReport = async (reportId, newStatusId) => {
     if (isProcessing.value) return;
     if (!confirm(`確定要將此案件狀態更改嗎?`)) return;
-
-    // 獲取 adminId 的程式碼 ...
     const storedAdmin = localStorage.getItem('admin');
     const adminInfo = storedAdmin ? JSON.parse(storedAdmin) : null;
     if (!adminInfo || !adminInfo.adminId) {
@@ -105,27 +135,15 @@ const processReport = async (reportId, newStatusId) => {
     }
     const currentAdminId = adminInfo.adminId;
     isProcessing.value = true;
-
     try {
         const payload = { NewStatusId: newStatusId, AdminId: currentAdminId };
         await axios.put(`/api/ReviewReports/${reportId}/status`, payload);
         showToast('操作成功！', 'success');
-
-        // vvvvvvvvvv 【核心修改】調整非同步流程 vvvvvvvvvv
         const reportIdToKeepOpen = selectedReport.value.reportId;
-        
-        // 1. 先從後端獲取最新的「全部」資料，更新到 allReports
         await fetchReports();
-        
-        // 2. 從最新的「全部」資料中，找到我們剛剛更新的那一筆
         const updatedReport = allReports.value.find(r => r.reportId === reportIdToKeepOpen);
-        
-        // 3. 更新右側詳情面板的顯示內容
         selectedReport.value = updatedReport || null;
-        
-        // 4. 最後，才根據當前的篩選條件，去更新左側的列表
         applyFilters();
-
     } catch (err) {
         const errorMessage = err.response?.data || "發生未知錯誤";
         showToast(`操作失敗：${errorMessage}`, 'error');
@@ -135,24 +153,31 @@ const processReport = async (reportId, newStatusId) => {
     }
 };
 
-// --- 區塊 5：監聽器 (Watchers) ---
+// ========================================================================
+// 區塊 5：監聽器 (Watchers)
+// ========================================================================
 watch(searchTerm, () => {
-    applyFilters();
+    let timer;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+        applyFilters();
+    }, 300);
 });
 
-// --- 區塊 6：生命週期鉤子 (Lifecycle Hooks) ---
+// ========================================================================
+// 區塊 6：生命週期鉤子 (Lifecycle Hooks)
+// ========================================================================
 onMounted(async () => {
   activeStatus.value = 0; 
-  await fetchReports(); // 等待資料獲取完成
-  applyFilters();       // 然後再執行第一次篩選
+  await fetchReports();
+  applyFilters();
 });
 </script>
-
-
 
 <template>
   <div class="report-management">
 
+    <!-- Toast 通知元件 -->
     <transition name="toast">
         <div v-if="toast.show" class="toast-notification" :class="toast.type">
             <svg v-if="toast.type === 'success'" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
@@ -161,8 +186,9 @@ onMounted(async () => {
         </div>
     </transition>
     
+    <!-- 頁首與篩選器 -->
     <header class="page-header">
-      <h3>評論檢舉管理</h3>
+      <h2>評論檢舉管理</h2>
       <div class="filters-and-search">
         <div class="search-bar">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></svg>
@@ -181,13 +207,16 @@ onMounted(async () => {
       </div>
     </header>
 
+    <!-- 載入與錯誤狀態 -->
     <div v-if="isLoading" class="loading">載入中...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
 
+    <!-- 主內容佈局 -->
     <div v-else class="content-layout">
-
+      <!-- 左側案件列表 -->
       <div class="report-list">
         <h4>{{ statusButtons.find(s => s.id === activeStatus)?.name || '所有' }} 案件列表 ({{ reports.length }} 筆)</h4>
+        
         <table>
           <thead>
             <tr>
@@ -200,10 +229,10 @@ onMounted(async () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-if="reports.length === 0">
+            <tr v-if="paginatedReports.length === 0">
               <td colspan="6">沒有符合條件的案件</td>
             </tr>
-            <tr v-for="report in reports" :key="report.reportId" @click="selectReport(report)" :class="{ 'selected': selectedReport && selectedReport.reportId === report.reportId }">
+            <tr v-for="report in paginatedReports" :key="report.reportId" @click="selectReport(report)" :class="{ 'selected': selectedReport && selectedReport.reportId === report.reportId }">
               <td>{{ report.reportId }}</td>
               <td>{{ report.reasonName }}</td>
               <td class="preview-text">{{ report.reviewContent }}</td>
@@ -215,14 +244,27 @@ onMounted(async () => {
             </tr>
           </tbody>
         </table>
+
+        <!-- 分頁控制項 -->
+        <div v-if="totalPages > 1" class="pagination-controls mt-4">
+            <button @click="goToPage(currentPage - 1)" :disabled="currentPage === 1" class="btn btn-outline-secondary">
+                &laquo; 上一頁
+            </button>
+            <span class="page-info">
+                第 {{ currentPage }} / {{ totalPages }} 頁
+            </span>
+            <button @click="goToPage(currentPage + 1)" :disabled="currentPage === totalPages" class="btn btn-outline-secondary">
+                下一頁 &raquo;
+            </button>
+        </div>
       </div>
 
+      <!-- 右側詳情面板 -->
       <div v-if="selectedReport" class="report-detail">
         <div class="detail-header">
             <h3>案件詳情 (ID: {{ selectedReport.reportId }})</h3>
             <button class="close-btn" @click="closeDetailView">×</button>
         </div>
-
         <div class="detail-content">
           <div class="detail-item">
             <strong>檢舉時間:</strong>
@@ -255,7 +297,6 @@ onMounted(async () => {
             <p>{{ selectedReport.adminUserName || 'N/A' }}</p>
           </div>
         </div>
-
         <div class="detail-actions">
             <button class="btn-approve" @click="processReport(selectedReport.reportId, 1)" :disabled="isProcessing">
                 {{ isProcessing ? '處理中...' : '審核通過 (成立)' }}
@@ -269,7 +310,6 @@ onMounted(async () => {
       <div v-else class="placeholder">
         點擊左側列表中的案件以查看詳細資訊。
       </div>
-
     </div>
   </div>
 </template>
