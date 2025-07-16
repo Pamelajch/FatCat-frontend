@@ -31,7 +31,8 @@ const initializeData = async () => {
                     editForm.value = {
                         name: authStore.user.name || '',
                         birthdate: authStore.user.birthdate ? new Date(authStore.user.birthdate).toISOString().split('T')[0] : '',
-                        phone: authStore.user.phone || ''
+                        phone: authStore.user.phone || '',
+                        gender: authStore.user.gender
                     }
                 }
                 // 標記為已初始化
@@ -82,14 +83,16 @@ onMounted(async () => {
 const editMode = ref({
     name: false,
     birthdate: false,
-    phone: false
+    phone: false,
+    gender: false
 })
 
 // 編輯表單數據
 const editForm = ref({
     name: '',
     birthdate: '',
-    phone: ''
+    phone: '',
+    gender: null
 })
 
 // 檔案上傳相關
@@ -165,6 +168,17 @@ const formatBirthdate = (dateString) => {
     })
 }
 
+// 格式化性別
+const formatGender = (gender) => {
+    if (gender === null || gender === undefined) return '未設定'
+    switch (gender) {
+        case 0: return '男'
+        case 1: return '女'
+        case 2: return '其他'
+        default: return '未設定'
+    }
+}
+
 // 切換編輯模式
 const toggleEdit = (field) => {
     if (editMode.value[field]) {
@@ -176,6 +190,7 @@ const toggleEdit = (field) => {
         // 初始化編輯值
         if (field === 'name') editForm.value.name = authStore.user?.name || ''
         if (field === 'phone') editForm.value.phone = authStore.user?.phone || ''
+        if (field === 'gender') editForm.value.gender = authStore.user?.gender
         if (field === 'birthdate') {
             // 將日期轉為 YYYY-MM-DD 格式
             const date = authStore.user?.birthdate
@@ -196,6 +211,8 @@ const saveField = async (field) => {
             updateData.name = editForm.value.name
         } else if (field === 'phone') {
             updateData.phone = editForm.value.phone
+        } else if (field === 'gender') {
+            updateData.gender = editForm.value.gender
         } else if (field === 'birthdate') {
             updateData.birthdate = new Date(editForm.value.birthdate).toISOString()
         }
@@ -283,6 +300,9 @@ const saveAllChanges = async () => {
         if (editMode.value.phone && editForm.value.phone !== authStore.user?.phone) {
             updateData.phone = editForm.value.phone
         }
+        if (editMode.value.gender && editForm.value.gender !== authStore.user?.gender) {
+            updateData.gender = editForm.value.gender
+        }
         if (editMode.value.birthdate && editForm.value.birthdate) {
             updateData.birthdate = new Date(editForm.value.birthdate).toISOString()
         }
@@ -315,7 +335,8 @@ const saveAllChanges = async () => {
                 editForm.value = {
                     name: authStore.user.name || '',
                     birthdate: authStore.user.birthdate ? new Date(authStore.user.birthdate).toISOString().split('T')[0] : '',
-                    phone: authStore.user.phone || ''
+                    phone: authStore.user.phone || '',
+                    gender: authStore.user.gender
                 }
             }
             
@@ -568,7 +589,26 @@ const handleUnbind = async (provider) => {
                         </div>
                     </div>
 
-                    <!-- 第三行：密碼（單獨一行） -->
+                    <!-- 第三行：性別 -->
+                    <div class="info-row-group row mb-3">
+                        <div class="col-md-6">
+                            <div class="info-row">
+                                <label class="info-label">性別：</label>
+                                <span v-if="!editMode.gender" class="info-value">{{ formatGender(authStore.user?.gender) }}</span>
+                                <select v-else v-model="editForm.gender" class="form-control info-input">
+                                    <option value="">請選擇性別</option>
+                                    <option value="0">男</option>
+                                    <option value="1">女</option>
+                                    <option value="2">其他</option>
+                                </select>
+                                <button class="btn btn-link btn-sm" @click="toggleEdit('gender')">
+                                    <i class="bi" :class="editMode.gender ? 'bi-check-lg' : 'bi-pencil-fill'"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 第四行：密碼（單獨一行） -->
                     <div class="info-row-group row mb-3">
                         <div class="col-12">
                             <div class="info-row">
