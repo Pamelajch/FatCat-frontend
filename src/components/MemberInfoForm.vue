@@ -36,4 +36,4 @@ watch(name, val => checkout.name = val)
 watch(phone, val => checkout.phone = val)
 watch(email, val => checkout.email = val)
 </script>
-
+ 
