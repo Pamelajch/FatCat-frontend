@@ -138,6 +138,7 @@ const routes = [
             { path: 'logs', name: 'AdminLogs', component: () => import('./views/Admin/AdminLogsView.vue') },
             { path: 'notifications', name: 'AdminNotifications', component: () => import('./views/Admin/AdminNotificationView.vue') },
             { path: 'stream', name: 'AdminStream', component: () => import('./views/Admin/AdminStreamView.vue') },
+            
         ]
     },
 

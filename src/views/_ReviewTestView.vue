@@ -1,7 +1,7 @@
 <script setup>
 import CreateComplaintForm from '@/components/CreateComplaintForm.vue';
-import ReviewComponent from '../components/ReviewComponent.vue';
 import PostReviewForm from '@/components/PostReviewForm.vue';
+import ProductReview from '@/components/ProductReview.vue';
 
 // ========================================================================
 //        【在這裡定義好所有要測試用的 ID 】
@@ -33,8 +33,8 @@ const handleReviewSubmitted = () => {
         我們將 testProductId 傳遞給它
         ============================================================
      -->
-    <h3 class="mt-4">顯示評論列表 (ReviewComponent)</h3>
-    <ReviewComponent :product-id="testProductId" />
+    <h3 class="mt-4">商品(單品)評論列表 (ReviewComponent)</h3>
+    <ProductReview :product-id="testProductId" />
     <hr>
 
     <!-- 
@@ -63,5 +63,6 @@ const handleReviewSubmitted = () => {
         @complaint-submitted="handleComplaintSubmitted"
     />
     <hr>
+     
   </div>
 </template>
