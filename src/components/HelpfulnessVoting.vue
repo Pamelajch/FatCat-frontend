@@ -49,7 +49,7 @@ const vote = async (voteType) => {
       isHelpful: voteType
     });
     
-    // --- 👇👇👇【修改點 3：使用後端回傳的最新計數來校準】👇👇👇 ---
+    // --- 【修改點 3：使用後端回傳的最新計數來校準】 ---
     // 這樣能保證畫面上顯示的數字永遠是最準確的
     if (response.data && typeof response.data.newCount === 'number') {
         helpfulnessCount.value = response.data.newCount;

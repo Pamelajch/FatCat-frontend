@@ -4,8 +4,10 @@
 // ========================================================================
 import { ref, onMounted, computed } from 'vue';
 import api from '@/services/jjapi.js'; 
-import HelpfulnessVoting from './HelpfulnessVoting.vue'; // 假設路徑正確
-import ReportModal from './ReportModal.vue';             // 假設路徑正確
+import HelpfulnessVoting from './HelpfulnessVoting.vue'; 
+import ReportModal from './ReportModal.vue';             
+import { useAuthStore } from '@/stores/auth'; 
+
 
 // ========================================================================
 // 區塊 2：Props
@@ -27,6 +29,7 @@ const isLoading = ref(true);
 const error = ref(null);
 const showReportModal = ref(false); 
 const reportingReviewId = ref(null);
+const authStore = useAuthStore(); //取得Auth實例
 
 // ========================================================================
 // 區塊 4：計算屬性
@@ -116,7 +119,8 @@ onMounted(() => {
                 <span v-for="n in 5" :key="n" class="star" :class="{ 'filled': n <= review.rating }">★</span>
               </div>
               <!-- 互動按鈕區 -->
-              <div class="review-actions d-flex align-items-center gap-2">
+             <!-- 使用 v-if="authStore.isLoggedIn" 來判斷是否顯示互動按鈕區 -->
+              <div v-if="authStore.isAuthenticated" class="review-actions d-flex align-items-center gap-2">
                 <HelpfulnessVoting
                   :review-id="review.reviewId"
                   :initial-count="review.helpfulnessCount"

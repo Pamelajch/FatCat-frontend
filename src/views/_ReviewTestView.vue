@@ -11,7 +11,7 @@ import ProductReview from '@/components/ProductReview.vue';
 // 1. 你有一張訂單 OrderId = 2
 // 2. 這張訂單裡有一個商品，其對應的 ProductId 是 1
 const testOrderId = 2;
-const testProductId = 1;
+const testProductId = 5;
 
 // 處理子元件發出的事件，方便除錯
 const handleComplaintSubmitted = () => {
