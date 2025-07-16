@@ -22,9 +22,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useCheckoutStore } from '@/stores/checkout'
+
+const checkout = useCheckoutStore()
 
 const name = ref('')
 const phone = ref('')
 const email = ref('')
+
+// 即時同步到 store
+watch(name, val => checkout.name = val)
+watch(phone, val => checkout.phone = val)
+watch(email, val => checkout.email = val)
 </script>
+

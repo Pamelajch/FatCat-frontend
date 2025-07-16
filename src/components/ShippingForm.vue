@@ -102,6 +102,17 @@ onMounted(async () => {
   }
 })
 
+// 監聽 checkbox 勾選時從 store 帶入資料
+watch(sameAsMember, (val) => {
+  if (val) {
+    recipientName.value = checkout.name
+    recipientPhone.value = checkout.phone
+  } else {
+    recipientName.value = ''
+    recipientPhone.value = ''
+  }
+})
+
 // 同步到 store
 watch(selectedShippingId, (newId) => {
   checkout.shippingId = newId
