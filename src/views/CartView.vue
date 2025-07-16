@@ -57,28 +57,29 @@ const products = ref([
       </div>
     </div>
 
-    <!-- 優惠與猜你喜歡 -->
+    <!-- 猜你喜歡與優惠 -->
     <div class="container">
       <div class="row">
-        <!-- 優惠區塊 -->
-        <div class="col-12 col-md-6">
-           <CouponSection />
-        </div>
-
         <!-- 猜你喜歡區塊 -->
         <div class="col-12 col-md-6">
-            <li class="list-group-item d-flex gap-2">
-              <GueseeULikeSection/>
-            </li>
-          
-          <!-- 結帳按鈕 -->
-          <router-link to="/checkout">
-            <button type="button" class="btn custom-purple-btn float-end">前往結帳</button>
-          </router-link>
-        
-          <router-link to="/">
-            <button type="button" class="btn custom-purple-outline-btn float-end btn-space">繼續購物</button>
-          </router-link>
+          <li class="list-group-item d-flex gap-2">
+            <GueseeULikeSection />
+          </li>
+        </div>
+
+        <!-- 優惠區塊 + 按鈕 -->
+        <div class="col-12 col-md-6 d-flex flex-column">
+          <CouponSection />
+
+          <!-- 按鈕區塊，靠右排列 -->
+          <div class="mt-3 d-flex justify-content-end gap-2">
+            <router-link to="/">
+              <button type="button" class="btn custom-purple-outline-btn">繼續購物</button>
+            </router-link>
+            <router-link to="/checkout">
+              <button type="button" class="btn custom-purple-btn">前往結帳</button>
+            </router-link>
+          </div>
         </div>
       </div>
     </div>
