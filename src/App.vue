@@ -14,7 +14,7 @@ import CustomerService from './components/CustomerService.vue'
        
 // 應用載入狀態
 const appLoading = ref(true)
-      
+        
 //獲取目前路由
 const route = useRoute()
 //計算是否需要隱藏 Header 和 Footer
