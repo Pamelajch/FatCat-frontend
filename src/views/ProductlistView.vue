@@ -27,10 +27,12 @@ const maxPrice = ref('')
 const fetchFilterOptions = async () => {
   try {
     const catRes = await fetch('https://localhost:7017/api/ProductCategories')
-    categories.value = await catRes.json()
+    const allCategories = await catRes.json()
+    categories.value = allCategories.filter(cat => cat.productCategoriesId !== 9)
 
     const sortRes = await fetch('https://localhost:7017/api/Sorts')
-    sorts.value = await sortRes.json()
+    const allSorts = await sortRes.json()
+    sorts.value = allSorts.filter(s => s.categoryId !== 9)
   } catch (error) {
     console.error('無法取得篩選資料:', error)
   }
@@ -53,7 +55,7 @@ const fetchProducts = async () => {
     const res = await fetch('https://localhost:7017/api/Products/filter')
     const data = await res.json()
     // 這裡加上圖片路徑補全
-    products.value = data.map(p => ({
+    products.value = data.filter(p => p.categoryId !== 9).map(p => ({
       ...p,
       imageUrl: `/ProductImages/${p.imageUrl}`,
       categoryId: p.categoryId
@@ -85,7 +87,7 @@ const applyFilters = async () => {
     const res = await fetch(`https://localhost:7017/api/Products/filter?${query.toString()}`)
     const data = await res.json()
     // 一樣補上圖片路徑
-    products.value = data.map(p => ({
+    products.value = data.filter(p => p.categoryId !== 9).map(p => ({
       ...p,
       imageUrl: `/ProductImages/${p.imageUrl}`,
       categoryId: p.categoryId
