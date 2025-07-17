@@ -160,7 +160,15 @@ const routes = [
             { path: 'stream', name: 'AdminStream', component: () => import('./views/Admin/AdminStreamView.vue') },
             { path: '/coupon-add', component: CouponAddView },
             { path: '/coupon-detail/:id', component: CouponDetailView, props: true },
-            { path: '/order-detail/:id', component: OrderDetailView }
+            { path: '/order-detail/:id', component: OrderDetailView },
+            {
+                path: '/admin/shippings/add',
+                component: () => import('@/views/Admin/ShippingAddView.vue')
+            },
+            {
+                path: '/admin/shippings/edit/:id',
+                component: () => import('@/views/Admin/ShippingEditView.vue')
+            }
 
         ]
     },
