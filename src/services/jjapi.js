@@ -31,6 +31,7 @@ api.interceptors.response.use(
         return response
     },
     (error) => {
+        //////////////////////// 記得寫 && !isAdminLogin 登入失敗不要重倒到Login葉面//////////////////////////////////////
         // 如果 token 過期或無效，清除本地儲存並跳轉到登入頁
         if (error.response?.status == 401) {
             // 檢查是否已經在登入頁面或是登入相關的 API 呼叫
