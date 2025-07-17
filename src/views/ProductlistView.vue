@@ -445,7 +445,7 @@ const addSmartRandomIngredients = () => {
   justify-content: center;
   align-items: center;
   z-index: 1;
-  margin-bottom: 20px; /* 可調整碗跟桌面的距離 */
+  margin-bottom: 20px; /* 調整碗跟桌面的距離 */
 }
 
 .action-panel {
