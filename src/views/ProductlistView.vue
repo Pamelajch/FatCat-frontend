@@ -55,11 +55,22 @@ const fetchProducts = async () => {
     // 這裡加上圖片路徑補全
     products.value = data.map(p => ({
       ...p,
-      imageUrl: `/ProductImages/${p.imageUrl}`
+      imageUrl: `/ProductImages/${p.imageUrl}`,
+      categoryId: p.categoryId
     }))
   } catch (error) {
     console.error('無法取得商品資料:', error)
   }
+}
+
+const slider = ref(null)
+
+const scrollLeft = () => {
+  slider.value.scrollLeft -= 200
+}
+
+const scrollRight = () => {
+  slider.value.scrollLeft += 200
 }
 
 // 套用使用者篩選條件
@@ -76,7 +87,8 @@ const applyFilters = async () => {
     // 一樣補上圖片路徑
     products.value = data.map(p => ({
       ...p,
-      imageUrl: `/ProductImages/${p.imageUrl}`
+      imageUrl: `/ProductImages/${p.imageUrl}`,
+      categoryId: p.categoryId
     }))
   } catch (error) {
     console.error('篩選商品失敗:', error)
@@ -123,6 +135,41 @@ const onDropToList = (event) => {
     }
   }
 }
+
+const addSmartRandomIngredients = () => {
+  const grouped = {}
+
+  for (const product of products.value) {
+    const isInBowl = bowl.value.some(b => b.productsId === product.productsId)
+    if (isInBowl) continue
+
+    const catId = product.categoryId
+    if (!grouped[catId]) {
+      grouped[catId] = []
+    }
+    grouped[catId].push(product)
+  }
+
+  let added = false
+  for (const catId in grouped) {
+    const items = grouped[catId]
+    if (items.length > 0) {
+      const randomIndex = Math.floor(Math.random() * items.length)
+      const selected = items[randomIndex]
+      bowl.value.push(selected)
+      added = true
+    }
+  }
+
+  if (added) {
+    showBubbles.value = true
+    setTimeout(() => {
+      showBubbles.value = false
+    }, 800)
+  } else {
+    alert('每個分類都已經有一個食材囉～無法再抽了 😺')
+  }
+}
 </script>
 
 <template>
@@ -162,25 +209,40 @@ const onDropToList = (event) => {
 
   <button class="filter-button" @click="applyFilters">套用篩選</button>
 </div>
-    <!-- 食材清單 -->
-    <div class="product-list" @dragover.prevent @drop="onDropToList">
-      <div
-  v-for="product in products"
-  :key="product.productsId"
-  class="product"
-  draggable="true"
-  @dragstart="onDragStart(product, 'list')"
-  @dblclick="goToProductDetail(product.productsId)"
->
-  <img :src="product.imageUrl" />
-  <p>{{ product.name }}</p>
-</div>
+    <!-- 篩選區下方加標題 -->
+<h3 class="section-title">🧂 可拖曳食材區</h3>
+
+<!-- 食材清單，可滑動容器 + 左右按鈕 -->
+<div class="product-slider-container">
+  <button class="scroll-btn left" @click="scrollLeft">‹</button>
+
+  <div class="product-slider" ref="slider" @dragover.prevent @drop="onDropToList">
+    <div
+      v-for="product in products"
+      :key="product.productsId"
+      class="ironbox"
+      draggable="true"
+      @dragstart="onDragStart(product, 'list')"
+      @dblclick="goToProductDetail(product.productsId)"
+    >
+      <img class="ironbox-bg" src="/ironbox.png" alt="鐵盒背景" />
+      <img class="ironbox-item" :src="product.imageUrl" :alt="product.name" />
+      <div class="ironbox-name">{{ product.name }}</div>
+    </div>
+  </div>
+
+  <button class="scroll-btn right" @click="scrollRight">›</button>
 </div>
 
-    <!-- 拖曳進來的碗（用 pot.jpg 當背景）-->
-    <div class="bowl" @dragover.prevent @drop="onDrop">
-      <div class="bowl-items">
-        <img
+<!-- 碗區標題與提示 -->
+<h3 class="section-title">🍜 你的泡麵碗</h3> <!-- 置中 -->
+
+<!-- 桌子背景容器以及碗 -->
+<div class="table-wrapper">
+  <img src="/mytable.png" class="table-bg" alt="桌子背景" />
+  <div class="bowl" @dragover.prevent @drop="onDrop">
+    <div class="bowl-items">
+      <img
         v-for="item in bowl"
         :key="item.productsId"
         :src="item.imageUrl"
@@ -188,18 +250,23 @@ const onDropToList = (event) => {
         class="bowl-img"
         draggable="true"
         @dragstart="onDragStart(item, 'bowl')"
-        />
-      </div>
-      <div v-if="showBubbles" class="bubble-effect"></div> <!-- 泡泡動畫 -->
+      />
     </div>
-    <button @click="bowl = []" class="clear-button">清空碗</button>
-    <RouterLink :to="{name:'specialnoodle'}"><button class="clear-button">查看特殊款泡麵 ➜</button></RouterLink>
-  <div>
-    <!-- 給梓瑋的放加入購物車按鈕連結的地方 -->
+    <div v-if="showBubbles" class="bubble-effect"></div>
   </div>
-  <div>
-    <!-- 給如謙的放加入購物車按鈕連結的地方 -->
+</div>
+
+<!-- 改為左右按鈕 -->
+<div class="action-panel">
+  <div class="button-group">
+    <button @click="bowl = []" class="action-button">清空碗</button>
+    <button @click="addSmartRandomIngredients" class="action-button">隨機抽選食材 🎯</button>
+    <button class="action-button">加入購物車</button>
+    <RouterLink :to="{ name: 'specialnoodle' }">
+      <button class="action-button">查看特殊款泡麵 ➜</button>
+    </RouterLink>
   </div>
+</div>
   </div>
   </div>
 </template>
@@ -237,47 +304,173 @@ const onDropToList = (event) => {
   padding-bottom: 60px;
 }
 
-.product-list {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+.product-slider-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
   margin-bottom: 30px;
 }
 
-.product {
-  width: 100px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  padding: 8px;
-  text-align: center;
-  background-color: #fff6fa;
-  box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+.product-slider {
+  display: flex;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+.ironbox {
+  position: relative;
+  width: 250px;
+  height: 250px;
+  flex-shrink: 0;
   cursor: grab;
-  transition: all 0.2s ease-in-out;
 }
 
-.product:active {
-  cursor: grabbing;
-  transform: scale(1.05);
+.ironbox-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
 }
 
-.product img {
-  width: 60px;
-  height: 60px;
+.ironbox-item {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 155px;
+  height: 150px;
+  object-fit: cover;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.ironbox-name {
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: white;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none; /* 避免 hover 停在名字上就卡住 */
+}
+
+.ironbox:hover .ironbox-name {
+  opacity: 1;
+}
+
+/* 左右捲動按鈕 */
+.scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.7);
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+  padding: 6px 12px;
+  cursor: pointer;
+  z-index: 10;
+  border-radius: 8px;
+}
+
+.scroll-btn.left {
+  left: 0;
+}
+
+.scroll-btn.right {
+  right: 0;
+}
+
+.scroll-btn:hover {
+  background-color: #ffe0e0;
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.6); /* 半透明深底 */
+  padding: 10px 20px;
+  border: 2px solid #ffcc70;
+  border-radius: 6px;
+  display: inline-block;
+  text-shadow:
+    2px 2px 0px #663399,
+   -2px -2px 0px #663399; /* 紫色描邊感 */
+  margin-bottom: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* 底部陰影 */
+}
+
+.table-wrapper {
+  position: relative;
+  width: 1050px;              /* 調整寬度 */
+  overflow: hidden;          /* 防止圖片溢出 */
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin-top: 40px;
+}
+
+.table-bg {
+  position: absolute;
+  bottom: 0;
+  width: 1050px;              /* 圖片寬度 */
+  height: auto;              /* 高度自動 */
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bowl-hint {
+  text-align: center;
+  font-size: 18px;
+  color: whitesmoke;
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
 .bowl {
-  width: 800px;
-  height: 800px;
+  width: 600px; /* 原本 800 改小一點更緊湊 */
+  height: 600px;
   background-image: url('/pot.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  position: relative;  /* 讓子元素可以絕對定位 */
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 20px auto;
+  z-index: 1;
+  margin-bottom: 20px; /* 調整碗跟桌面的距離 */
+}
+
+.action-panel {
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 3px solid #ffcc70;
+  border-radius: 10px;
+  padding: 20px 30px;
+  margin-top: 30px;
+  margin-bottom: 60px;
+  width: fit-content;
+  max-width: 95%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.button-group {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .bowl-items {
@@ -300,36 +493,43 @@ const onDropToList = (event) => {
   box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.clear-button {
-  margin-top: 30px;
-  background-color: #f79c6a;
+.action-button {
+  background: linear-gradient(to right, #ffa94d, #ff6f61);
   border: none;
-  padding: 14px 28px;         /* 加大按鈕內部空間 */
-  border-radius: 14px;        /* 邊角更圓潤 */
   color: white;
+  padding: 14px 28px;
+  font-size: 20px;
+  font-weight: bold;
+  border-radius: 14px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   cursor: pointer;
-  font-size: 20px;            /* 字體變大 */
-  font-weight: bold;          /* 更有力道 */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* 加點陰影感 */
   transition: all 0.2s ease-in-out;
 }
 
-.clear-button:hover {
-  background-color: #ffad7f;
-  transform: scale(1.05);     /* 滑鼠移上去微微放大 */
+.action-button:hover {
+  background: linear-gradient(to right, #ffb96b, #ff8677);
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+.action-button:active {
+  transform: scale(0.98);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .filter-box {
-  background-color: #fff5e1;
-  border: 2px solid #fcd38a;
+  background-color: rgba(255, 165, 0, 0.2); /* 半透明橘色 */
+  border: 2px solid #ffa94d;               /* 同色系邊框 */
   padding: 20px;
   margin-bottom: 30px;
-  border-radius: 16px;
+  border-radius: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
   justify-content: center;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 0 8px rgba(255, 140, 0, 0.2); /* 內陰影 */
+  backdrop-filter: blur(4px);                      /* 毛玻璃效果 */
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .filter-group {
@@ -340,8 +540,11 @@ const onDropToList = (event) => {
 
 .filter-group label {
   font-weight: bold;
-  color: #ff8c42;
-  margin-bottom: 6px;
+  color: #fff;
+  font-size: 14px;
+  text-shadow:
+    1px 1px 0 #663399,
+   -1px -1px 0 #663399;  /* 紫色描邊 */
 }
 
 .filter-group select,
@@ -360,18 +563,28 @@ const onDropToList = (event) => {
 }
 
 .filter-button {
-  background-color: #ffa94d;
+  background-color: rgba(255, 165, 0, 0.85);  /* 橘色半透明 */
   color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 12px 20px;
+  border: 2px solid #ffd280;                 /* 黃橘邊框 */
+  border-radius: 4px;
+  padding: 10px 20px;
   font-weight: bold;
+  font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease-in-out;
+  text-shadow: 1px 1px #aa4c00;              /* 描邊*/
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);  /* 陰影 */
 }
 
 .filter-button:hover {
-  background-color: #ff922b;
+  background-color: rgba(255, 190, 100, 0.95); /* Hover 淺一點橘 */
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(255, 180, 100, 0.4);
+}
+
+.filter-button:active {
+  transform: scale(0.97);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .bubble-effect {
