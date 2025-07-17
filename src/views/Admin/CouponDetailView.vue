@@ -3,6 +3,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getCouponById, updateCoupon, deleteCoupon } from '@/services/couponService'
+import { getCouponTypes } from '@/services/couponService' // 確保你有這個方法
 
 const route = useRoute()
 const router = useRouter()
@@ -10,6 +11,7 @@ const couponId = route.params.id
 
 const coupon = ref({
   couponId: '',
+  coupontypeId: '',
   name: '',
   description: '',
   discountAmount: 0,
@@ -32,6 +34,7 @@ const fetchCoupon = async () => {
   coupon.value = data
 }
 
+const couponTypes = ref([])
 
 
 
@@ -49,7 +52,14 @@ const deleteCurrentCoupon = async () => {
   }
 }
 
+// 取得優惠券種類
+const fetchCouponTypes = async () => {
+  const res = await getCouponTypes()
+  couponTypes.value = res.data
+}
+
 onMounted(fetchCoupon)
+onMounted(fetchCouponTypes)
 </script>
 
 <template>
@@ -71,6 +81,17 @@ onMounted(fetchCoupon)
       <label class="form-label">到期日</label>
       <input type="date" v-model="coupon.expiryDate" class="form-control" />
     </div>
+
+     <!-- ✅ 修改：用 select 顯示優惠券種類 -->
+    <div class="mb-3">
+      <label class="form-label">優惠券種類</label>
+      <select v-model.number="coupon.coupontypeId" class="form-select">
+        <option v-for="type in couponTypes" :key="type.coupontypeId" :value="type.coupontypeId">
+        {{ type.name }}
+        </option>
+      </select>
+    </div>
+    
     <!-- 加入低消欄位 minimumPurchase -->
     <div class="mb-3">
     <label class="form-label">最低消費金額（低消）</label>
