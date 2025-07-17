@@ -25,7 +25,7 @@ import AdminChat from "./views/Admin/AdminChat.vue"
 import JjtestView from "./views/jjtestView.vue"
 import CouponAddView from '@/views/Admin/CouponAddView.vue'
 import CouponDetailView from '@/views/Admin/CouponDetailView.vue'
-
+import OrderDetailView from "./views/Admin/OrderDetailView.vue"
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
@@ -160,6 +160,8 @@ const routes = [
             { path: 'stream', name: 'AdminStream', component: () => import('./views/Admin/AdminStreamView.vue') },
             { path: '/coupon-add', component: CouponAddView },
             { path: '/coupon-detail/:id', component: CouponDetailView, props: true },
+            { path: '/order-detail/:id', component: OrderDetailView }
+
         ]
     },
 
