@@ -148,13 +148,14 @@ const routes = [
             { path: 'coupons', name: 'AdminCoupons', component: () => import('./views/Admin/AdminCouponView.vue') },
             { path: 'customer-service', name: 'AdminCustomerService', component: () => import('./views/Admin/AdminCustomerServiceView.vue') },
             { path: 'complaints', name: 'AdminComplaints', component: () => import('./views/Admin/AdminComplaintView.vue') },
-            { path: 'reviews', name: 'AdminReviews', component: () => import('./views/Admin/AdminReviewView.vue') },
+            { path: 'reviews', name: 'AdminReviews', component: () => import('./views/Admin/AdminReportView.vue') },
             { path: 'analysis', name: 'AdminAnalysis', component: () => import('./views/Admin/AdminAnalysisView.vue') },
             { path: 'store-setup', name: 'AdminStoreSetup', component: () => import('./views/Admin/AdminStoreSetupView.vue') },
             { path: 'settings', name: 'AdminSettings', component: () => import('./views/Admin/AdminSettingsView.vue') },
             { path: 'logs', name: 'AdminLogs', component: () => import('./views/Admin/AdminLogsView.vue') },
             { path: 'notifications', name: 'AdminNotifications', component: () => import('./views/Admin/AdminNotificationView.vue') },
             { path: 'stream', name: 'AdminStream', component: () => import('./views/Admin/AdminStreamView.vue') },
+            
         ]
     },
 

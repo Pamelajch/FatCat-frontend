@@ -4,31 +4,32 @@
 // ========================================================================
 import { ref, onMounted, computed } from 'vue';
 import api from '@/services/jjapi.js'; 
-// 以下兩個元件在此頁面可能不需要，但先保留，以防未來需要
-import HelpfulnessVoting from './HelpfulnessVoting.vue';
-import ReportModal from './ReportModal.vue';
+import HelpfulnessVoting from './HelpfulnessVoting.vue'; 
+import ReportModal from './ReportModal.vue';             
+import { useAuthStore } from '@/stores/auth'; 
+
 
 // ========================================================================
 // 區塊 2：Props
-// 【核心修正】「我的評論紀錄」頁面不需要從外部接收任何 props，
-// 因為它應該自動根據登入狀態去抓取資料。所以我們將整個 defineProps 區塊移除。
+// 這個元件必須由父層（商品單品頁）傳入一個 productId
 // ========================================================================
-// const props = defineProps({
-//   productId: {
-//     type: Number,
-//     required: true
-//   }
-// });
+const props = defineProps({
+  productId: {
+    type: Number,
+    required: true
+  }
+});
 
 // ========================================================================
 // 區塊 3：響應式狀態定義
 // ========================================================================
-const BACKEND_URL = 'https://localhost:7017';
+const BACKEND_URL = 'https://localhost:7017'; // 用於顯示圖片
 const reviews = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
 const showReportModal = ref(false); 
 const reportingReviewId = ref(null);
+const authStore = useAuthStore(); //取得Auth實例
 
 // ========================================================================
 // 區塊 4：計算屬性
@@ -42,32 +43,26 @@ const averageRating = computed(() => {
 // ========================================================================
 // 區塊 5：API 呼叫函式
 // ========================================================================
-const fetchMyReviews = async () => {
+const fetchReviews = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    // vvvvvvvvvv 【核心修正】 vvvvvvvvvvvv
-    // 我們現在呼叫的是專門用來獲取「我的評論」的後端 API。
-    // 這個 API 不需要任何參數，它會自動從你請求附帶的 Token 中解析出 UserId。
-    const response = await api.get(`/reviews`);
-    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+    if (isNaN(props.productId)) {
+        throw new Error("無效的商品 ID。");
+    }
+    // 【核心】呼叫我們剛剛建立的「公開」API 端點
+    const response = await api.get(`/public/products/${props.productId}/reviews`);
     reviews.value = response.data;
   } catch (err) {
-    // 增加對 401 未授權錯誤的處理，提供更友善的提示
-    if (err.response && err.response.status === 401) {
-        error.value = '您需要登入才能查看評論紀錄。';
-    } else {
-        error.value = '無法載入您的評論紀錄。';
-    }
-    console.error(`取得我的評論失敗:`, err);
+    console.error(`取得商品 ${props.productId} 的評論失敗:`, err);
+    error.value = '無法載入評論。';
   } finally {
     isLoading.value = false;
   }
 };
 
 // ========================================================================
-// 區塊 6：檢舉 Modal 相關方法 (可以保留)
+// 區塊 6：檢舉 Modal 相關方法
 // ========================================================================
 const openReportModal = (reviewId) => {
   reportingReviewId.value = reviewId;
@@ -82,7 +77,7 @@ const closeReportModal = () => {
 // 區塊 7：生命週期鉤子
 // ========================================================================
 onMounted(() => {
-  fetchMyReviews(); // 呼叫修正後的函式
+  fetchReviews();
 });
 </script>
 
@@ -93,9 +88,9 @@ onMounted(() => {
   <div class="review-section my-5">
     <!-- 標題和平均評分 -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h3 class="mb-0">我的評論紀錄 ({{ reviews.length }})</h3>
+      <h3 class="mb-0">顧客評論 ({{ reviews.length }})</h3>
       <div v-if="reviews.length > 0" class="average-rating">
-        <strong>平均評分: {{ averageRating }}</strong> / 5
+        <strong>{{ averageRating }}</strong> / 5
         <span class="star filled ms-1">★</span>
       </div>
     </div>
@@ -109,11 +104,13 @@ onMounted(() => {
       <div v-for="review in reviews" :key="review.reviewId" class="review-card card mb-3">
         <div class="card-body">
           <div class="review-header d-flex align-items-start mb-2">
-            
-            <!-- vvvvvvvvvv 【修改】顯示是針對哪個商品的評論 vvvvvvvvvvvv -->
-            <div class="flex-grow-1">
-              <small class="text-muted">針對商品</small>
-              <h6 class="card-title mb-0">{{ review.productName || '商品名稱' }}</h6>
+            <!-- 使用者資訊 -->
+            <div class="d-flex align-items-center">
+              <img :src="`https://ui-avatars.com/api/?name=${review.userName || '?'}&background=0d6efd&color=fff`" class="rounded-circle me-3" alt="user avatar">
+              <div>
+                <h6 class="card-title mb-0">{{ review.userName || '匿名使用者' }}</h6>
+                <small class="text-muted">{{ new Date(review.createdAt).toLocaleDateString() }}</small>
+              </div>
             </div>
             
             <div class="ms-auto text-end">
@@ -121,16 +118,27 @@ onMounted(() => {
               <div class="rating-stars mb-2">
                 <span v-for="n in 5" :key="n" class="star" :class="{ 'filled': n <= review.rating }">★</span>
               </div>
-              <small class="text-muted">{{ new Date(review.createdAt).toLocaleDateString() }}</small>
+              <!-- 互動按鈕區 -->
+             <!-- 使用 v-if="authStore.isLoggedIn" 來判斷是否顯示互動按鈕區 -->
+              <div v-if="authStore.isAuthenticated" class="review-actions d-flex align-items-center gap-2">
+                <HelpfulnessVoting
+                  :review-id="review.reviewId"
+                  :initial-count="review.helpfulnessCount"
+                  :initial-user-vote="review.currentUserVote" 
+                />
+                <button @click="openReportModal(review.reviewId)" class="btn btn-sm btn-link text-danger p-0" title="檢舉此評論">
+                  <i class="fas fa-flag"></i> 檢舉
+                </button>
+              </div>
             </div>
           </div>
 
           <p class="card-text mt-3">{{ review.comment }}</p>
           
           <div v-if="review.attachments && review.attachments.length > 0" class="attachments mt-2">
-             <a v-for="att in review.attachments" :key="att.filePath" :href="`${BACKEND_URL}${att.filePath}`" target="_blank" title="點擊放大">
-               <img :src="`${BACKEND_URL}${att.filePath}`" class="img-thumbnail me-2" alt="review attachment">
-             </a>
+            <a v-for="att in review.attachments" :key="att.filePath" :href="`${BACKEND_URL}${att.filePath}`" target="_blank" title="點擊放大">
+              <img :src="`${BACKEND_URL}${att.filePath}`" class="img-thumbnail me-2" alt="review attachment">
+            </a>
           </div>
 
           <div v-if="review.response" class="official-response mt-3 p-3">
@@ -141,10 +149,9 @@ onMounted(() => {
     </div>
     
     <div v-if="!isLoading && reviews.length === 0" class="text-center text-muted py-4">
-      <p>您尚未發表任何評論。</p>
+      <p>還沒有任何評論，快來搶頭香！</p>
     </div>
     
-    <!-- 檢舉 Modal 在此頁面可能不需要，但先保留 -->
     <ReportModal 
       v-if="showReportModal" 
       :review-id="reportingReviewId"
@@ -154,11 +161,22 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* 你的樣式完全不需要修改，可以保持原樣 */
+/* 這裡的樣式可以完全複製你 MyReviewComponent.vue 的樣式 */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
-
 .review-section { max-width: 800px; margin-left: auto; margin-right: auto; }
-.review-card { border-left: 4px solid #92559c; } /* 改回紫色系，代表「我的」 */
+.review-card { border-left: 4px solid #d3a2da; }
+.star { color: #e0e0e0; font-size: 1.5rem; } 
+.star.filled { color: #ffa600; }
+.attachments img { width: 80px; height: 80px; object-fit: cover; cursor: pointer; transition: transform 0.2s ease; }
+.attachments img:hover { transform: scale(1.1); }
+.official-response { background-color: #f6f6f6; border-radius: 5px; border: 1px solid #eee; }
+.helpfulness-voting .btn { font-size: 0.8rem; padding: 0.2rem 0.5rem; }
+.review-actions .btn-link { text-decoration: none; font-size: 0.8rem; }
+.review-actions .btn-link:hover { text-decoration: underline; }
+.rating-input .star { font-size: 2rem; cursor: pointer; transition: color 0.2s ease-in-out; }
+.rating-input .star:hover { color: #ffd966; }
+.review-section { max-width: 800px; margin-left: auto; margin-right: auto; }
+.review-card { border-left: 4px solid #0d6efd; } /* 改成藍色系，與「我的評論」做區隔 */
 .star { color: #e0e0e0; font-size: 1.5rem; } 
 .star.filled { color: #ffa600; }
 .attachments img { width: 80px; height: 80px; object-fit: cover; cursor: pointer; transition: transform 0.2s ease; }

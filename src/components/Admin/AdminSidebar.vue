@@ -41,7 +41,7 @@ const navItems = ref([
     icon: 'bi bi-headset', 
     children: [      
       { text: '線上客服', path: '/admin/customer-service' },
-      { text: '客訴處理', path: '/admin/complaints' },
+      { text: '消費申訴處理', path: '/admin/complaints' },
       { text: '評論核查', path: '/admin/reviews' },
     ]
   },

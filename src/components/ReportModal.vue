@@ -45,7 +45,7 @@ const submitReport = async () => {
       reasonComment: currentReport.reasonComment
     };
     
-    // 👇👇👇【主要修改點】改用 api 實例發送請求 👇👇👇
+    // 【改用 api 實例發送請求】
     await api.post(`/reviews/${props.reviewId}/report`, payload);
     
     alert('感謝您的檢舉，我們將會盡快處理。');
