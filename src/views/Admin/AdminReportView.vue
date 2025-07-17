@@ -96,6 +96,7 @@ const applyFilters = () => {
     currentPage.value = 1;
 };
 
+
 const selectStatus = (statusId) => {
     activeStatus.value = statusId;
     applyFilters();
