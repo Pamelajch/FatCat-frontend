@@ -4,6 +4,20 @@ import CartItemList from '@/components/CartItemList.vue'
 import MemberInfoForm from '@/components/MemberInfoForm.vue'
 import ShippingForm from '@/components/ShippingForm.vue'
 import PaymentInfo from '@/components/PaymentInfo.vue'
+
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const shippingFormRef = ref()
+
+function handleCheckout() {
+  const isValid = shippingFormRef.value?.validateShippingInfo?.()
+  if (!isValid) return
+
+  // ✅ 若通過驗證則導向結帳完成頁
+  router.push('/checkoutfinish')
+}
 </script>
 
 <template>
@@ -38,7 +52,8 @@ import PaymentInfo from '@/components/PaymentInfo.vue'
           <MemberInfoForm />
         </div>
         <div class="col-12 col-md-4">
-          <ShippingForm />
+          <!-- 加上 ref 綁定 -->
+          <ShippingForm ref="shippingFormRef" />
         </div>
         <div class="col-12 col-md-4">
           <PaymentInfo />
@@ -49,10 +64,11 @@ import PaymentInfo from '@/components/PaymentInfo.vue'
           <router-link to="/cart">
             <button type="button" class="btn custom-purple-outline-btn btn-space">購物車確認</button>
           </router-link>
-          
-          <router-link to="/checkoutfinish">
-            <button type="button" class="btn custom-purple-btn">確定結帳</button>
-          </router-link>
+
+          <!-- 修改為手動觸發 handleCheckout -->
+          <button type="button" class="btn custom-purple-btn" @click="handleCheckout">
+            確定結帳
+          </button>
         </div>
       </div>
     </div>

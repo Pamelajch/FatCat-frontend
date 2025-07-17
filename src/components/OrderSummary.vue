@@ -17,6 +17,17 @@
         <li class="list-group-item">送貨方式：
           <div>{{ selectedShipping?.name || '未選擇' }}</div>
         </li>
+        <!-- 顯示宅配地址 -->
+        <li class="list-group-item" v-if="selectedShipping?.shippingTypeId === 1">
+          收件地址：
+          <div>{{ checkout.recipientAddress || '未填寫' }}</div>
+        </li>
+
+        <!-- 顯示超商門市名稱 -->
+        <li class="list-group-item" v-else-if="selectedShipping?.shippingTypeId === 2">
+          取貨門市：
+          <div>{{ checkout.storeName || '未選擇' }}</div>
+        </li>
         <li class="list-group-item">收件人姓名：<div>{{ checkout.recipientName }}</div></li>
         <li class="list-group-item">收件人電話：<div>{{ checkout.recipientPhone }}</div></li>
       </ul>
@@ -30,7 +41,7 @@
           <div>{{ selectedCoupon?.description || '未使用' }}</div>
         </li>
         <li class="list-group-item">
-          訂單總金額：{{ checkout.productTotal }} 元
+            訂單總金額：{{ productTotal }} 元
           <div>
             運費：{{ checkout.shippingFee }} 元<br />
             折扣金額：-{{ checkout.discount }} 元
@@ -47,11 +58,17 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { useCheckoutStore } from '@/stores/checkout'
+import { useOrderStore } from '@/stores/order'
 
 const checkout = useCheckoutStore()
 
 const couponOptions = ref([])
 const shippingOptions = ref([])
+const orderStore = useOrderStore()
+
+const productTotal = computed(() =>
+  orderStore.latestOrderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+)
 
 // 載入對應資料名稱
 onMounted(async () => {

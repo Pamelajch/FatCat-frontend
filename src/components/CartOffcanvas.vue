@@ -13,6 +13,10 @@ onMounted(() => {
   if (el) {
     offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(el)
   }
+
+  
+  // ✅ 載入購物車商品圖片
+  cartStore.loadImagesForCartItems()
 })
 
 onUnmounted(() => {
@@ -33,6 +37,29 @@ function closeOffcanvas() {
   document.body.classList.remove('offcanvas-backdrop')
   document.body.style.overflow = ''
 }
+
+const onQtyInput = debounce((event, item) => {
+  let value = parseInt(event.target.value)
+
+  // 非數字或小於1就自動還原
+  if (isNaN(value) || value < 1) {
+    event.target.value = item.quantity
+    return
+  }
+
+  cartStore.setQty(item, value)
+}, 300)
+
+
+function debounce(fn, delay = 300) {
+  let timeout
+  return (...args) => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => fn(...args), delay)
+  }
+}
+
+
 </script>
 
 <template>
@@ -60,17 +87,27 @@ function closeOffcanvas() {
               <h6 class="mb-1">{{ item.name }}</h6>
               <div>單價：${{ item.price }}</div>
               <div class="d-flex align-items-center mt-1">
-                <button class="btn btn-outline-secondary btn-sm" @click="cartStore.decreaseQty(item)">-</button>
-                <span class="mx-2">{{ item.quantity }}</span>
-                <button class="btn btn-outline-secondary btn-sm" @click="cartStore.increaseQty(item)">+</button>
-              </div>
+              <button class="btn btn-outline-secondary btn-sm" @click="cartStore.decreaseQty(item)">-</button>
+              
+              <input
+                type="number"
+                class="form-control form-control-sm mx-2"
+                style="width: 60px;"
+                :value="item.quantity"
+                @input="onQtyInput($event, item)"
+                min="1"
+              />
+
+              
+              <button class="btn btn-outline-secondary btn-sm" @click="cartStore.increaseQty(item)">+</button>
+            </div>
             </div>
             <button class="btn btn-sm btn-danger" @click="cartStore.removeItem(item.id)"><i class="fa-solid fa-trash-can"></i>移除</button>
           </div>
         </div>
 
         <div class="fw-bold text-end mb-3">
-          總金額：<span class="text-danger">${{ cartStore.totalAmount }}</span>
+          總金額：<span class="text-danger">${{ cartStore.total }}</span>
         </div>
 
         <router-link to="/cart" class="btn custom-purple-btn w-100" @click="closeOffcanvas">立刻結帳</router-link>

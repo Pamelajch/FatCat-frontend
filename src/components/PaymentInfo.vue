@@ -5,19 +5,34 @@
     </li>
 
     <!-- 優惠券選擇 -->
-    <li class="list-group-item">使用優惠券:
-      <select class="form-select form-select-sm" v-model.number="checkout.couponId">
-        <option value="">請選擇優惠</option>
-        <option v-for="coupon in couponOptions" :key="coupon.couponId" :value="coupon.couponId">
-          {{ coupon.description }}
-        </option>
-      </select>
+    <li class="list-group-item">
+      使用優惠券:
+      <select class="form-select form-select-sm" v-model="checkout.couponId">
+      <option value="">請選擇優惠</option>
+      <option 
+        v-for="coupon in couponOptions" 
+        :key="coupon.couponId"
+        :value="coupon.couponId"
+        :disabled="coupon.minimumPurchase > 0 && productTotal < coupon.minimumPurchase"
+      >
+        {{ coupon.description }}
+        <template v-if="coupon.minimumPurchase > 0">
+          （低消 {{ coupon.minimumPurchase }} 元
+          {{ productTotal < coupon.minimumPurchase ? '，未達門檻' : '' }}）
+        </template>
+      </option>
+    </select>
+
+      <!-- 提示訊息 -->
+      <div v-if="couponMessage" class="text-danger mt-1">
+        {{ couponMessage }}
+      </div>
     </li>
 
     <!-- 金額明細 -->
-    <li class="list-group-item">訂單總金額:
+    <li class="list-group-item">
       <div>
-        商品小計: {{ productTotal }} 元<br />
+        商品總金額: {{ cartStore.total }} 元<br />
         運費: {{ checkout.shippingFee }} 元<br />
         折扣金額: -{{ checkout.discount }} 元
         <hr />
@@ -27,65 +42,82 @@
   </ul>
 </template>
 
+
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { useCheckoutStore } from '@/stores/checkout'
+import { useCartStore } from '@/stores/cart'
 
 const checkout = useCheckoutStore()
-const productTotal = ref(2000)
+const cartStore = useCartStore()
+
+const productTotal = computed(() => cartStore.total)
 const couponOptions = ref([])
-const shippingOptions = ref([])
+const couponMessage = ref('') // ✅ 優惠提示訊息
+
+// ✅ 過濾出 minimumPurchase > 0 的優惠券
+const validCouponOptions = computed(() =>
+  couponOptions.value.filter(c => c.minimumPurchase > 0)
+)
 
 onMounted(async () => {
   try {
-    const [couponRes, shippingRes] = await Promise.all([
-      axios.get('https://localhost:7017/api/Coupons'),
-      axios.get('https://localhost:7017/api/Shippings')
-    ])
-    couponOptions.value = couponRes.data
-    shippingOptions.value = shippingRes.data
+    const res = await axios.get('https://localhost:7017/api/Coupons')
+    const now = new Date()
+    couponOptions.value = res.data.filter(c => new Date(c.expirydate) >= now)
 
-    console.log('✅ Coupon API 成功:', couponOptions.value)
-    console.log('✅ Shipping API 成功:', shippingOptions.value)
-
+    console.log('✅ Coupon API 成功（未過期的）:', couponOptions.value)
     recalculateTotal()
   } catch (error) {
-    console.error('❌ 載入優惠券與送貨方式失敗:', error)
+    console.error('❌ 載入優惠券失敗:', error)
   }
 })
 
-// 當 shippingId 改變
-watch(() => checkout.shippingId, recalculateTotal)
-
-// 當 couponId 改變
+// ✅ 監看優惠券、運費、商品金額
 watch(() => checkout.couponId, recalculateTotal)
+watch(() => checkout.shippingFee, recalculateTotal)
 
-// shippingOptions 載入完成也要再算一次（初始）
-watch(shippingOptions, recalculateTotal)
+// ✅ 若商品金額變動導致不符門檻 → 自動清除優惠券 + 顯示提示
+watch(productTotal, () => {
+  const selected = couponOptions.value.find(c => c.couponId === Number(checkout.couponId))
+  if (selected && selected.minimumPurchase > productTotal.value) {
+    couponMessage.value = `已自動取消優惠券「${selected.description}」，因金額未達 NT$${selected.minimumPurchase} 門檻`
+       // ✅ 加入 alert 提示
+    alert(`您使用的優惠券「${selected.description}」已被取消，因為商品金額未達 NT$${selected.minimumPurchase} 元的門檻`)
+    checkout.couponId = ''
+  } else {
+    couponMessage.value = ''
+  }
+  recalculateTotal()
+})
 
-// ✅ 統一的運費與折扣重計邏輯
+// ✅ 計算折扣與總金額
 function recalculateTotal() {
-  const selectedShipping = shippingOptions.value.find(s => s.shippingId === Number(checkout.shippingId))
   const selectedCoupon = couponOptions.value.find(c => c.couponId === Number(checkout.couponId))
-
-  checkout.shippingFee = selectedShipping?.shippingFee ?? 0
+  couponMessage.value = '' // 清空錯誤提示
+  checkout.discount = 0
 
   if (!selectedCoupon) {
-    checkout.discount = 0
-  } else if (selectedCoupon.couponTypeId === 3) {
-    // 🎯 免運券 → 折扣 = 運費
+    checkout.total = productTotal.value + checkout.shippingFee
+    return
+  }
+
+  if (selectedCoupon.minimumPurchase && productTotal.value < selectedCoupon.minimumPurchase) {
+    checkout.total = productTotal.value + checkout.shippingFee
+    return
+  }
+
+  if (selectedCoupon.coupontypeId === 3) {
     checkout.discount = checkout.shippingFee
+  } else if (selectedCoupon.coupontypeId === 4) {
+    const discountRate = selectedCoupon.discountAmount / 100
+    checkout.discount = Math.round(productTotal.value * (1 - discountRate))
   } else {
-    // 🎯 一般折價券
     checkout.discount = selectedCoupon.discountAmount ?? 0
   }
 
   checkout.total = productTotal.value + checkout.shippingFee - checkout.discount
-
-  // Debug log
-  console.log('📦 運費:', checkout.shippingFee)
-  console.log('💰 折扣:', checkout.discount)
-  console.log('💳 總金額:', checkout.total)
 }
+
 </script>

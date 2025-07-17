@@ -29,6 +29,12 @@ const { selectedCoupon, selectedShipping } = useOrderLookup()
         <li class="list-group-item">訂單狀態：<div>{{ orderStatus }}</div></li>
         <li class="list-group-item">物流狀態：<div>{{ shippingStatus }}</div></li>
         <li class="list-group-item">送貨方式：<div>{{ selectedShipping?.name || '未選擇' }}</div></li>
+        <li class="list-group-item" v-if="selectedShipping?.shippingTypeId === 1">
+        收件地址：<div>{{ checkout.recipientAddress || '未填寫' }}</div>
+        </li>
+        <li class="list-group-item" v-else-if="selectedShipping?.shippingTypeId === 2">
+        取貨門市：<div>{{ checkout.storeName || '未選擇' }}</div>
+        </li>
         <li class="list-group-item">收件人姓名：<div>{{ checkout.recipientName }}</div></li>
         <li class="list-group-item">收件人電話：<div>{{ checkout.recipientPhone }}</div></li>
       </ul>
@@ -40,9 +46,8 @@ const { selectedCoupon, selectedShipping } = useOrderLookup()
         <li class="list-group-item"><h3>付款資料</h3></li>
         <li class="list-group-item">使用優惠券：<div>{{ selectedCoupon?.description || '未使用' }}</div></li>
         <li class="list-group-item">
-          訂單總金額：
           <div>
-            商品小計：{{ checkout.productTotal }} 元<br />
+            訂單總金額：{{ checkout.productTotal }} 元<br />
             運費：{{ checkout.shippingFee }} 元<br />
             折扣金額：-{{ checkout.discount }} 元
             <hr />

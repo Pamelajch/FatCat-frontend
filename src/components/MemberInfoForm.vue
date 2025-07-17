@@ -22,6 +22,10 @@
 </template>
 
 <script setup>
+import { ref, watch } from 'vue'
+import { useCheckoutStore } from '@/stores/checkout'
+
+const checkout = useCheckoutStore()
 import { ref ,onMounted} from 'vue'
 import { useAuthStore } from '@/stores/auth' //代入個人資訊
 
@@ -29,6 +33,11 @@ const authStore = useAuthStore()  //初始化
 const name = ref('')
 const phone = ref('')
 const email = ref('')
+
+// 即時同步到 store
+watch(name, val => checkout.name = val)
+watch(phone, val => checkout.phone = val)
+watch(email, val => checkout.email = val)
 
 // 組件掛載時初始化用戶資料
 onMounted(() =>{
@@ -41,3 +50,4 @@ onMounted(() =>{
 
 
 </script>
+ 
