@@ -31,25 +31,27 @@ api.interceptors.response.use(
         return response
     },
     (error) => {
-        //////////////////////// 記得寫 && !isAdminLogin 登入失敗不要重倒到Login葉面//////////////////////////////////////
         // 如果 token 過期或無效，清除本地儲存並跳轉到登入頁
         if (error.response?.status == 401) {
             // 檢查是否已經在登入頁面或是登入相關的 API 呼叫
             const isLoginPage = window.location.pathname === '/login'
             const isLoginAPI = error.config?.url?.includes('/auth/login') || error.config?.url?.endsWith('/auth/login')
             const isExternalLoginAPI = error.config?.url?.includes('/ExternalLogin')
+            const isAdminLogin = error.config?.url?.includes('/admin/login') || error.config?.url?.endsWith('/admin/login')
 
-            // 如果不是登入頁面且不是登入/第三方登入 API，才進行重新導向
-            if (!isLoginPage && !isLoginAPI && !isExternalLoginAPI) {
+            // 如果不是登入頁面且不是登入/第三方登入/管理員登入 API，才進行重新導向
+            if (!isLoginPage && !isLoginAPI && !isExternalLoginAPI && !isAdminLogin) {
                 localStorage.removeItem('token')
                 localStorage.removeItem('user')
                 //跳轉到登入頁
                 window.location.href = '/login'
             }
 
-            // 如果是登入或第三方登入 API 失敗，不要清除本地存儲
+            // 如果是登入、第三方登入或管理員登入 API 失敗，不要清除本地存儲
             if (isExternalLoginAPI) {
                 console.log('第三方登入 API 失敗，但不重新導向頁面')
+            } else if (isAdminLogin) {
+                console.log('管理員登入 API 失敗，但不重新導向頁面')
             } else {
                 console.log('登入失敗，但不重新導向頁面')
             }
