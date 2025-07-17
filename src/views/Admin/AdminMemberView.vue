@@ -36,10 +36,16 @@ const createForm = ref({
   email: '',
   phone: '',
   gender: null,
-  birthdate: '',
-  password: '',
-  picPath: ''
+  birthdate: ''
 })
+
+// 表單錯誤訊息
+const nameErr = ref('')
+const emailErr = ref('')
+const clearErrors = () => {
+  nameErr.value = ''
+  emailErr.value = ''
+}
 
 const editForm = ref({
   name: '',
@@ -47,9 +53,7 @@ const editForm = ref({
   phone: '',
   gender: null,
   birthdate: '',
-  password: '',
-  status: 1,
-  picPath: ''
+  status: 1
 })
 
 // 狀態選項
@@ -105,6 +109,28 @@ const filteredMembers = computed(() => {
 
   return filtered
 })
+//表單驗證
+const validateForm = (form) => {
+    clearErrors()
+    let hasError = false
+
+    //驗證姓名
+    if (!form.name || form.name.trim() === '') {
+        nameErr.value = '姓名是必填項目！'
+        hasError = true
+    }
+
+    //驗證Email
+    if (!form.email || form.email.trim() === '') {
+        emailErr.value = 'Email是必填項目！'
+        hasError = true
+    } else if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+        emailErr.value = 'Email格式錯誤！'
+        hasError = true
+    }
+    
+    return !hasError
+}
 
 // API 呼叫函數
 const fetchMembers = async () => {
@@ -120,27 +146,99 @@ const fetchMembers = async () => {
 }
 
 const createMember = async () => {
+    if (!validateForm(createForm.value)) {
+        console.error('表單驗證失敗')
+        return
+    }
+
   try {
-    await api.post('/admin/members', createForm.value)
+    // 準備發送的資料，確保必填欄位有值
+    const memberData = {
+      name: createForm.value.name.trim(),
+      email: createForm.value.email.trim(),
+      phone: createForm.value.phone || ''
+    }
+    
+    // 只有當有選擇性別時才添加 gender 欄位
+    if (createForm.value.gender !== null) {
+      memberData.gender = createForm.value.gender
+    }
+    
+    // 只有當有選擇日期時才添加 birthdate 欄位
+    if (createForm.value.birthdate) {
+      memberData.birthdate = createForm.value.birthdate
+    }
+    
+    console.log('發送資料:', memberData)
+    const response = await api.post('/admin/members', memberData)
+    console.log('新增成功:', response.data)
     showCreateModal.value = false
     resetCreateForm()
+    clearErrors()
     await fetchMembers()
     alert('會員新增成功')
   } catch (error) {
     console.error('新增失敗:', error)
-    alert(error.response?.data?.message || '新增失敗')
+    console.error('錯誤詳情:', error.response?.data)
+    
+    // 顯示詳細的錯誤資訊
+    if (error.response?.data?.errors) {
+      const errorMessages = []
+      for (const [field, messages] of Object.entries(error.response.data.errors)) {
+        errorMessages.push(`${field}: ${messages.join(', ')}`)
+      }
+      alert(`驗證錯誤:\n${errorMessages.join('\n')}`)
+    } else {
+      alert(error.response?.data?.message || '新增失敗')
+    }
   }
 }
 
 const updateMember = async () => {
+    if (!validateForm(editForm.value)) {
+        console.error('表單驗證失敗')
+        return
+    }
+
   try {
-    await api.put(`/admin/members/${selectedMember.value.userId}`, editForm.value)
+    // 準備發送的資料，確保必填欄位有值
+    const memberData = {
+      name: editForm.value.name.trim(),
+      email: editForm.value.email.trim(),
+      phone: editForm.value.phone || '',
+      status: editForm.value.status
+    }
+    
+    // 只有當有選擇性別時才添加 gender 欄位
+    if (editForm.value.gender !== null) {
+      memberData.gender = editForm.value.gender
+    }
+    
+    // 只有當有選擇日期時才添加 birthdate 欄位
+    if (editForm.value.birthdate) {
+      memberData.birthdate = editForm.value.birthdate
+    }
+    
+    console.log('發送資料:', memberData)
+    await api.put(`/admin/members/${selectedMember.value.userId}`, memberData)
     showEditModal.value = false
+    clearErrors()
     await fetchMembers()
     alert('會員更新成功')
   } catch (error) {
     console.error('更新失敗:', error)
-    alert(error.response?.data?.message || '更新失敗')
+    console.error('錯誤詳情:', error.response?.data)
+    
+    // 顯示詳細的錯誤資訊
+    if (error.response?.data?.errors) {
+      const errorMessages = []
+      for (const [field, messages] of Object.entries(error.response.data.errors)) {
+        errorMessages.push(`${field}: ${messages.join(', ')}`)
+      }
+      alert(`驗證錯誤:\n${errorMessages.join('\n')}`)
+    } else {
+      alert(error.response?.data?.message || '更新失敗')
+    }
   }
 }
 
@@ -176,9 +274,7 @@ const openEditModal = (member) => {
     phone: member.phone,
     gender: member.gender,
     birthdate: member.birthdate ? member.birthdate.split('T')[0] : '',
-    password: '',
-    status: member.status,
-    picPath: member.picPath || ''
+    status: member.status
   }
   showEditModal.value = true
 }
@@ -194,9 +290,7 @@ const resetCreateForm = () => {
     email: '',
     phone: '',
     gender: null,
-    birthdate: '',
-    password: '',
-    picPath: ''
+    birthdate: ''
   }
 }
 
@@ -219,7 +313,7 @@ const getStatusClass = (status) => {
 }
 
 const getGenderText = (gender) => {
-  return gender === 0 ? '男' : gender === 1 ? '女' : '未設定'
+  return gender === 0 ? '男' : gender === 1 ? '女' :  gender === 2 ? '第三性' :'未設定'
 }
 
 const formatDate = (dateString) => {
@@ -456,13 +550,15 @@ onMounted(() => {
                 <div class="col-md-6">
                   <div class="mb-3">
                     <label class="form-label">姓名 *</label>
-                    <input v-model="createForm.name" type="text" class="form-control" required>
+                    <input v-model="createForm.name" type="text" class="form-control" :class="{'is-invalid':nameErr}" placeholder="請輸入姓名" @input="nameErr = ''" required>
+                    <div class="invalid-feedback" v-if="nameErr">{{ nameErr }}</div>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="mb-3">
                     <label class="form-label">Email *</label>
-                    <input v-model="createForm.email" type="email" class="form-control" required>
+                    <input v-model="createForm.email" type="email" class="form-control" :class="{'is-invalid':emailErr}" placeholder="請輸入電子郵件" @input="emailErr = ''"  required>
+                    <div class="invalid-feedback" v-if="emailErr">{{ emailErr }}</div>
                   </div>
                 </div>
               </div>
@@ -475,14 +571,6 @@ onMounted(() => {
                 </div>
                 <div class="col-md-6">
                   <div class="mb-3">
-                    <label class="form-label">密碼 *</label>
-                    <input v-model="createForm.password" type="password" class="form-control" required>
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="mb-3">
                     <label class="form-label">性別</label>
                     <select v-model="createForm.gender" class="form-control">
                       <option :value="null">請選擇</option>
@@ -491,16 +579,21 @@ onMounted(() => {
                     </select>
                   </div>
                 </div>
+
+              </div>
+              <div class="row">
                 <div class="col-md-6">
                   <div class="mb-3">
                     <label class="form-label">生日</label>
                     <input v-model="createForm.birthdate" type="date" class="form-control">
                   </div>
                 </div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">頭像路徑</label>
-                <input v-model="createForm.picPath" type="text" class="form-control">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                      <p>新增會員，預設狀態為正常。</p>
+                      <p>預設密碼：123</p>
+                    </div>
+                </div>
               </div>
             </form>
           </div>
@@ -526,13 +619,15 @@ onMounted(() => {
                 <div class="col-md-6">
                   <div class="mb-3">
                     <label class="form-label">姓名 *</label>
-                    <input v-model="editForm.name" type="text" class="form-control" required>
+                    <input v-model="editForm.name" type="text" class="form-control" :class="{'is-invalid':nameErr}" placeholder="請輸入姓名" @input="nameErr = ''" required>
+                    <div class="invalid-feedback" v-if="nameErr">{{ nameErr }}</div>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="mb-3">
                     <label class="form-label">Email *</label>
-                    <input v-model="editForm.email" type="email" class="form-control" required>
+                    <input v-model="editForm.email" type="email" class="form-control" :class="{'is-invalid':emailErr}" placeholder="請輸入電子郵件" @input="emailErr = ''" required>
+                    <div class="invalid-feedback" v-if="emailErr">{{ emailErr }}</div>
                   </div>
                 </div>
               </div>
@@ -541,12 +636,6 @@ onMounted(() => {
                   <div class="mb-3">
                     <label class="form-label">電話</label>
                     <input v-model="editForm.phone" type="text" class="form-control">
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label">密碼 (留空不修改)</label>
-                    <input v-model="editForm.password" type="password" class="form-control">
                   </div>
                 </div>
               </div>
@@ -577,12 +666,6 @@ onMounted(() => {
                       <option :value="1">正常</option>
                       <option :value="2">黑名單</option>
                     </select>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label">頭像路徑</label>
-                    <input v-model="editForm.picPath" type="text" class="form-control">
                   </div>
                 </div>
               </div>
