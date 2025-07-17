@@ -26,7 +26,7 @@ import { ref, watch } from 'vue'
 import { useCheckoutStore } from '@/stores/checkout'
 
 const checkout = useCheckoutStore()
-import { ref ,onMounted} from 'vue'
+import { onMounted} from 'vue'
 import { useAuthStore } from '@/stores/auth' //代入個人資訊
 
 const authStore = useAuthStore()  //初始化
