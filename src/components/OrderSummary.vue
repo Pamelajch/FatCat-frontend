@@ -25,7 +25,7 @@
 
         <!-- 顯示超商門市名稱 -->
         <li class="list-group-item" v-else-if="selectedShipping?.shippingTypeId === 2">
-          超商門市：
+          取貨門市：
           <div>{{ checkout.storeName || '未選擇' }}</div>
         </li>
         <li class="list-group-item">收件人姓名：<div>{{ checkout.recipientName }}</div></li>
