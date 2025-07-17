@@ -1,13 +1,44 @@
 <script setup>
-    
+import { ref, onMounted } from 'vue'
+import { getCoupons } from '@/services/couponService'
+import { useRouter } from 'vue-router'
+
+const coupons = ref([])
+const router = useRouter()
+
+const fetchCoupons = async () => {
+  const res = await getCoupons()
+  coupons.value = res.data
+}
+
+const goToAddPage = () => {
+  router.push('/coupon-add')
+}
+
+const goToDetailPage = (id) => {
+  router.push(`/coupon-detail/${id}`)
+}
+
+onMounted(fetchCoupons)
 </script>
 
 <template>
-    <div>
-<h2>zz 優惠</h2>
-    </div>
+  <div class="container">
+    <h2>優惠券列表</h2>
+
+    <!-- 前往新增頁面按鈕 -->
+    <button @click="goToAddPage" class="btn btn-primary mb-3">➕ 新增優惠券</button>
+
+    <ul class="list-group">
+      <li v-for="coupon in coupons" :key="coupon.couponId" class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+          <strong>{{ coupon.name }}</strong> - {{ coupon.description }}  
+          <span class="text-muted">（ 折扣: {{ coupon.discountAmount }}，低消: {{ coupon.minimumPurchase }}）</span>
+        </div>
+        <button @click="goToDetailPage(coupon.couponId)" class="btn btn-outline-secondary btn-sm">
+          管理
+        </button>
+      </li>
+    </ul>
+  </div>
 </template>
-
-<style lang="css" scoped>
-
-</style>
