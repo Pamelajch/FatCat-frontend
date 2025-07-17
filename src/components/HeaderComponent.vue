@@ -113,10 +113,10 @@
 <header class="custom-header px-3 py-2">
     <div class="container-fluid d-flex justify-content-between align-items-center">
       <!-- 左側 Logo + 店名 -->
-      <div class="d-flex align-items-center gap-2 flex-shrink-0">
+      <RouterLink :to="{name:'home'}" class="d-flex align-items-center gap-2 flex-shrink-0 text-decoration-none">
         <img src="/cat-logo.png" alt="logo" class="logo-img" />
         <img src="/cat-font.png" alt="" style="height: 50px;">
-      </div>
+      </RouterLink>
 
       <!-- 右側按鈕群組 -->
       <div class="d-flex align-items-center gap-3 gap-lg-4">
