@@ -1,61 +1,57 @@
 import axios from "axios"
 
-//建立axios 實例
+// 建立 axios 實例
 const api = axios.create({
-    baseURL: 'https://localhost:7017/api', //baseURL 設定 - 統一的後端 API 基礎路徑
-    timeout: 10000, //請求逾時設定10秒 防止請求卡死
+    baseURL: 'https://localhost:7017/api', // 統一的後端 API 基礎路徑
+    timeout: 5000, // 請求逾時 5 秒
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     }
 })
 
-//請求攔截器 - 自動在每個請求中添加 JWT Token
+// Helper function：判斷是否為登入或驗證相關 API
+function isAuthRelatedURL(url) {
+    if (!url) return false
+    return (
+        url.includes('/auth/login') ||
+        url.includes('/ExternalLogin') ||
+        url.includes('/admin/login')
+    )
+}
+
+// 請求攔截器：自動加上 JWT Token
 api.interceptors.request.use(
     (config) => {
-        // 從 localStorage 獲取 token
         const token = localStorage.getItem('token')
         if (token) {
             config.headers.Authorization = `Bearer ${token}`
         }
         return config
     },
-    (error) => {
-        return Promise.reject(error)
-    }
+    (error) => Promise.reject(error)
 )
 
-// 回應攔截器 - 統一處理 401 認證錯誤
+// 回應攔截器：統一處理 401 錯誤
 api.interceptors.response.use(
-    (response) => {
-        return response
-    },
+    (response) => response,
     (error) => {
-        // 如果 token 過期或無效，清除本地儲存並跳轉到登入頁
-        if (error.response?.status == 401) {
-            // 檢查是否已經在登入頁面或是登入相關的 API 呼叫
+        if (error.response?.status === 401) {
+            const url = error.config?.url
             const isLoginPage = window.location.pathname === '/login'
-            const isLoginAPI = error.config?.url?.includes('/auth/login') || error.config?.url?.endsWith('/auth/login')
-            const isExternalLoginAPI = error.config?.url?.includes('/ExternalLogin')
-            const isAdminLogin = error.config?.url?.includes('/admin/login') || error.config?.url?.endsWith('/admin/login')
+            const isAuthAPI = isAuthRelatedURL(url)
 
-            // 如果不是登入頁面且不是登入/第三方登入/管理員登入 API，才進行重新導向
-            if (!isLoginPage && !isLoginAPI && !isExternalLoginAPI && !isAdminLogin) {
+            if (!isLoginPage && !isAuthAPI) {
+                // 清除本地儲存並導向登入頁
                 localStorage.removeItem('token')
                 localStorage.removeItem('user')
-                //跳轉到登入頁
                 window.location.href = '/login'
-            }
-
-            // 如果是登入、第三方登入或管理員登入 API 失敗，不要清除本地存儲
-            if (isExternalLoginAPI) {
-                console.log('第三方登入 API 失敗，但不重新導向頁面')
-            } else if (isAdminLogin) {
-                console.log('管理員登入 API 失敗，但不重新導向頁面')
             } else {
-                console.log('登入失敗，但不重新導向頁面')
+                // 登入流程錯誤，不導向，只紀錄
+                console.log('登入相關 API 失敗，但不重新導向頁面')
             }
         }
+
         return Promise.reject(error)
     }
 )
