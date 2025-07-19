@@ -758,7 +758,7 @@ onMounted(() => {
   font-weight: 600;
   white-space: nowrap;
   background-color: var(--secondary-color) !important;
-  color: white;
+  color: black;
   border-color: var(--secondary-color);
 }
 
