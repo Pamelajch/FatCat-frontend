@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
+import { useAdminAuthStore } from './stores/adminauth'
 
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap/dist/js/bootstrap.bundle.js'
@@ -25,9 +26,14 @@ const shouldhideHeaderFooter = computed(()=>{
 //記住user登入資訊
 // 獲取auth store
 const authStore = useAuthStore()
+//記住管理員登入資訊
+// 獲取admin auth store
+const adminAuthStore = useAdminAuthStore() 
+
 // 在組件掛載時初始化auth狀態
 onMounted(async () => {
   authStore.initializeAuth()
+  adminAuthStore.initializeAuth()
   // 模擬初始載入時間，讓用戶看到LoadingComponent
   await new Promise(resolve => setTimeout(resolve, 2000))
   appLoading.value = false
