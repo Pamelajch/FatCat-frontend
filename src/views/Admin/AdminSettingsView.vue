@@ -1,29 +1,46 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
-import { useAuthStore } from '@/stores/auth'
+import { useAdminAuthStore } from '@/stores/adminauth'
 
-const authStore = useAuthStore()
+const adminAuthStore = useAdminAuthStore()
+
+// 防抖函數
+const debounce = (func, wait) => {
+  let timeout
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout)
+      func(...args)
+    }
+    clearTimeout(timeout)
+    timeout = setTimeout(later, wait)
+  }
+}
 
 // 響應式資料
 const admins = ref([])
 const loading = ref(false)
-const totalCount = ref(0)
-const totalPages = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(10)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
+const showDeleteModal = ref(false)
+const selectedAdmin = ref(null)
 
-// 搜尋和排序
-const searchForm = reactive({
-  searchKeyword: '',
-  sortBy: 'AdminId',
-  sortOrder: 'asc'
+// 搜尋和篩選
+const searchTerm = ref('')
+const roleFilter = ref('')
+const statusFilter = ref('')
+const isSearching = ref(false)
+
+// 表單資料
+const createForm = ref({
+  email: '',
+  password: '',
+  name: '',
+  phone: '',
+  role: '管理員'
 })
 
-// 新增/編輯表單
-const showModal = ref(false)
-const isEdit = ref(false)
-const currentAdmin = ref(null)
-const formData = reactive({
+const editForm = ref({
   email: '',
   password: '',
   name: '',
@@ -32,51 +49,125 @@ const formData = reactive({
   status: 1
 })
 
-// 表單驗證
-const formErrors = reactive({})
+// 表單錯誤訊息
+const emailErr = ref('')
+const passwordErr = ref('')
+const nameErr = ref('')
+const phoneErr = ref('')
+
+const clearErrors = () => {
+  emailErr.value = ''
+  passwordErr.value = ''
+  nameErr.value = ''
+  phoneErr.value = ''
+}
 
 // 角色選項
 const roleOptions = [
+  { value: '', label: '全部角色' },
   { value: '管理員', label: '管理員' },
   { value: '超級管理員', label: '超級管理員' }
 ]
 
 // 狀態選項
 const statusOptions = [
+  { value: '', label: '全部狀態' },
   { value: 1, label: '啟用' },
   { value: 0, label: '停用' }
 ]
 
-// 計算屬性
+// 計算屬性 - 從 adminAuthStore 讀取管理員資料
 const canEdit = computed(() => {
-  return authStore.user?.role === '超級管理員'
+  return adminAuthStore.admin?.role === '超級管理員'
 })
 
 const canDelete = computed(() => {
-  return authStore.user?.role === '超級管理員'
+  return adminAuthStore.admin?.role === '超級管理員'
 })
 
-// 方法
+// 計算屬性：篩選後的管理員列表
+const filteredAdmins = computed(() => {
+  let filtered = admins.value
+
+  // 搜尋篩選（支援多欄位搜尋）
+  if (searchTerm.value) {
+    const term = searchTerm.value.toLowerCase().trim()
+    if (term) {
+      filtered = filtered.filter(admin => 
+        (admin.name && admin.name.toLowerCase().includes(term)) ||
+        (admin.email && admin.email.toLowerCase().includes(term)) ||
+        (admin.phone && admin.phone.includes(term))
+      )
+    }
+  }
+
+  // 角色篩選
+  if (roleFilter.value !== '') {
+    filtered = filtered.filter(admin => admin.role === roleFilter.value)
+  }
+
+  // 狀態篩選
+  if (statusFilter.value !== '') {
+    filtered = filtered.filter(admin => admin.status === parseInt(statusFilter.value))
+  }
+
+  return filtered
+})
+
+// 表單驗證
+const validateForm = (form, isEdit = false) => {
+  clearErrors()
+  let hasError = false
+
+  // 驗證Email
+  if (!form.email || form.email.trim() === '') {
+    emailErr.value = 'Email是必填項目！'
+    hasError = true
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+    emailErr.value = 'Email格式錯誤！'
+    hasError = true
+  }
+
+  // 驗證密碼（新增時必填）
+  if (!isEdit && (!form.password || form.password.trim() === '')) {
+    passwordErr.value = '密碼是必填項目！'
+    hasError = true
+  } else if (!isEdit && form.password && form.password.length < 6) {
+    passwordErr.value = '密碼長度至少為6個字元！'
+    hasError = true
+  }
+
+  // 驗證姓名
+  if (!form.name || form.name.trim() === '') {
+    nameErr.value = '姓名是必填項目！'
+    hasError = true
+  }
+
+  // 驗證電話
+  if (!form.phone || form.phone.trim() === '') {
+    phoneErr.value = '電話是必填項目！'
+    hasError = true
+  }
+
+  return !hasError
+}
+
+// API 呼叫函數
 const fetchAdmins = async () => {
   loading.value = true
   try {
-    const params = new URLSearchParams({
-      searchKeyword: searchForm.searchKeyword,
-      sortBy: searchForm.sortBy,
-      sortOrder: searchForm.sortOrder,
-      page: currentPage.value,
-      pageSize: pageSize.value
+    const result = await adminAuthStore.fetchAdmins({
+      searchKeyword: searchTerm.value,
+      sortBy: 'AdminId',
+      sortOrder: 'asc',
+      page: 1,
+      pageSize: 1000 // 取得所有資料以便前端篩選
     })
 
-    const response = await fetch(`/api/Admins?${params}`)
-    if (response.ok) {
-      const data = await response.json()
-      admins.value = data.admins
-      totalCount.value = data.totalCount
-      totalPages.value = data.totalPages
-      currentPage.value = data.currentPage
+    if (result.success) {
+      admins.value = result.data.admins
     } else {
-      console.error('取得管理員列表失敗')
+      console.error('取得管理員列表失敗:', result.message)
     }
   } catch (error) {
     console.error('取得管理員列表時發生錯誤:', error)
@@ -85,207 +176,269 @@ const fetchAdmins = async () => {
   }
 }
 
-const search = () => {
-  currentPage.value = 1
-  fetchAdmins()
-}
-
-const resetSearch = () => {
-  searchForm.searchKeyword = ''
-  searchForm.sortBy = 'AdminId'
-  searchForm.sortOrder = 'asc'
-  currentPage.value = 1
-  fetchAdmins()
-}
-
-const changePage = (page) => {
-  currentPage.value = page
-  fetchAdmins()
-}
-
-const openAddModal = () => {
-  isEdit.value = false
-  currentAdmin.value = null
-  resetForm()
-  showModal.value = true
-}
-
-const openEditModal = (admin) => {
-  isEdit.value = true
-  currentAdmin.value = admin
-  formData.email = admin.email
-  formData.name = admin.name
-  formData.phone = admin.phone
-  formData.role = admin.role
-  formData.status = admin.status
-  formData.password = '' // 編輯時不顯示密碼
-  showModal.value = true
-}
-
-const resetForm = () => {
-  formData.email = ''
-  formData.password = ''
-  formData.name = ''
-  formData.phone = ''
-  formData.role = '管理員'
-  formData.status = 1
-  formErrors.value = {}
-}
-
-const validateForm = () => {
-  formErrors.value = {}
-  
-  if (!formData.email) {
-    formErrors.value.email = 'Email是必填項目'
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-    formErrors.value.email = 'Email格式錯誤'
+const createAdmin = async () => {
+  if (!validateForm(createForm.value, false)) {
+    console.error('表單驗證失敗')
+    return
   }
-  
-  if (!isEdit.value && !formData.password) {
-    formErrors.value.password = '密碼為必填欄位'
-  } else if (!isEdit.value && formData.password.length < 6) {
-    formErrors.value.password = '密碼長度至少為6個字元'
-  }
-  
-  if (!formData.name) {
-    formErrors.value.name = '姓名是必填項目'
-  }
-  
-  if (!formData.phone) {
-    formErrors.value.phone = '電話是必填項目'
-  }
-  
-  if (!formData.role) {
-    formErrors.value.role = '角色是必填項目'
-  }
-  
-  return Object.keys(formErrors.value).length === 0
-}
 
-const submitForm = async () => {
-  if (!validateForm()) return
-  
   try {
-    const url = isEdit.value 
-      ? `/api/Admins/${currentAdmin.value.adminId}`
-      : '/api/Admins'
+    const adminData = {
+      email: createForm.value.email.trim(),
+      password: createForm.value.password,
+      name: createForm.value.name.trim(),
+      phone: createForm.value.phone.trim(),
+      role: createForm.value.role
+    }
+
+    console.log('發送資料:', adminData)
+    const result = await adminAuthStore.createAdmin(adminData)
     
-    const method = isEdit.value ? 'PUT' : 'POST'
-    const body = isEdit.value 
-      ? { ...formData }
-      : { ...formData }
-    
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    })
-    
-    if (response.ok) {
-      showModal.value = false
-      fetchAdmins()
-      alert(isEdit.value ? '管理員資料更新成功' : '管理員新增成功')
+    if (result.success) {
+      showCreateModal.value = false
+      resetCreateForm()
+      clearErrors()
+      await fetchAdmins()
+      alert('管理員新增成功')
     } else {
-      const error = await response.json()
-      alert(error.message || '操作失敗')
+      alert(result.message || '新增失敗')
     }
   } catch (error) {
-    console.error('提交表單時發生錯誤:', error)
-    alert('操作失敗')
+    console.error('新增失敗:', error)
+    alert(error.response?.data?.message || '新增失敗')
   }
 }
 
-const deleteAdmin = async (adminId, adminName) => {
-  if (!confirm(`確定要刪除管理員「${adminName}」嗎？此操作無法復原。`)) return
-  
+const updateAdmin = async () => {
+  if (!validateForm(editForm.value, true)) {
+    console.error('表單驗證失敗')
+    return
+  }
+
   try {
-    const response = await fetch(`/api/Admins/${adminId}`, {
-      method: 'DELETE'
-    })
+    const adminData = {
+      email: editForm.value.email.trim(),
+      name: editForm.value.name.trim(),
+      phone: editForm.value.phone.trim(),
+      role: editForm.value.role,
+      status: editForm.value.status
+    }
+
+    // 只有當密碼不為空時才更新密碼
+    if (editForm.value.password && editForm.value.password.trim() !== '') {
+      adminData.password = editForm.value.password
+    }
+
+    console.log('發送資料:', adminData)
+    const result = await adminAuthStore.updateAdmin(selectedAdmin.value.adminId, adminData)
     
-    if (response.ok) {
-      fetchAdmins()
+    if (result.success) {
+      showEditModal.value = false
+      clearErrors()
+      await fetchAdmins()
+      alert('管理員更新成功')
+    } else {
+      alert(result.message || '更新失敗')
+    }
+  } catch (error) {
+    console.error('更新失敗:', error)
+    alert(error.response?.data?.message || '更新失敗')
+  }
+}
+
+const deleteAdmin = async () => {
+  try {
+    const result = await adminAuthStore.deleteAdmin(selectedAdmin.value.adminId)
+    
+    if (result.success) {
+      showDeleteModal.value = false
+      await fetchAdmins()
       alert('管理員刪除成功')
     } else {
-      const error = await response.json()
-      alert(error.message || '刪除失敗')
+      alert(result.message || '刪除失敗')
     }
   } catch (error) {
-    console.error('刪除管理員時發生錯誤:', error)
+    console.error('刪除失敗:', error)
     alert('刪除失敗')
   }
 }
 
+const updateAdminStatus = async (adminId, newStatus) => {
+  try {
+    const result = await adminAuthStore.updateAdmin(adminId, { status: newStatus })
+    
+    if (result.success) {
+      await fetchAdmins()
+      alert('狀態更新成功')
+    } else {
+      alert(result.message || '狀態更新失敗')
+    }
+  } catch (error) {
+    console.error('狀態更新失敗:', error)
+    alert('狀態更新失敗')
+  }
+}
+
+// 輔助函數
+const openEditModal = (admin) => {
+  selectedAdmin.value = admin
+  editForm.value = {
+    email: admin.email,
+    password: '', // 編輯時不顯示密碼
+    name: admin.name,
+    phone: admin.phone,
+    role: admin.role,
+    status: admin.status
+  }
+  showEditModal.value = true
+}
+
+const openDeleteModal = (admin) => {
+  selectedAdmin.value = admin
+  showDeleteModal.value = true
+}
+
+const resetCreateForm = () => {
+  createForm.value = {
+    email: '',
+    password: '',
+    name: '',
+    phone: '',
+    role: '管理員'
+  }
+}
+
+const getStatusText = (status) => {
+  return status === 1 ? '啟用' : '停用'
+}
+
+const getStatusBadgeClass = (status) => {
+  return status === 1 ? 'bg-success' : 'bg-secondary'
+}
+
+const formatDate = (dateString) => {
+  if (!dateString) return '未設定'
+  return new Date(dateString).toLocaleDateString('zh-TW')
+}
+
+// 搜尋處理函數（使用防抖）
+const handleSearch = debounce(() => {
+  isSearching.value = true
+  console.log('搜尋關鍵字:', searchTerm.value)
+  
+  setTimeout(() => {
+    isSearching.value = false
+  }, 200)
+}, 300)
+
+// 清除搜尋
+const clearSearch = () => {
+  searchTerm.value = ''
+  isSearching.value = false
+}
+
+// 清除所有篩選
+const clearAllFilters = () => {
+  searchTerm.value = ''
+  roleFilter.value = ''
+  statusFilter.value = ''
+  isSearching.value = false
+}
+
 // 生命週期
 onMounted(() => {
+  console.log('AdminSettingsView 已掛載')
+  console.log('adminAuthStore.admin:', adminAuthStore.admin)
   fetchAdmins()
 })
 </script>
 
 <template>
- <div class="container-fluid">
-    <!-- 錯誤訊息顯示區域 -->
-    <div v-if="false" class="alert alert-danger alert-dismissible fade show" role="alert">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i>
-      錯誤訊息
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-
+  <div class="container-fluid">
     <div class="card shadow-sm">
       <div class="card-header bg-white py-3">
         <div class="d-flex justify-content-between align-items-center">
           <h1 class="h3 mb-0 page-title">
-            <i class="fa-solid fa-user-shield fa-bounce"></i>管理員列表
+            <i class="fa-solid fa-user-shield fa-bounce"></i> 管理員列表
           </h1>
           <button 
-            v-if="canEdit" 
-            @click="openAddModal" 
+            @click="showCreateModal = true" 
             class="btn btn-custom"
+            type="button"
           >
-            <i class="bi bi-person-plus me-1" style="display: inline-block; margin-right: 0.25rem;"></i>新增管理員
+            <i class="bi bi-person-plus me-1"></i> 新增管理員
           </button>
         </div>
       </div>
       
       <div class="card-body">
-        <!-- 搜尋區域 -->
-        <div class="search-section mb-3">
-          <div class="search-form">
-            <input
-              v-model="searchForm.searchKeyword"
-              type="text"
-              placeholder="搜尋姓名、電話或Email..."
-              class="form-control"
-              @keyup.enter="search"
-            />
-            <select v-model="searchForm.sortBy" class="form-control">
-              <option value="AdminId">ID</option>
-              <option value="Name">姓名</option>
-              <option value="Email">Email</option>
-              <option value="Role">角色</option>
-              <option value="Status">狀態</option>
+        <!-- 搜尋和篩選工具列 -->
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <div class="input-group">
+              <span class="input-group-text">
+                <i class="fas fa-search"></i>
+              </span>
+              <input 
+                v-model="searchTerm"
+                type="text" 
+                class="form-control" 
+                placeholder="搜尋姓名、Email 或電話"
+                @keyup="handleSearch"
+                @input="handleSearch"
+              >
+              <button 
+                v-if="searchTerm" 
+                type="button" 
+                class="btn btn-outline-secondary" 
+                @click="clearSearch"
+                title="清除搜尋"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <select v-model="roleFilter" class="form-select">
+              <option v-for="option in roleOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
             </select>
-            <select v-model="searchForm.sortOrder" class="form-control">
-              <option value="asc">升序</option>
-              <option value="desc">降序</option>
+          </div>
+          <div class="col-md-2">
+            <select v-model="statusFilter" class="form-select">
+              <option v-for="option in statusOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
             </select>
-            <button @click="search" class="btn btn-secondary">搜尋</button>
-            <button @click="resetSearch" class="btn btn-outline-secondary">重置</button>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-outline-secondary" @click="fetchAdmins">
+              <i class="fas fa-refresh me-1"></i> 重新整理
+            </button>
           </div>
         </div>
 
-        <!-- 載入中 -->
-        <div v-if="loading" class="loading text-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">載入中...</span>
+        <!-- 搜尋結果統計 -->
+        <div class="row mb-3" v-if="searchTerm || roleFilter || statusFilter">
+          <div class="col-12">
+            <div class="alert alert-info d-flex align-items-center">
+              <i class="fas fa-info-circle me-2"></i>
+              <span>搜尋結果：顯示 {{ filteredAdmins.length }} 筆資料</span>
+              <span v-if="searchTerm" class="ms-2">（關鍵字：「{{ searchTerm }}」）</span>
+              <button 
+                type="button" 
+                class="btn btn-sm btn-outline-info ms-auto" 
+                @click="clearAllFilters"
+              >
+                清除所有篩選
+              </button>
+            </div>
           </div>
-          <p class="mt-2">載入中...</p>
         </div>
 
-        <!-- 管理員列表 -->
-        <div v-else class="table-responsive">
+        <!-- 管理員列表表格 -->
+        <div class="table-responsive">
           <table class="table table-hover align-middle">
             <thead class="table-light">
               <tr>
@@ -298,447 +451,432 @@ onMounted(() => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="admin in admins" :key="admin.adminId">
-                <td>{{ admin.email }}</td>
+              <tr v-if="loading">
+                <td colspan="8" class="text-center py-4">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">載入中...</span>
+                  </div>
+                </td>
+              </tr>
+              <tr v-else-if="filteredAdmins.length === 0">
+                <td colspan="8" class="text-center py-4 text-muted">
+                  <i class="fas fa-inbox fa-2x mb-2"></i>
+                  <p class="mb-0">沒有找到管理員資料</p>
+                </td>
+              </tr>
+              <tr v-else v-for="admin in filteredAdmins" :key="admin.adminId">
+                <td>
+                  <strong>{{ admin.email }}</strong>
+                  <small class="text-muted d-block">ID: {{ admin.adminId }}</small>
+                </td>
                 <td>{{ admin.name }}</td>
-                <td>{{ admin.phone || '未填寫' }}</td>
+                <td>{{ admin.phone || '未設定' }}</td>
                 <td>
                   <span class="badge bg-primary">
                     {{ admin.role || '未設定' }}
                   </span>
                 </td>
                 <td>
-                  <span class="badge" :class="admin.statusText === '啟用' ? 'bg-success' : admin.statusText === '停用' ? 'bg-secondary' : 'bg-danger'">
-                    {{ admin.statusText }}
+                  <span class="badge" :class="getStatusBadgeClass(admin.status)">
+                    {{ getStatusText(admin.status) }}
                   </span>
                 </td>
                 <td>
                   <div class="btn-group" role="group">
                     <button 
-                      @click="openEditModal(admin)" 
-                      class="btn btn-sm btn-outline-primary"
+                      v-if="canEdit"
+                      class="btn btn-sm btn-outline-primary" 
+                      @click="openEditModal(admin)"
+                      title="編輯"
                     >
-                      <i class="bi bi-pencil"></i>編輯
+                      <i class="bi bi-pencil me-1"></i>編輯
                     </button>
                     <button 
                       class="btn btn-sm btn-outline-info"
+                      title="詳細資料"
                     >
-                      <i class="bi bi-info-circle"></i>詳細資料
+                      <i class="bi bi-info-circle me-1"></i>詳細資料
                     </button>
                     <button 
                       v-if="canDelete" 
-                      @click="deleteAdmin(admin.adminId, admin.name)" 
-                      class="btn btn-sm btn-outline-danger"
+                      class="btn btn-sm btn-outline-danger" 
+                      @click="openDeleteModal(admin)"
+                      title="刪除"
                     >
-                      <i class="bi bi-trash"></i>刪除
+                      <i class="bi bi-trash me-1"></i>刪除
                     </button>
+                    <div class="btn-group" role="group">
+                      <button 
+                        type="button" 
+                        class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                        data-bs-toggle="dropdown"
+                      >
+                        狀態
+                      </button>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" @click="updateAdminStatus(admin.adminId, 1)">
+                          <i class="bi bi-check-circle text-success me-2"></i>設為啟用
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" @click="updateAdminStatus(admin.adminId, 0)">
+                          <i class="bi bi-x-circle text-danger me-2"></i>設為停用
+                        </a></li>
+                      </ul>
+                    </div>
                   </div>
                 </td>
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
 
-          <!-- 分頁 -->
-          <div v-if="totalPages > 1" class="pagination d-flex justify-content-center align-items-center gap-3 mt-4">
-            <button 
-              @click="changePage(currentPage - 1)" 
-              :disabled="currentPage === 1"
-              class="btn btn-outline-secondary"
-            >
-              上一頁
-            </button>
-            <span class="text-muted">
-              第 {{ currentPage }} 頁，共 {{ totalPages }} 頁
-              (總計 {{ totalCount }} 筆資料)
-            </span>
-            <button 
-              @click="changePage(currentPage + 1)" 
-              :disabled="currentPage === totalPages"
-              class="btn btn-outline-secondary"
-            >
-              下一頁
+    <!-- 新增管理員 Modal -->
+    <div class="modal fade" :class="{ show: showCreateModal }" :style="{ display: showCreateModal ? 'block' : 'none' }" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="bi bi-person-plus me-2"></i>新增管理員
+            </h5>
+            <button type="button" class="btn-close" @click="showCreateModal = false"></button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="createAdmin">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Email <span class="text-danger">*</span></label>
+                    <input v-model="createForm.email" type="email" class="form-control" :class="{'is-invalid':emailErr}" placeholder="請輸入Email" @input="emailErr = ''" required>
+                    <div class="invalid-feedback" v-if="emailErr">{{ emailErr }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">密碼 <span class="text-danger">*</span></label>
+                    <input v-model="createForm.password" type="password" class="form-control" :class="{'is-invalid':passwordErr}" placeholder="請輸入密碼" @input="passwordErr = ''" required>
+                    <div class="invalid-feedback" v-if="passwordErr">{{ passwordErr }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">姓名 <span class="text-danger">*</span></label>
+                    <input v-model="createForm.name" type="text" class="form-control" :class="{'is-invalid':nameErr}" placeholder="請輸入姓名" @input="nameErr = ''" required>
+                    <div class="invalid-feedback" v-if="nameErr">{{ nameErr }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">電話 <span class="text-danger">*</span></label>
+                    <input v-model="createForm.phone" type="tel" class="form-control" :class="{'is-invalid':phoneErr}" placeholder="請輸入電話" @input="phoneErr = ''" required>
+                    <div class="invalid-feedback" v-if="phoneErr">{{ phoneErr }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">角色</label>
+                    <select v-model="createForm.role" class="form-select">
+                      <option value="管理員">管理員</option>
+                      <option value="超級管理員">超級管理員</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <div class="alert alert-info">
+                      <i class="bi bi-info-circle me-2"></i>
+                      <strong>預設設定：</strong><br>
+                      • 狀態：啟用
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="showCreateModal = false">取消</button>
+            <button type="button" class="btn btn-primary" @click="createAdmin">
+              <i class="bi bi-check me-1"></i>新增
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 新增/編輯 Modal -->
-    <div v-if="showModal" class="modal-overlay" @click="showModal = false">
-      <div class="modal" @click.stop>
-        <div class="modal-header">
-          <h3>{{ isEdit ? '編輯管理員' : '新增管理員' }}</h3>
-          <button @click="showModal = false" class="close-btn">&times;</button>
-        </div>
-        <div class="modal-body">
-          <form @submit.prevent="submitForm">
-            <div class="form-group mb-3">
-              <label class="form-label">Email *</label>
-              <input
-                v-model="formData.email"
-                type="email"
-                class="form-control"
-                :class="{ 'is-invalid': formErrors.email }"
-              />
-              <div v-if="formErrors.email" class="invalid-feedback">{{ formErrors.email }}</div>
-            </div>
-
-            <div class="form-group mb-3">
-              <label class="form-label">{{ isEdit ? '密碼 (留空則不修改)' : '密碼 *' }}</label>
-              <input
-                v-model="formData.password"
-                type="password"
-                class="form-control"
-                :class="{ 'is-invalid': formErrors.password }"
-              />
-              <div v-if="formErrors.password" class="invalid-feedback">{{ formErrors.password }}</div>
-            </div>
-
-            <div class="form-group mb-3">
-              <label class="form-label">姓名 *</label>
-              <input
-                v-model="formData.name"
-                type="text"
-                class="form-control"
-                :class="{ 'is-invalid': formErrors.name }"
-              />
-              <div v-if="formErrors.name" class="invalid-feedback">{{ formErrors.name }}</div>
-            </div>
-
-            <div class="form-group mb-3">
-              <label class="form-label">電話 *</label>
-              <input
-                v-model="formData.phone"
-                type="tel"
-                class="form-control"
-                :class="{ 'is-invalid': formErrors.phone }"
-              />
-              <div v-if="formErrors.phone" class="invalid-feedback">{{ formErrors.phone }}</div>
-            </div>
-
-            <div class="form-group mb-3">
-              <label class="form-label">角色 *</label>
-              <select
-                v-model="formData.role"
-                class="form-control"
-                :class="{ 'is-invalid': formErrors.role }"
-              >
-                <option v-for="option in roleOptions" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-              <div v-if="formErrors.role" class="invalid-feedback">{{ formErrors.role }}</div>
-            </div>
-
-            <div v-if="isEdit" class="form-group mb-3">
-              <label class="form-label">狀態</label>
-              <select v-model="formData.status" class="form-control">
-                <option v-for="option in statusOptions" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-
-            <div class="form-actions d-flex gap-2 justify-content-end">
-              <button type="button" @click="showModal = false" class="btn btn-outline-secondary">
-                取消
-              </button>
-              <button type="submit" class="btn btn-custom">
-                {{ isEdit ? '更新' : '新增' }}
-              </button>
-            </div>
-          </form>
+    <!-- 編輯管理員 Modal -->
+    <div class="modal fade" :class="{ show: showEditModal }" :style="{ display: showEditModal ? 'block' : 'none' }" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="bi bi-pencil me-2"></i>編輯管理員
+            </h5>
+            <button type="button" class="btn-close" @click="showEditModal = false"></button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="updateAdmin">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Email <span class="text-danger">*</span></label>
+                    <input v-model="editForm.email" type="email" class="form-control" :class="{'is-invalid':emailErr}" placeholder="請輸入Email" @input="emailErr = ''" required>
+                    <div class="invalid-feedback" v-if="emailErr">{{ emailErr }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">密碼 (留空則不修改)</label>
+                    <input v-model="editForm.password" type="password" class="form-control" :class="{'is-invalid':passwordErr}" placeholder="請輸入新密碼" @input="passwordErr = ''">
+                    <div class="invalid-feedback" v-if="passwordErr">{{ passwordErr }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">姓名 <span class="text-danger">*</span></label>
+                    <input v-model="editForm.name" type="text" class="form-control" :class="{'is-invalid':nameErr}" placeholder="請輸入姓名" @input="nameErr = ''" required>
+                    <div class="invalid-feedback" v-if="nameErr">{{ nameErr }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">電話 <span class="text-danger">*</span></label>
+                    <input v-model="editForm.phone" type="tel" class="form-control" :class="{'is-invalid':phoneErr}" placeholder="請輸入電話" @input="phoneErr = ''" required>
+                    <div class="invalid-feedback" v-if="phoneErr">{{ phoneErr }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">角色</label>
+                    <select v-model="editForm.role" class="form-select">
+                      <option value="管理員">管理員</option>
+                      <option value="超級管理員">超級管理員</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">狀態</label>
+                    <select v-model="editForm.status" class="form-select">
+                      <option :value="1">啟用</option>
+                      <option :value="0">停用</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="showEditModal = false">取消</button>
+            <button type="button" class="btn btn-primary" @click="updateAdmin">
+              <i class="bi bi-check me-1"></i>更新
+            </button>
+          </div>
         </div>
       </div>
     </div>
- </div>
+
+    <!-- 刪除確認 Modal -->
+    <div class="modal fade" :class="{ show: showDeleteModal }" :style="{ display: showDeleteModal ? 'block' : 'none' }" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="bi bi-exclamation-triangle text-danger me-2"></i>確認刪除
+            </h5>
+            <button type="button" class="btn-close" @click="showDeleteModal = false"></button>
+          </div>
+          <div class="modal-body">
+            <p>確定要刪除管理員「<strong>{{ selectedAdmin?.name }}</strong>」嗎？</p>
+            <div class="alert alert-warning">
+              <i class="bi bi-info-circle me-2"></i>
+              此操作無法復原，請謹慎操作。
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="showDeleteModal = false">取消</button>
+            <button type="button" class="btn btn-danger" @click="deleteAdmin">
+              <i class="bi bi-trash me-1"></i>確認刪除
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 背景遮罩 -->
+    <div v-if="showCreateModal || showEditModal || showDeleteModal" class="modal-backdrop fade show"></div>
+  </div>
 </template>
 
-<style lang="css" scoped>
+<style scoped>
+/* 主題色彩 */
+:root {
+  --primary-color: rgb(115, 2, 95);
+  --secondary-color: rgb(152, 102, 149);
+}
 
+/* 頁面標題樣式 */
+.page-title {
+  color: var(--primary-color);
+  font-weight: 600;
+}
 
-/* 表格樣式 - 參考 MVC 樣式 */
+.page-title i {
+  color: var(--secondary-color);
+}
+
+/* 自定義按鈕樣式 */
+.btn-custom {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  background-color: transparent;
+  transition: all 0.3s ease;
+}
+
+.btn-custom:hover {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* 表格樣式 */
 .table th {
   font-weight: 600;
   white-space: nowrap;
-  background-color: rgb(152,102,149) !important;
-  color: white;
-  vertical-align: middle;
+  background-color: var(--secondary-color) !important;
+  color:black;
+  border-color: var(--secondary-color);
 }
 
 .table td {
   vertical-align: middle;
 }
 
+.table-hover tbody tr:hover {
+  background-color: rgba(152, 102, 149, 0.1);
+}
+
 /* 按鈕群組樣式 */
 .btn-group .btn {
   padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
 }
 
-/* Badge 樣式 */
+/* 徽章樣式 */
 .badge {
   font-weight: 500;
   padding: 0.5em 0.75em;
+  border-radius: 0.375rem;
 }
 
-/* 頁面標題樣式 */
-.page-title {
-  color: rgb(115,2,95);
+/* 搜尋框樣式 */
+.input-group .form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(115, 2, 95, 0.25);
 }
 
-/* 自定義按鈕樣式 */
-.btn-custom {
-  color: rgb(115,2,95);
-  border-color: rgb(115,2,95);
-  background-color: transparent;
-}
-
-.btn-custom:hover {
-  background-color: rgb(115,2,95);
-  color: white;
-}
-
-/* 搜尋區域樣式 */
-.search-section {
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-}
-
-.search-form {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
+.input-group-text {
+  background-color: #f8f9fa;
+  border-color: #ced4da;
+  color: var(--secondary-color);
 }
 
 /* 表單控制項樣式 */
-.form-control {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(115, 2, 95, 0.25);
 }
 
-.form-control:focus {
-  outline: none;
-  border-color: rgb(115,2,95);
-  box-shadow: 0 0 0 2px rgba(115, 2, 95, 0.25);
-}
-
-.form-control.is-invalid {
-  border-color: #dc3545;
-}
-
-.invalid-feedback {
-  color: #dc3545;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-/* 按鈕樣式 */
-.btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: #007bff;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #0056b3;
-}
-
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #545b62;
-}
-
-.btn-outline-primary {
-  background: transparent;
-  border: 1px solid #007bff;
-  color: #007bff;
-}
-
-.btn-outline-primary:hover {
-  background: #007bff;
-  color: white;
-}
-
-.btn-outline-secondary {
-  background: transparent;
-  border: 1px solid #6c757d;
-  color: #6c757d;
-}
-
-.btn-outline-secondary:hover {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-outline-info {
-  background: transparent;
-  border: 1px solid #17a2b8;
-  color: #17a2b8;
-}
-
-.btn-outline-info:hover {
-  background: #17a2b8;
-  color: white;
-}
-
-.btn-outline-danger {
-  background: transparent;
-  border: 1px solid #dc3545;
-  color: #dc3545;
-}
-
-.btn-outline-danger:hover {
-  background: #dc3545;
-  color: white;
-}
-
-.btn-sm {
-  padding: 4px 8px;
-  font-size: 12px;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* 載入動畫 */
-.loading {
-  text-align: center;
-  padding: 40px;
-}
-
-/* 表格樣式 */
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.table-hover tbody tr:hover {
-  background: #f8f9fa;
-}
-
-/* 分頁樣式 */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
-  margin-top: 20px;
-  padding: 20px;
+/* 警告框樣式 */
+.alert-info {
+  background-color: rgba(152, 102, 149, 0.1);
+  border-color: var(--secondary-color);
+  color: var(--primary-color);
 }
 
 /* Modal 樣式 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal {
-  background: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
 .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #eee;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
 }
 
-.modal-header h3 {
-  margin: 0;
-  color: #333;
+.modal-title {
+  color: var(--primary-color);
+  font-weight: 600;
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #666;
+/* 載入動畫樣式 */
+.spinner-border {
+  width: 2rem;
+  height: 2rem;
 }
 
-.close-btn:hover {
-  color: #333;
-}
-
-.modal-body {
-  padding: 20px;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-.form-label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: 500;
-  color: #333;
+/* 空狀態樣式 */
+.text-muted {
+  color: #6c757d !important;
 }
 
 /* 響應式設計 */
 @media (max-width: 768px) {
-  .search-form {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .table {
-    font-size: 12px;
-  }
-  
-  .table th,
-  .table td {
-    padding: 8px;
-  }
-  
-  .pagination {
-    flex-direction: column;
-    gap: 10px;
-  }
-  
   .btn-group {
     flex-direction: column;
   }
   
   .btn-group .btn {
-    margin-bottom: 2px;
+    margin-bottom: 0.25rem;
   }
+  
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+}
+
+/* 動畫效果 */
+.fa-bounce {
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Modal 背景遮罩 */
+.modal-backdrop {
+  z-index: 1040;
+}
+
+.modal {
+  z-index: 1050;
+}
+
+.btn-group .dropdown-menu {
+  z-index: 1060;
+}
+
+/* 下拉選單樣式 */
+.dropdown-item:hover {
+  background-color: rgba(152, 102, 149, 0.1);
+}
+
+.dropdown-item i {
+  width: 1rem;
+  text-align: center;
 }
 
 /* Bootstrap 相容性樣式 */
@@ -778,6 +916,10 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
+.mb-4 {
+  margin-bottom: 1.5rem;
+}
+
 .mt-2 {
   margin-top: 0.5rem;
 }
@@ -790,9 +932,26 @@ onMounted(() => {
   margin-right: 0.25rem;
 }
 
+.me-2 {
+  margin-right: 0.5rem;
+}
+
+.ms-2 {
+  margin-left: 0.5rem;
+}
+
+.ms-auto {
+  margin-left: auto;
+}
+
 .py-3 {
   padding-top: 1rem;
   padding-bottom: 1rem;
+}
+
+.py-4 {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
 }
 
 .py-5 {
