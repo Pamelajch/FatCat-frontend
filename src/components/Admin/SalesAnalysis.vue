@@ -103,7 +103,7 @@ onMounted(() => {
 <template>
   <div>
     <div class="time-filter-controls mb-4">
-      <p>時間篩選器區域 (暫用文字替代)</p>
+      <!-- <p>時間篩選器區域 (暫用文字替代)</p> -->
     </div>
 
     <div v-if="loading" class="text-center">
@@ -117,11 +117,11 @@ onMounted(() => {
       <div class="row">
         
         <div class="col-xl-6">
-            <div class="card mb-4 h-50">
+            <div class="card mb-4 ">
                 <div class="card-header"><i class="fas fa-wallet me-1"></i> 本月目前銷售總額</div>
                 <div class="card-body d-flex justify-content-center align-items-center">
                     <div class="text-center">
-                        <h2 class="display-5 fw-semibold kpi-number">
+                        <h2 class="display-6 display-md-5 fw-semibold kpi-number">
                             {{ formatCurrency(chartData.selectedRangeTotalRevenue) }}
                         </h2>
                     </div>

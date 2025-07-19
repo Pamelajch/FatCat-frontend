@@ -4,15 +4,24 @@ import MemberAnalysis from '@/components/admin/MemberAnalysis.vue';
 import SalesAnalysis from '@/components/admin/SalesAnalysis.vue';
 import ProductAnalysis from '@/components/admin/ProductAnalysis.vue'; 
 
-const activeTab = ref('sales'); // 預設顯示銷售報表
+const activeTab = ref('product'); // 預設顯示銷售報表
 </script>
 
 <template>
   <div class="analysis-container">
     <h1 class="mt-2 page-title">分析報表</h1>
-    <ol class="breadcrumb"><li class="breadcrumb-item active">分析您的商業數據與顧客行為</li></ol>
+    <ol class="breadcrumb"><h4 class="breadcrumb-item active">分析您的商業數據與顧客行為</h4></ol>
 
     <ul class="nav nav-pills mb-4">
+      <li class="nav-item">
+        <a 
+          class="nav-link" 
+          :class="{ active: activeTab === 'product' }" 
+          @click.prevent="activeTab = 'product'" 
+          href="#">
+          <i class="fas fa-tag me-1"></i> 產品分析
+        </a>
+      </li>
       <li class="nav-item">
         <a 
           class="nav-link" 
@@ -30,16 +39,7 @@ const activeTab = ref('sales'); // 預設顯示銷售報表
           href="#">
           <i class="fas fa-users me-1"></i> 會員分析
         </a>
-      </li>
-      <li class="nav-item">
-        <a 
-          class="nav-link" 
-          :class="{ active: activeTab === 'product' }" 
-          @click.prevent="activeTab = 'product'" 
-          href="#">
-          <i class="fas fa-tag me-1"></i> 產品分析
-        </a>
-      </li>
+      </li>      
     </ul>
 
     <div class="tab-content">
