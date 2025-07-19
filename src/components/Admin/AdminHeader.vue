@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, inject } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -7,6 +7,10 @@ const currentTime = ref('');
 let timer = null;
 const isDropdownOpen = ref(false);
 const adminInfo = ref(null);
+
+// 注入側邊欄切換函數和狀態
+const toggleSidebar = inject('toggleSidebar');
+const isSidebarCollapsed = inject('isSidebarCollapsed', ref(false));
 
 const welcomeMessage = computed(() => {
   if (adminInfo.value && adminInfo.value.name) {
@@ -54,8 +58,8 @@ onUnmounted(() => {
 <template>
   <header class="admin-header">
     <div class="header-left">
-      <button class="sidebar-toggle-btn">
-        <i class="bi bi-list"></i>
+      <button class="sidebar-toggle-btn" @click="toggleSidebar">
+        <i class="bi" :class="isSidebarCollapsed ? 'bi-arrow-right' : 'bi-list'"></i>
       </button>
       <div class="search-bar">
         <i class="bi bi-search"></i>
@@ -105,6 +109,15 @@ onUnmounted(() => {
   font-size: 1.5rem;
   cursor: pointer;
   color: #f6f7f7;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  transform: scale(1.1);
+}
+
+.sidebar-toggle-btn i {
+  transition: transform 0.3s ease;
 }
 .search-bar {
   background-color: #f8f9fa;

@@ -1,5 +1,8 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
+
+// 注入側邊欄收合狀態
+const isSidebarCollapsed = inject('isSidebarCollapsed', ref(false));
 
 const openCollapseId = ref(null); // null 代表全部收合
 const navItems = ref([
@@ -91,18 +94,21 @@ const toggleCollapse = (itemId) => {
 </script>
 
 <template>
-  <aside class="admin-sidebar">
+  <aside class="admin-sidebar" :class="{ 'collapsed': isSidebarCollapsed }">
     <div class="sidebar-header">
-      <a href="/admin/dashboard" class="logo">肥貓後台</a>
+      <a href="/admin/dashboard" class="logo">
+        <span v-if="!isSidebarCollapsed">肥貓後台</span>
+        <span v-else>肥貓</span>
+      </a>
     </div>
     <nav class="sidebar-nav">
       <ul>
         <template v-for="(item, index) in navItems" :key="index">
           
           <li v-if="item.type === 'link'">
-            <RouterLink :to="item.path" class="nav-link">
+            <RouterLink :to="item.path" class="nav-link" :title="isSidebarCollapsed ? item.text : ''">
               <i :class="item.icon"></i>
-              <span>{{ item.text }}</span>
+              <span v-if="!isSidebarCollapsed">{{ item.text }}</span>
             </RouterLink>
           </li>
 
@@ -113,10 +119,11 @@ const toggleCollapse = (itemId) => {
               role="button"
               @click.prevent="toggleCollapse(item.id)"
               :class="{ 'collapsed': openCollapseId !== item.id }"
+              :title="isSidebarCollapsed ? item.text : ''"
             >
               <i :class="item.icon"></i>
-              <span>{{ item.text }}</span>
-              <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
+              <span v-if="!isSidebarCollapsed">{{ item.text }}</span>
+              <i v-if="!isSidebarCollapsed" class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
             
             <Transition
@@ -125,7 +132,7 @@ const toggleCollapse = (itemId) => {
               @enter="enter"
               @leave="leave"
             >
-              <div v-show="openCollapseId === item.id" class="submenu-wrapper">
+              <div v-show="openCollapseId === item.id && !isSidebarCollapsed" class="submenu-wrapper">
                 <ul class="submenu">
                   <li v-for="child in item.children" :key="child.path">
                     <RouterLink :to="child.path" class="nav-link sub-link">
@@ -152,27 +159,47 @@ const toggleCollapse = (itemId) => {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  transition: width 0.3s ease;
 }
+
+.admin-sidebar.collapsed {
+  width: 70px;
+}
+
 .sidebar-header {
   padding: 1.5rem;
   text-align: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+.admin-sidebar.collapsed .sidebar-header {
+  padding: 1rem 0.5rem;
+}
+
 .logo {
   font-size: 1.5rem;
   font-weight: bold;
   color: #fff;
   text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
 }
+
+.admin-sidebar.collapsed .logo {
+  font-size: 1rem;
+}
+
 .sidebar-nav {
   flex-grow: 1;
   padding-top: 1rem;
 }
+
 .sidebar-nav ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
+
 .nav-link {
   display: flex;
   align-items: center;
@@ -185,58 +212,106 @@ const toggleCollapse = (itemId) => {
   background: none;
   border: none;
   text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
 }
+
+.admin-sidebar.collapsed .nav-link {
+  padding: 1rem 0.5rem;
+  justify-content: center;
+}
+
 .nav-link:hover {
   background-color: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
+
 .nav-link i {
   margin-right: 1rem;
   font-size: 1.2rem;
   width: 24px;
   text-align: center;
+  flex-shrink: 0;
 }
+
+.admin-sidebar.collapsed .nav-link i {
+  margin-right: 0;
+}
+
 .collapsible-link {
   cursor: pointer;
   justify-content: space-between;
 }
+
+.admin-sidebar.collapsed .collapsible-link {
+  justify-content: center;
+}
+
 .arrow-icon {
   transition: transform 0.3s ease;
   font-size: 0.8rem !important;
 }
+
 .collapsible-link:not(.collapsed) .arrow-icon {
   transform: rotate(180deg);
 }
+
 .nav-link.router-link-exact-active {
   background-color: #f3e3f4;
   color: #582b5e;
   font-weight: bold;
 }
+
 li:has(.submenu .router-link-exact-active) > .nav-link.collapsible-link {
   background-color: #7f2395;
   color: white;
   font-weight: bold;
 }
+
 .submenu-wrapper {
   overflow: hidden;
 }
+
 .submenu {
   padding-left: 1.5rem;
   background-color: rgba(0, 0, 0, 0.2);
 }
+
 .submenu .nav-link {
   font-size: 1rem;
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
   padding-left: 2.8rem;
 }
+
 .submenu .nav-link.router-link-exact-active {
   background-color: #e8daef !important;
   color: #582b5e !important;
 }
+
 .slide-enter-active,
 .slide-leave-active {
   transition: height 0.35s ease-out;
 }
 
+/* 收合時的提示樣式 */
+.admin-sidebar.collapsed .nav-link:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-left: 0.5rem;
+}
+
+.admin-sidebar.collapsed .nav-link {
+  position: relative;
+}
 </style>
