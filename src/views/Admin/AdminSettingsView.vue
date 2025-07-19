@@ -197,8 +197,8 @@ const submitForm = async () => {
   }
 }
 
-const deleteAdmin = async (adminId) => {
-  if (!confirm('確定要刪除此管理員嗎？')) return
+const deleteAdmin = async (adminId, adminName) => {
+  if (!confirm(`確定要刪除管理員「${adminName}」嗎？此操作無法復原。`)) return
   
   try {
     const response = await fetch(`/api/Admins/${adminId}`, {
@@ -225,115 +225,141 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="admin-settings">
-    <div class="header">
-      <h2>管理員設定</h2>
-      <button 
-        v-if="canEdit" 
-        @click="openAddModal" 
-        class="btn btn-primary"
-      >
-        新增管理員
-      </button>
+ <div class="container-fluid">
+    <!-- 錯誤訊息顯示區域 -->
+    <div v-if="false" class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      錯誤訊息
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
-    <!-- 搜尋區域 -->
-    <div class="search-section">
-      <div class="search-form">
-        <input
-          v-model="searchForm.searchKeyword"
-          type="text"
-          placeholder="搜尋姓名、電話或Email..."
-          class="form-control"
-          @keyup.enter="search"
-        />
-        <select v-model="searchForm.sortBy" class="form-control">
-          <option value="AdminId">ID</option>
-          <option value="Name">姓名</option>
-          <option value="Email">Email</option>
-          <option value="Role">角色</option>
-          <option value="Status">狀態</option>
-        </select>
-        <select v-model="searchForm.sortOrder" class="form-control">
-          <option value="asc">升序</option>
-          <option value="desc">降序</option>
-        </select>
-        <button @click="search" class="btn btn-secondary">搜尋</button>
-        <button @click="resetSearch" class="btn btn-outline">重置</button>
+    <div class="card shadow-sm">
+      <div class="card-header bg-white py-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <h1 class="h3 mb-0 page-title">
+            <i class="fa-solid fa-user-shield fa-bounce"></i>管理員列表
+          </h1>
+          <button 
+            v-if="canEdit" 
+            @click="openAddModal" 
+            class="btn btn-custom"
+          >
+            <i class="bi bi-person-plus me-1" style="display: inline-block; margin-right: 0.25rem;"></i>新增管理員
+          </button>
+        </div>
       </div>
-    </div>
+      
+      <div class="card-body">
+        <!-- 搜尋區域 -->
+        <div class="search-section mb-3">
+          <div class="search-form">
+            <input
+              v-model="searchForm.searchKeyword"
+              type="text"
+              placeholder="搜尋姓名、電話或Email..."
+              class="form-control"
+              @keyup.enter="search"
+            />
+            <select v-model="searchForm.sortBy" class="form-control">
+              <option value="AdminId">ID</option>
+              <option value="Name">姓名</option>
+              <option value="Email">Email</option>
+              <option value="Role">角色</option>
+              <option value="Status">狀態</option>
+            </select>
+            <select v-model="searchForm.sortOrder" class="form-control">
+              <option value="asc">升序</option>
+              <option value="desc">降序</option>
+            </select>
+            <button @click="search" class="btn btn-secondary">搜尋</button>
+            <button @click="resetSearch" class="btn btn-outline-secondary">重置</button>
+          </div>
+        </div>
 
-    <!-- 載入中 -->
-    <div v-if="loading" class="loading">
-      <div class="spinner"></div>
-      <p>載入中...</p>
-    </div>
+        <!-- 載入中 -->
+        <div v-if="loading" class="loading text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">載入中...</span>
+          </div>
+          <p class="mt-2">載入中...</p>
+        </div>
 
-    <!-- 管理員列表 -->
-    <div v-else class="admin-list">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>姓名</th>
-            <th>Email</th>
-            <th>電話</th>
-            <th>角色</th>
-            <th>狀態</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="admin in admins" :key="admin.adminId">
-            <td>{{ admin.adminId }}</td>
-            <td>{{ admin.name }}</td>
-            <td>{{ admin.email }}</td>
-            <td>{{ admin.phone }}</td>
-            <td>{{ admin.role }}</td>
-            <td>
-              <span :class="['status-badge', `status-${admin.status}`]">
-                {{ admin.statusText }}
-              </span>
-            </td>
-            <td>
-              <button 
-                @click="openEditModal(admin)" 
-                class="btn btn-sm btn-outline"
-              >
-                編輯
-              </button>
-              <button 
-                v-if="canDelete" 
-                @click="deleteAdmin(admin.adminId)" 
-                class="btn btn-sm btn-danger"
-              >
-                刪除
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <!-- 管理員列表 -->
+        <div v-else class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Email</th>
+                <th>姓名</th>
+                <th>電話</th>
+                <th>角色</th>
+                <th>狀態</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="admin in admins" :key="admin.adminId">
+                <td>{{ admin.email }}</td>
+                <td>{{ admin.name }}</td>
+                <td>{{ admin.phone || '未填寫' }}</td>
+                <td>
+                  <span class="badge bg-primary">
+                    {{ admin.role || '未設定' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" :class="admin.statusText === '啟用' ? 'bg-success' : admin.statusText === '停用' ? 'bg-secondary' : 'bg-danger'">
+                    {{ admin.statusText }}
+                  </span>
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <button 
+                      @click="openEditModal(admin)" 
+                      class="btn btn-sm btn-outline-primary"
+                    >
+                      <i class="bi bi-pencil"></i>編輯
+                    </button>
+                    <button 
+                      class="btn btn-sm btn-outline-info"
+                    >
+                      <i class="bi bi-info-circle"></i>詳細資料
+                    </button>
+                    <button 
+                      v-if="canDelete" 
+                      @click="deleteAdmin(admin.adminId, admin.name)" 
+                      class="btn btn-sm btn-outline-danger"
+                    >
+                      <i class="bi bi-trash"></i>刪除
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-      <!-- 分頁 -->
-      <div v-if="totalPages > 1" class="pagination">
-        <button 
-          @click="changePage(currentPage - 1)" 
-          :disabled="currentPage === 1"
-          class="btn btn-outline"
-        >
-          上一頁
-        </button>
-        <span class="page-info">
-          第 {{ currentPage }} 頁，共 {{ totalPages }} 頁
-          (總計 {{ totalCount }} 筆資料)
-        </span>
-        <button 
-          @click="changePage(currentPage + 1)" 
-          :disabled="currentPage === totalPages"
-          class="btn btn-outline"
-        >
-          下一頁
-        </button>
+          <!-- 分頁 -->
+          <div v-if="totalPages > 1" class="pagination d-flex justify-content-center align-items-center gap-3 mt-4">
+            <button 
+              @click="changePage(currentPage - 1)" 
+              :disabled="currentPage === 1"
+              class="btn btn-outline-secondary"
+            >
+              上一頁
+            </button>
+            <span class="text-muted">
+              第 {{ currentPage }} 頁，共 {{ totalPages }} 頁
+              (總計 {{ totalCount }} 筆資料)
+            </span>
+            <button 
+              @click="changePage(currentPage + 1)" 
+              :disabled="currentPage === totalPages"
+              class="btn btn-outline-secondary"
+            >
+              下一頁
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -346,66 +372,66 @@ onMounted(() => {
         </div>
         <div class="modal-body">
           <form @submit.prevent="submitForm">
-            <div class="form-group">
-              <label>Email *</label>
+            <div class="form-group mb-3">
+              <label class="form-label">Email *</label>
               <input
                 v-model="formData.email"
                 type="email"
                 class="form-control"
-                :class="{ 'error': formErrors.email }"
+                :class="{ 'is-invalid': formErrors.email }"
               />
-              <span v-if="formErrors.email" class="error-text">{{ formErrors.email }}</span>
+              <div v-if="formErrors.email" class="invalid-feedback">{{ formErrors.email }}</div>
             </div>
 
-            <div class="form-group">
-              <label>{{ isEdit ? '密碼 (留空則不修改)' : '密碼 *' }}</label>
+            <div class="form-group mb-3">
+              <label class="form-label">{{ isEdit ? '密碼 (留空則不修改)' : '密碼 *' }}</label>
               <input
                 v-model="formData.password"
                 type="password"
                 class="form-control"
-                :class="{ 'error': formErrors.password }"
+                :class="{ 'is-invalid': formErrors.password }"
               />
-              <span v-if="formErrors.password" class="error-text">{{ formErrors.password }}</span>
+              <div v-if="formErrors.password" class="invalid-feedback">{{ formErrors.password }}</div>
             </div>
 
-            <div class="form-group">
-              <label>姓名 *</label>
+            <div class="form-group mb-3">
+              <label class="form-label">姓名 *</label>
               <input
                 v-model="formData.name"
                 type="text"
                 class="form-control"
-                :class="{ 'error': formErrors.name }"
+                :class="{ 'is-invalid': formErrors.name }"
               />
-              <span v-if="formErrors.name" class="error-text">{{ formErrors.name }}</span>
+              <div v-if="formErrors.name" class="invalid-feedback">{{ formErrors.name }}</div>
             </div>
 
-            <div class="form-group">
-              <label>電話 *</label>
+            <div class="form-group mb-3">
+              <label class="form-label">電話 *</label>
               <input
                 v-model="formData.phone"
                 type="tel"
                 class="form-control"
-                :class="{ 'error': formErrors.phone }"
+                :class="{ 'is-invalid': formErrors.phone }"
               />
-              <span v-if="formErrors.phone" class="error-text">{{ formErrors.phone }}</span>
+              <div v-if="formErrors.phone" class="invalid-feedback">{{ formErrors.phone }}</div>
             </div>
 
-            <div class="form-group">
-              <label>角色 *</label>
+            <div class="form-group mb-3">
+              <label class="form-label">角色 *</label>
               <select
                 v-model="formData.role"
                 class="form-control"
-                :class="{ 'error': formErrors.role }"
+                :class="{ 'is-invalid': formErrors.role }"
               >
                 <option v-for="option in roleOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
                 </option>
               </select>
-              <span v-if="formErrors.role" class="error-text">{{ formErrors.role }}</span>
+              <div v-if="formErrors.role" class="invalid-feedback">{{ formErrors.role }}</div>
             </div>
 
-            <div v-if="isEdit" class="form-group">
-              <label>狀態</label>
+            <div v-if="isEdit" class="form-group mb-3">
+              <label class="form-label">狀態</label>
               <select v-model="formData.status" class="form-control">
                 <option v-for="option in statusOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
@@ -413,11 +439,11 @@ onMounted(() => {
               </select>
             </div>
 
-            <div class="form-actions">
-              <button type="button" @click="showModal = false" class="btn btn-outline">
+            <div class="form-actions d-flex gap-2 justify-content-end">
+              <button type="button" @click="showModal = false" class="btn btn-outline-secondary">
                 取消
               </button>
-              <button type="submit" class="btn btn-primary">
+              <button type="submit" class="btn btn-custom">
                 {{ isEdit ? '更新' : '新增' }}
               </button>
             </div>
@@ -425,33 +451,58 @@ onMounted(() => {
         </div>
       </div>
     </div>
-  </div>
+ </div>
 </template>
 
 <style lang="css" scoped>
-.admin-settings {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+
+
+/* 表格樣式 - 參考 MVC 樣式 */
+.table th {
+  font-weight: 600;
+  white-space: nowrap;
+  background-color: rgb(152,102,149) !important;
+  color: white;
+  vertical-align: middle;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+.table td {
+  vertical-align: middle;
 }
 
-.header h2 {
-  margin: 0;
-  color: #333;
+/* 按鈕群組樣式 */
+.btn-group .btn {
+  padding: 0.25rem 0.5rem;
 }
 
+/* Badge 樣式 */
+.badge {
+  font-weight: 500;
+  padding: 0.5em 0.75em;
+}
+
+/* 頁面標題樣式 */
+.page-title {
+  color: rgb(115,2,95);
+}
+
+/* 自定義按鈕樣式 */
+.btn-custom {
+  color: rgb(115,2,95);
+  border-color: rgb(115,2,95);
+  background-color: transparent;
+}
+
+.btn-custom:hover {
+  background-color: rgb(115,2,95);
+  color: white;
+}
+
+/* 搜尋區域樣式 */
 .search-section {
   background: #f8f9fa;
   padding: 20px;
   border-radius: 8px;
-  margin-bottom: 20px;
 }
 
 .search-form {
@@ -461,6 +512,7 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 
+/* 表單控制項樣式 */
 .form-control {
   padding: 8px 12px;
   border: 1px solid #ddd;
@@ -470,20 +522,21 @@ onMounted(() => {
 
 .form-control:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  border-color: rgb(115,2,95);
+  box-shadow: 0 0 0 2px rgba(115, 2, 95, 0.25);
 }
 
-.form-control.error {
+.form-control.is-invalid {
   border-color: #dc3545;
 }
 
-.error-text {
+.invalid-feedback {
   color: #dc3545;
   font-size: 12px;
   margin-top: 4px;
 }
 
+/* 按鈕樣式 */
 .btn {
   padding: 8px 16px;
   border: none;
@@ -511,24 +564,48 @@ onMounted(() => {
   background: #545b62;
 }
 
-.btn-outline {
+.btn-outline-primary {
   background: transparent;
   border: 1px solid #007bff;
   color: #007bff;
 }
 
-.btn-outline:hover {
+.btn-outline-primary:hover {
   background: #007bff;
   color: white;
 }
 
-.btn-danger {
-  background: #dc3545;
+.btn-outline-secondary {
+  background: transparent;
+  border: 1px solid #6c757d;
+  color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+  background: #6c757d;
   color: white;
 }
 
-.btn-danger:hover {
-  background: #c82333;
+.btn-outline-info {
+  background: transparent;
+  border: 1px solid #17a2b8;
+  color: #17a2b8;
+}
+
+.btn-outline-info:hover {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-outline-danger {
+  background: transparent;
+  border: 1px solid #dc3545;
+  color: #dc3545;
+}
+
+.btn-outline-danger:hover {
+  background: #dc3545;
+  color: white;
 }
 
 .btn-sm {
@@ -541,26 +618,13 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
+/* 載入動畫 */
 .loading {
   text-align: center;
   padding: 40px;
 }
 
-.spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #007bff;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 10px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
+/* 表格樣式 */
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -570,45 +634,11 @@ onMounted(() => {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.table th,
-.table td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-}
-
-.table th {
-  background: #f8f9fa;
-  font-weight: 600;
-  color: #333;
-}
-
-.table tr:hover {
+.table-hover tbody tr:hover {
   background: #f8f9fa;
 }
 
-.status-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-0 {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.status-1 {
-  background: #d4edda;
-  color: #155724;
-}
-
-.status-2 {
-  background: #f8d7da;
-  color: #721c24;
-}
-
+/* 分頁樣式 */
 .pagination {
   display: flex;
   justify-content: center;
@@ -618,11 +648,7 @@ onMounted(() => {
   padding: 20px;
 }
 
-.page-info {
-  color: #666;
-  font-size: 14px;
-}
-
+/* Modal 樣式 */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -678,20 +704,14 @@ onMounted(() => {
   margin-bottom: 15px;
 }
 
-.form-group label {
+.form-label {
   display: block;
   margin-bottom: 5px;
   font-weight: 500;
   color: #333;
 }
 
-.form-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-
+/* 響應式設計 */
 @media (max-width: 768px) {
   .search-form {
     flex-direction: column;
@@ -711,5 +731,100 @@ onMounted(() => {
     flex-direction: column;
     gap: 10px;
   }
+  
+  .btn-group {
+    flex-direction: column;
+  }
+  
+  .btn-group .btn {
+    margin-bottom: 2px;
+  }
+}
+
+/* Bootstrap 相容性樣式 */
+.d-flex {
+  display: flex;
+}
+
+.justify-content-between {
+  justify-content: space-between;
+}
+
+.justify-content-center {
+  justify-content: center;
+}
+
+.justify-content-end {
+  justify-content: flex-end;
+}
+
+.align-items-center {
+  align-items: center;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-3 {
+  gap: 1rem;
+}
+
+.mb-0 {
+  margin-bottom: 0;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-4 {
+  margin-top: 1.5rem;
+}
+
+.me-1 {
+  margin-right: 0.25rem;
+}
+
+.py-3 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.py-5 {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  color: #6c757d;
+}
+
+.shadow-sm {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 </style>
