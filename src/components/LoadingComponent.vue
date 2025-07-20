@@ -9,6 +9,7 @@ const mode = ref('loading')
 // 貓頭預言師功能
 const prophecyText = ref('')
 const showProphecy = ref(false)
+const isTriggeredByClick = ref(false)
 const prophecies = [
   '今天穿橘色 🌶️',
   '今天不宜偷懶 🐾',
@@ -16,13 +17,32 @@ const prophecies = [
   '相信泡麵，相信命運 ✨',
   '今天是拉麵星逆行的一天 🌘'
 ]
-
-const randomProphecy = () => {
-  prophecyText.value = prophecies[Math.floor(Math.random() * prophecies.length)]
+const clickProphecies = [
+  '戳什麼戳 😾',
+  '本喵不喜歡被摸 🙀',
+  '走開人類 🐾',
+  '有事嗎？沒事別吵我 😼',
+  '嘶...再戳我就報警 ☎️'
+]
+const showProphecyNow = (text) => {
+  prophecyText.value = text
   showProphecy.value = true
   setTimeout(() => {
     showProphecy.value = false
+    isTriggeredByClick.value = false
   }, 4000)
+}
+
+const randomAutoProphecy = () => {
+  if (isTriggeredByClick.value) return
+  const random = prophecies[Math.floor(Math.random() * prophecies.length)]
+  showProphecyNow(random)
+}
+
+const triggerClickProphecy = () => {
+  isTriggeredByClick.value = true
+  const random = clickProphecies[Math.floor(Math.random() * clickProphecies.length)]
+  showProphecyNow(random)
 }
 
 // 撈取特殊泡麵
@@ -60,7 +80,7 @@ const addToCart = (noodle) => {
 // 初始化：抓泡麵 & 開啟貓咪預言循環
 onMounted(() => {
   fetchSpecialNoodles()
-  setInterval(randomProphecy, 5000)
+  setInterval(randomAutoProphecy, 5000)
 })
 </script>
 
@@ -104,7 +124,12 @@ onMounted(() => {
   </div>
   <!-- 貓頭預言師 -->
   <div class="cat-prophet">
-    <img src="/cat-head.png" alt="預言貓" class="cat-head" />
+    <img
+      src="/cat-head.png"
+      alt="預言貓"
+      class="cat-head"
+      @click="triggerClickProphecy"
+    />
     <div class="prophecy" v-if="showProphecy">{{ prophecyText }}</div>
   </div>
 </div>
@@ -340,5 +365,14 @@ onMounted(() => {
   10% { opacity: 1; transform: translateY(0); }
   90% { opacity: 1; }
   100% { opacity: 0; transform: translateY(-10px); }
+}
+
+.cat-head:active {
+  animation: shake 0.3s;
+}
+@keyframes shake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  75% { transform: rotate(10deg); }
 }
 </style>
