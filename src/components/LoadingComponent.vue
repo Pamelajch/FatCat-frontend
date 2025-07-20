@@ -1,9 +1,29 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
+// 塔羅功能
 const cards = ref([])
 const selectedIndex = ref(null)
 const mode = ref('loading')
+
+// 貓頭預言師功能
+const prophecyText = ref('')
+const showProphecy = ref(false)
+const prophecies = [
+  '今天穿橘色 🌶️',
+  '今天不宜偷懶 🐾',
+  '信pingu得永生 🍜',
+  '相信泡麵，相信命運 ✨',
+  '今天是拉麵星逆行的一天 🌘'
+]
+
+const randomProphecy = () => {
+  prophecyText.value = prophecies[Math.floor(Math.random() * prophecies.length)]
+  showProphecy.value = true
+  setTimeout(() => {
+    showProphecy.value = false
+  }, 4000)
+}
 
 // 撈取特殊泡麵
 const fetchSpecialNoodles = async () => {
@@ -22,7 +42,6 @@ const fetchSpecialNoodles = async () => {
 
 const startDraw = () => {
   mode.value = 'spinning'
-  // 模擬洗牌動畫延遲
   setTimeout(() => {
     selectedIndex.value = Math.floor(Math.random() * cards.value.length)
     mode.value = 'result'
@@ -38,15 +57,16 @@ const addToCart = (noodle) => {
   alert(`已將 ${noodle.name} 加入購物車！`)
 }
 
+// 初始化：抓泡麵 & 開啟貓咪預言循環
 onMounted(() => {
   fetchSpecialNoodles()
+  setInterval(randomProphecy, 5000)
 })
 </script>
 
 <template>
   <div class="tarot-container">
   <h1 class="title">今日的命運泡麵是...</h1>
-
   <!-- 包住卡牌的容器 -->
   <div class="cards-wrapper">
     <div
@@ -81,6 +101,11 @@ onMounted(() => {
       <button @click="reset">再抽一次</button>
       <button @click="addToCart(cards[selectedIndex])">加入購物車</button>
     </div>
+  </div>
+  <!-- 貓頭預言師 -->
+  <div class="cat-prophet">
+    <img src="/cat-head.png" alt="預言貓" class="cat-head" />
+    <div class="prophecy" v-if="showProphecy">{{ prophecyText }}</div>
   </div>
 </div>
 </template>
@@ -274,5 +299,46 @@ onMounted(() => {
 .result-actions button:hover {
   transform: scale(1.08);
   box-shadow: 0 0 16px rgba(200, 100, 255, 0.8);
+}
+
+.cat-prophet {
+  position: fixed;
+  bottom: 40px;
+  left: 20px;
+  animation: floaty 5s ease-in-out infinite;
+  z-index: 10;
+}
+
+.cat-head {
+  width: 60px;
+  filter: drop-shadow(0 0 6px #fff);
+}
+
+.prophecy {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffffffcc;
+  color: #4c007d;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  animation: fadeInOut 4s ease-in-out;
+  white-space: nowrap;
+}
+
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-10px); }
 }
 </style>
