@@ -60,6 +60,12 @@ const fetchSpecialNoodles = async () => {
   }
 }
 
+const handleCardClick = (index) => {
+  if (mode.value !== 'loading') return // 避免重複抽
+  selectedIndex.value = index
+  mode.value = 'result'
+}
+
 const startDraw = () => {
   mode.value = 'spinning'
   setTimeout(() => {
@@ -93,6 +99,7 @@ onMounted(() => {
       v-for="(card, index) in cards"
       :key="index"
       class="card"
+      @click="handleCardClick(index)"
     >
       <div
         class="card-inner"
