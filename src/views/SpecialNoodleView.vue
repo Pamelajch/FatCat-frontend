@@ -1,23 +1,61 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 
-const categories = [
-  '如果我是宋朝人系列',
-  '社畜都在吃系列',
-  '我是你的小女友系列',
-  '猛男都有16塊腹肌系列',
-  '微波即正義系列',
-  '古怪食物系列'
-]
+const selectedCategory = ref('')     // 先給空，等資料來了再設
+const categories = ref([])           // 動態分類
+const allProducts = ref([])          // 從 API 抓到的全部特殊款泡麵
+const products = ref([])             // 篩選後顯示的資料
+const isLoading = ref(true)
+const loadError = ref(null)
 
-const selectedCategory = ref('強檔泡麵系列')
+const fetchSpecialProducts = async () => {
+  isLoading.value = true
+  loadError.value = null
+  try {
+    const res = await fetch('https://localhost:7017/api/Products/special')
+    const data = await res.json()
 
-const products = Array.from({ length: 12 }, (_, i) => ({
-  id: i + 1,
-  name: `宋朝人應該不吃素吧`,
-  imageUrl: '/fakenoodle.jpg',
-  tag: '強檔'
-}))
+    // 格式化
+    const formatted = data.map(p => ({
+      id: p.productsId,
+      name: p.name,
+      imageUrl: `/ProductImages/${p.imageUrl}`,
+      tag: p.sortName || '未分類'
+    }))
+
+    allProducts.value = formatted
+
+    // 建分類
+    const uniqueCategories = [...new Set(formatted.map(p => p.tag))]
+    categories.value = uniqueCategories
+
+    // 設預設分類（有資料才設）
+    if (uniqueCategories.length > 0) {
+      selectedCategory.value = uniqueCategories[0]
+    } else {
+      selectedCategory.value = ''
+    }
+
+    filterProducts()
+  } catch (err) {
+    console.error('載入特殊泡麵失敗:', err)
+    loadError.value = '載入失敗，請稍後再試'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const filterProducts = () => {
+  if (!selectedCategory.value) {
+    products.value = allProducts.value
+  } else {
+    products.value = allProducts.value.filter(p => p.tag === selectedCategory.value)
+  }
+}
+
+watch(selectedCategory, filterProducts)
+
+onMounted(fetchSpecialProducts)
 </script>
 
 <template>
@@ -27,10 +65,10 @@ const products = Array.from({ length: 12 }, (_, i) => ({
       <h3 class="menu-title">🍜 商品分類</h3>
       <ul>
         <li
-          v-for="category in categories"
-          :key="category"
-          :class="{ active: selectedCategory === category }"
-          @click="selectedCategory = category"
+        v-for="category in categories"
+        :key="category"
+        :class="{ active: selectedCategory === category }"
+        @click="selectedCategory = category"
         >
           <i class="bi bi-caret-right-fill"></i>
           {{ category }}
@@ -40,18 +78,29 @@ const products = Array.from({ length: 12 }, (_, i) => ({
 
     <!-- 商品展示 -->
     <section class="product-section">
-      <h2 class="title title-arrow">🔥 {{ selectedCategory }}</h2>
+  <h2 class="title title-arrow">🔥 {{ selectedCategory || '全部特殊款泡麵' }}</h2>
 
-      <div class="product-grid">
-        <RouterLink :to="{ name: 'onespecialnoodle', query: { id: product.id } }" class="product-card"
-        v-for="product in products"
-        :key="product.id">
-            <img :src="product.imageUrl" :alt="product.name" class="product-image" />
-            <div class="product-info">
-                <span class="product-tag">{{ product.tag }}</span>
-                <h3 class="product-name">{{ product.name }}</h3>
-            </div>
-        </RouterLink>
+  <div v-if="isLoading" class="loading-box">載入中…</div>
+  <div v-else-if="loadError" class="error-box">{{ loadError }}</div>
+  <div v-else-if="products.length === 0" class="empty-box">這個分類目前沒有商品🐾</div>
+  <div v-else class="product-grid">
+    <RouterLink
+      v-for="product in products"
+      :key="product.id"
+      :to="{ name: 'onespecialnoodle', query: { id: product.id } }"
+      class="product-card"
+    >
+      <img
+        :src="product.imageUrl"
+        :alt="product.name"
+        class="product-image"
+        @error="e => e.target.src = '/fakenoodle.jpg'"
+      />
+      <div class="product-info">
+        <span class="product-tag">{{ product.tag }}</span>
+        <h3 class="product-name">{{ product.name }}</h3>
+      </div>
+    </RouterLink>
       </div>
     </section>
   </div>
