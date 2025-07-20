@@ -12,37 +12,11 @@ const messages = [
   '親愛的貓貓們，特殊款泡麵無法更換配料 🍜',
   '自定義泡麵請前往商品列表 👉'
 ]
-
 const nextMessage = () => {
   if (messageIndex.value < messages.length - 1) {
     messageIndex.value++
   } else {
     showNotification.value = false
-  }
-}
-
-// ====== 輪播圖片滑動功能 ======
-const images = ref([
-  '/fakenoodle.jpg',
-  '/pingu.png',
-  '/cat-logo.png'
-])
-
-const currentImageIndex = ref(0)
-
-const direction = ref('next') // 控制滑動方向
-
-const showPrev = () => {
-  if (currentImageIndex.value > 0) {
-    direction.value = 'prev'
-    currentImageIndex.value--
-  }
-}
-
-const showNext = () => {
-  if (currentImageIndex.value < images.value.length - 1) {
-    direction.value = 'next'
-    currentImageIndex.value++
   }
 }
 
@@ -66,48 +40,61 @@ onBeforeUnmount(() => {
   clearInterval(warningInterval)
 })
 
-// 數量
+// ====== 商品資料 ======
+const productDetail = ref(null)
+const images = ref([])
 const quantity = ref(1)
 
-// 商品規格：未來從 API 帶入這個陣列
+const fetchProductDetail = async () => {
+  try {
+    const res = await fetch(`https://localhost:7017/api/Products/Details/${productId}`)
+    const data = await res.json()
+    productDetail.value = data
+    images.value = [data.imageUrl] // 只有一張主圖
+
+    // 商品規格先用寫死的
+    productSpecs.value = [
+      { label: '口味', value: '貓貓專用香氣' },
+      { label: '內容量', value: '150g ± 5%' },
+      { label: '保存期限', value: '6 個月' },
+      { label: '產地', value: '台灣' },
+      { label: '過敏原', value: '含愛心與貓毛' }
+    ]
+
+    // 推薦商品寫死
+    recommendedProducts.value = [
+      { id: 73, name: '如果我是宋朝人', image: '/ProductImages/如果我是宋朝人.jpg', price: 99 },
+      { id: 74, name: '如果我是埃及豔后', image: '/ProductImages/如果我是埃及豔后.jpg', price: 119 }
+    ]
+  } catch (err) {
+    console.error('取得商品資料失敗', err)
+  }
+}
+
+// 輪播控制
+const currentImageIndex = ref(0)
+const direction = ref('next')
+
+const showPrev = () => {
+  if (currentImageIndex.value > 0) {
+    direction.value = 'prev'
+    currentImageIndex.value--
+  }
+}
+
+const showNext = () => {
+  if (currentImageIndex.value < images.value.length - 1) {
+    direction.value = 'next'
+    currentImageIndex.value++
+  }
+}
+
+// 商品規格與推薦商品（先寫死）
 const productSpecs = ref([])
-
-// 預設顯示假資料（API 還沒完成前）
-onMounted(() => {
-  productSpecs.value = [
-    { label: '口味', value: '龍蝦海鮮風味' },
-    { label: '內容量', value: '150g ± 5%' },
-    { label: '保存期限', value: '6 個月' },
-    { label: '產地', value: '台灣' },
-    { label: '過敏原', value: '含蝦、麩質' }
-  ]
-})
-
-// 推薦商品清單：未來從 API 帶入這個陣列
 const recommendedProducts = ref([])
 
-// 預設假資料
 onMounted(() => {
-  recommendedProducts.value = [
-    {
-      id: 101,
-      name: '起司泡菜豚骨',
-      image: '/fakenoodle.jpg',
-      price: 159
-    },
-    {
-      id: 102,
-      name: '濃厚味噌拉麵',
-      image: '/pingu.png',
-      price: 149
-    },
-    {
-      id: 103,
-      name: '貓薄荷拉麵',
-      image: '/cat-logo.png',
-      price: 109
-    }
-  ]
+  fetchProductDetail()
 })
 </script>
 
@@ -136,10 +123,10 @@ onMounted(() => {
         <button class="nav-btn left" @click="showPrev" :disabled="currentImageIndex === 0">‹</button>
         <transition :name="direction" mode="out-in">
           <img
-          :key="images[currentImageIndex]"
-          :src="images[currentImageIndex]"
-          class="product-image"
-          alt="泡麵圖片"
+            :key="images[currentImageIndex]"
+            :src="images[currentImageIndex]"
+            class="product-image"
+            alt="泡麵圖片"
           />
         </transition>
         <button class="nav-btn right" @click="showNext" :disabled="currentImageIndex === images.length - 1">›</button>
@@ -150,10 +137,12 @@ onMounted(() => {
       </div>
       <!-- 資訊 -->
       <div class="info-box">
-        <h1 class="product-name">天降龍蝦泡麵</h1>
-        <p class="product-price">NT$ 199</p>
-        <p class="product-description">濃厚海味拉麵，搭配整隻龍蝦，彷彿置身深海的溫柔擁抱 🦞🌊</p>
-        <p class="product-stock">剩餘庫存：12 碗</p>
+        <h1 class="product-name">{{ productDetail?.name }}</h1>
+        <p class="product-price">NT$ {{ productDetail?.price }}</p>
+        <p class="product-description">{{ productDetail?.description }}</p>
+        <p class="product-stock">剩餘庫存：{{ productDetail?.stock }} 碗</p>
+        <p class="product-category">分類：{{ productDetail?.categoryName }} > {{ productDetail?.sortName }}</p>
+        <p class="product-status">狀態：{{ productDetail?.statusText }}</p>
         <!-- 商品規格 -->
         <div class="product-specs-form">
           <h3 class="spec-title">商品規格</h3>

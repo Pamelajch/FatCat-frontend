@@ -1,31 +1,28 @@
 <script setup>
-// 以下是假資料，等後端完成後改成 API 撈資料
-const products = [
-  {
-    id: 1,
-    name: '地獄椒鹽豚骨',
-    imageUrl: '/fakenoodle.jpg',
-    tag: '強檔'
-  },
-  {
-    id: 2,
-    name: '爆香麻辣牛肉',
-    imageUrl: '/fakenoodle.jpg',
-    tag: '強檔'
-  },
-  {
-    id: 3,
-    name: '濃厚蝦味拉麵',
-    imageUrl: '/fakenoodle.jpg',
-    tag: '強檔'
-  },
-  {
-    id: 4,
-    name: '咖哩起司燉雞',
-    imageUrl: '/fakenoodle.jpg',
-    tag: '強檔'
+import { ref, onMounted } from 'vue'
+
+const products = ref([])
+
+const fetchSpecialNoodles = async () => {
+  try {
+    const res = await fetch('https://localhost:7017/api/Products/special')
+    const data = await res.json()
+
+    // 顯示前 4 筆資料並格式化圖片路徑
+    products.value = data.slice(0, 4).map(p => ({
+      id: p.productsId,
+      name: p.name,
+      imageUrl: `/ProductImages/${p.imageUrl}`,
+      tag: '強檔'
+    }))
+  } catch (error) {
+    console.error('無法取得特殊款泡麵資料:', error)
   }
-]
+}
+
+onMounted(() => {
+  fetchSpecialNoodles()
+})
 </script>
 
 <template>
@@ -125,6 +122,8 @@ const products = [
 
 .product-image {
   width: 100%;
+  height: 370px; /* 固定高度 */
+  object-fit: cover; /* 圖片填滿但不變形 */
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
 }
