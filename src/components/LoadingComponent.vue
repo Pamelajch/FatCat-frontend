@@ -1,61 +1,37 @@
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted } from 'vue'
 
-const scrollContainer = ref(null)
-const mode = ref('loading') // 'loading' | 'spinning' | 'result'
-const selectedNoodle = ref(null)
-let animationFrame
-let isDown = false
-let startX, scrollLeft, velocity = 0
+const cards = ref([])
+const selectedIndex = ref(null)
+const mode = ref('loading')
 
-const specialNoodles = ref([
-  {
-    id: 1,
-    name: '天降龍蝦泡麵',
-    image: 'LoadingNoodle.png',
-    description: '豪華龍蝦大餐，只給特別的你 🍜🦞',
-  },
-  {
-    id: 2,
-    name: '滿漢大雞腿麵',
-    image: 'LoadingNoodle.png',
-    description: '雞腿大到蓋不住的幸福！🍗',
-  },
-  {
-    id: 3,
-    name: '印尼炒泡麵特辣版！！',
-    image: 'LoadingNoodle.png',
-    description: '來自南洋的辣味衝擊🔥🌶️',
-  },
-])
-
-// START 按鈕 disable 防連點
-const startDraw = async () => {
-  if (mode.value === 'spinning') return
-  mode.value = 'spinning'
-  selectedNoodle.value = null
-  await nextTick()
-  const container = scrollContainer.value
-  let scrollSpeed = 80
-  let spinTime = 1500
-  let start = null
-
-  const spin = (timestamp) => {
-    if (!start) start = timestamp
-    const elapsed = timestamp - start
-    scrollSpeed *= 0.97
-    container.scrollLeft += scrollSpeed
-
-    if (elapsed < spinTime) {
-      animationFrame = requestAnimationFrame(spin)
-    } else {
-      const index = Math.floor(Math.random() * specialNoodles.value.length)
-      selectedNoodle.value = specialNoodles.value[index]
-      mode.value = 'result'
-    }
+// 撈取特殊泡麵
+const fetchSpecialNoodles = async () => {
+  try {
+    const res = await fetch('https://localhost:7017/api/Products/special')
+    const data = await res.json()
+    cards.value = data.slice(0, 6).map(p => ({
+      name: p.name,
+      image: `/ProductImages/${p.imageUrl}`,
+      description: p.description || '一碗神秘的泡麵...'
+    }))
+  } catch (err) {
+    console.error('泡麵資料取得失敗', err)
   }
+}
 
-  requestAnimationFrame(spin)
+const startDraw = () => {
+  mode.value = 'spinning'
+  // 模擬洗牌動畫延遲
+  setTimeout(() => {
+    selectedIndex.value = Math.floor(Math.random() * cards.value.length)
+    mode.value = 'result'
+  }, 1200)
+}
+
+const reset = () => {
+  mode.value = 'loading'
+  selectedIndex.value = null
 }
 
 const addToCart = (noodle) => {
@@ -63,208 +39,184 @@ const addToCart = (noodle) => {
 }
 
 onMounted(() => {
-  const container = scrollContainer.value
-  if (!container) return
-
-  container.addEventListener('mousedown', (e) => {
-    isDown = true
-    startX = e.pageX - container.offsetLeft
-    scrollLeft = container.scrollLeft
-    cancelAnimationFrame(animationFrame)
-  })
-
-  container.addEventListener('mouseleave', () => {
-    isDown = false
-  })
-
-  container.addEventListener('mouseup', () => {
-    isDown = false
-    inertiaScroll()
-  })
-
-  container.addEventListener('mousemove', (e) => {
-    if (!isDown) return
-    e.preventDefault()
-    const x = e.pageX - container.offsetLeft
-    const walk = x - startX
-    velocity = walk - (container.scrollLeft - scrollLeft)
-    container.scrollLeft = scrollLeft - walk
-  })
-
-  function inertiaScroll() {
-    const damping = 0.95
-    function animate() {
-      velocity *= damping
-      container.scrollLeft -= velocity
-      if (Math.abs(velocity) > 0.5) {
-        animationFrame = requestAnimationFrame(animate)
-      }
-    }
-    animate()
-  }
+  fetchSpecialNoodles()
 })
 </script>
 
 <template>
-  <div class="loading-container">
-    <!-- logo：除了結果都顯示 -->
-    <img v-if="mode !== 'result'" src="/logofont.png" alt="logo" class="logo" />
+  <div class="tarot-container">
+  <h1 class="title">今日的命運泡麵是...</h1>
 
-    <!-- 標題：除了結果都顯示 -->
-    <h2 v-if="mode !== 'result'" class="loading-text">你今天想吃啥？</h2>
-
-    <!-- START 按鈕：除了結果都顯示，spinning 時 disable -->
-    <button
-      v-if="mode !== 'result'"
-      class="start-button"
-      :disabled="mode === 'spinning'"
-      @click="startDraw"
+  <!-- 包住卡牌的容器 -->
+  <div class="cards-wrapper">
+    <div
+      v-for="(card, index) in cards"
+      :key="index"
+      class="card"
     >
-      START
-    </button>
-
-    <!-- 泡麵輪播動畫：除了結果都顯示 -->
-    <div v-if="mode !== 'result'" ref="scrollContainer" class="noodles-wrapper">
-      <div class="noodles-row">
-        <img v-for="n in 30" :key="n" src="/LoadingNoodle.png" alt="cup noodle" class="noodle-img" />
-      </div>
-    </div>
-
-    <!-- 抽出結果 -->
-    <div v-if="mode === 'result'" class="result-wrapper">
-      <div class="draw-result">
-      <h1 class="result-name-overlay">{{ selectedNoodle.name }}</h1>
-      <img :src="selectedNoodle.image" :alt="selectedNoodle.name" class="result-img" />
-    </div>
-
-  <!-- 結果按鈕 -->
-      <div class="result-buttons">
-        <button class="draw-again-btn" @click="mode = 'loading'">再抽一次</button>
-        <button class="add-to-cart-btn" @click="addToCart(selectedNoodle)">加入購物車</button>
+      <div
+        class="card-inner"
+        :class="{ flipped: selectedIndex === index && mode === 'result' }"
+      >
+        <!-- 背面 -->
+        <div class="card-back">
+          <img src="/card-back.png" alt="卡牌背面" />
+        </div>
+        <!-- 正面 -->
+        <div class="card-front">
+          <img :src="card.image" alt="泡麵圖" />
+          <h3>{{ card.name }}</h3>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- START 按鈕 -->
+  <button v-if="mode === 'loading'" class="start-btn" @click="startDraw">START</button>
+
+  <!-- 結果 -->
+  <div v-if="mode === 'result'" class="result-info">
+    <p>{{ cards[selectedIndex].description }}</p>
+    <div class="result-actions">
+      <button @click="reset">再抽一次</button>
+      <button @click="addToCart(cards[selectedIndex])">加入購物車</button>
+    </div>
+  </div>
+</div>
 </template>
 
 <style scoped>
-.loading-container {
-  background-color: #c286cf;
+.tarot-container {
+  background: linear-gradient(to bottom, #2c003e, #5b108c);
+  color: white;
   min-height: 100vh;
-  width: 100vw;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.cards-wrapper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 每排 3 張 */
+  gap: 1.5rem;
+  justify-content: center;
+  margin: 2rem auto;
+  max-width: 700px;
+}
+
+.card {
+  width: 150px;
+  height: 220px;
+  perspective: 1000px;
+  position: relative;
+  overflow: visible; /* 防止動畫溢出被切到 */
+}
+
+.card-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transition: transform 0.8s ease;
+  transform-style: preserve-3d;
+}
+
+.card-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  backface-visibility: hidden;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid #999;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+}
+
+.card-back {
+  min-width: 100%;
+  min-height: 100%;
+  background-color: #fff;
+  transform: rotateY(0deg);
+  display: flex; /* 圖片置中並撐滿容器 */
+  align-items: center;
+  justify-content: center;
+}
+
+.card-back img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* 避免圖片拉爆、被切角 */
+  padding: 10px;
+}
+
+.card-front {
+  background: #fff;
+  transform: rotateY(180deg);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: 1rem;
-  position: relative;
-  overflow: hidden;
-  text-align: center;
-  padding-top: 30px;
-}
-
-.loading-text {
-  font-size: 70px;
-  font-weight: bold;
-  color: white;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.start-button {
-  background-color: #f8b63d;
-  color: white;
-  padding: 15px 45px;
-  font-size: 2rem;
-  font-weight: bold;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-  transition: background-color 0.2s ease;
-  margin-bottom: 1rem;
-}
-.start-button:hover {
-  background-color: #e9a029;
-}
-
-.noodles-wrapper {
-  width: 100%;
-  height: 250px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  cursor: grab;
-  user-select: none;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.noodles-wrapper::-webkit-scrollbar {
-  display: none;
-}
-.noodles-row {
-  display: flex;
   justify-content: center;
-  gap: 50px;
-  flex-wrap: nowrap;
-  margin-top: 20px;
+}
+
+.card-front h3 {
+  font-size: 14px;
+  margin-top: 0.5rem;
+  color: #333;
+}
+
+.card-front img {
+  width: 100%;
+  height: 120px;
+  object-fit: contain;
   padding: 10px;
-  min-height: 200px;
-}
-.noodle-img {
-  width: 300px;
-  height: auto;
-  flex-shrink: 0;
-  pointer-events: none;
-}
-.logo {
-  width: 400px;
 }
 
-.result-wrapper {
-  width: 100%;
-  position: relative;
-  margin-bottom: 50px; /* 防止按鈕擠到底部 */
+.card.flipped {
+  transform: rotateY(180deg);
 }
 
-.draw-result {
-  margin-top: 40px;
-  position: relative;
-}
-.result-img {
-  max-width: 550px;
-  width: 100%;
-  height: auto;
-  z-index: 1;
-}
-.result-name-overlay {
-  font-size: 50px;
-  color: white;
-  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
-  font-weight: bold;
-  margin-bottom: -30px;
-  position: relative;
-  z-index: 2;
-}
-
-.result-buttons {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  padding: 0 2rem;
-  transform: translateY(-50%);
-}
-
-.draw-again-btn,
-.add-to-cart-btn {
-  padding: 12px 30px;
-  font-size: 18px;
+.start-btn {
+  margin-top: 2rem;
+  font-size: 24px;
+  padding: 12px 32px;
+  background: linear-gradient(45deg, #ff94d4, #cc7eff);
   border: none;
-  border-radius: 30px;
+  border-radius: 12px;
   cursor: pointer;
-  font-weight: bold;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  background-color: #f8b63d;
   color: white;
+  font-weight: bold;
+  transition: transform 0.2s;
+}
+
+.start-btn:hover {
+  transform: scale(1.05);
+}
+
+.result-info {
+  margin-top: 2rem;
+}
+
+.result-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.result-actions button {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: bold;
+  background: #fff;
+  border: none;
+  color: #5b108c;
+  cursor: pointer;
+}
+
+.result-actions button:hover {
+  background: #eee;
 }
 </style>
