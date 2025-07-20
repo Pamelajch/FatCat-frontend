@@ -6,7 +6,7 @@ const isSidebarCollapsed = inject('isSidebarCollapsed', ref(false));
 
 const openCollapseId = ref(null); // null 代表全部收合
 const navItems = ref([
-  { type: 'link', text: '儀表板', path: '/admin/dashboard', icon: 'bi bi-grid-1x2-fill' },
+  { type: 'link', text: '主頁', path: '/admin/dashboard', icon: 'bi bi-grid-1x2-fill' },
 
   { 
     type: 'group', 
