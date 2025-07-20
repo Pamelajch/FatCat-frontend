@@ -97,6 +97,17 @@ onMounted(() => {
   text-align: center;
 }
 
+.title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: transparent;
+  background: linear-gradient(45deg, #ffcdf2, #d08fff, #a066ff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+  margin-bottom: 1.5rem;
+}
+
 .cards-wrapper {
   display: grid;
   grid-template-columns: repeat(6, 1fr); /* 一排6張 */
@@ -222,6 +233,25 @@ onMounted(() => {
   margin-top: 2rem;
 }
 
+.result-info p {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ffeaff;
+  animation: sparkleText 2.5s infinite;
+  text-shadow: 0 0 6px #d47cff, 0 0 12px #9d4eff;
+}
+
+@keyframes sparkleText {
+  0%, 100% {
+    opacity: 1;
+    text-shadow: 0 0 6px #d47cff, 0 0 12px #9d4eff;
+  }
+  50% {
+    opacity: 0.7;
+    text-shadow: 0 0 2px #ffffff;
+  }
+}
+
 .result-actions {
   margin-top: 1rem;
   display: flex;
@@ -230,16 +260,19 @@ onMounted(() => {
 }
 
 .result-actions button {
-  padding: 10px 20px;
-  border-radius: 10px;
+  padding: 12px 24px;
+  border-radius: 20px;
+  background: linear-gradient(to right, #e9aaff, #ba68ff);
+  color: white;
+  font-size: 16px;
   font-weight: bold;
-  background: #fff;
   border: none;
-  color: #5b108c;
-  cursor: pointer;
+  box-shadow: 0 0 10px rgba(170, 85, 255, 0.6);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .result-actions button:hover {
-  background: #eee;
+  transform: scale(1.08);
+  box-shadow: 0 0 16px rgba(200, 100, 255, 0.8);
 }
 </style>
