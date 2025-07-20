@@ -23,6 +23,9 @@ import SpecialNoodleView from "./views/SpecialNoodleView.vue"
 import OneSpecialNoodleView from "./views/OneSpecialNoodleView.vue"
 import AdminChat from "./views/Admin/AdminChat.vue"
 import JjtestView from "./views/jjtestView.vue"
+import CouponAddView from '@/views/Admin/CouponAddView.vue'
+import CouponDetailView from '@/views/Admin/CouponDetailView.vue'
+import OrderDetailView from "./views/Admin/OrderDetailView.vue"
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
@@ -155,7 +158,18 @@ const routes = [
             { path: 'logs', name: 'AdminLogs', component: () => import('./views/Admin/AdminLogsView.vue') },
             { path: 'notifications', name: 'AdminNotifications', component: () => import('./views/Admin/AdminNotificationView.vue') },
             { path: 'stream', name: 'AdminStream', component: () => import('./views/Admin/AdminStreamView.vue') },
-            
+            { path: '/coupon-add', component: CouponAddView },
+            { path: '/coupon-detail/:id', component: CouponDetailView, props: true },
+            { path: '/order-detail/:id', component: OrderDetailView },
+            {
+                path: '/admin/shippings/add',
+                component: () => import('@/views/Admin/ShippingAddView.vue')
+            },
+            {
+                path: '/admin/shippings/edit/:id',
+                component: () => import('@/views/Admin/ShippingEditView.vue')
+            }
+
         ]
     },
 
