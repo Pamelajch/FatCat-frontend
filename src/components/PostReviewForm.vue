@@ -1,6 +1,5 @@
 <script setup>
 import { reactive } from 'vue';
-// 【重要】請確認你引入的是設定好 token 攔截器的 axios 實例
 import api from '@/services/jjapi.js'; 
 
 const props = defineProps({
@@ -23,7 +22,7 @@ const handleFileChange = (event) => {
 const submitReview = async () => {
   const formData = new FormData();
   
-  // 【重要】確保有將 OrderId 加進去
+  // 【確保有將 OrderId 加進去】
   formData.append('OrderId', props.orderId);
   formData.append('Rating', newReview.rating);
   formData.append('Comment', newReview.comment);
@@ -34,7 +33,7 @@ const submitReview = async () => {
   }
 
   try {
-    // 【修改】改用 api 實例來發送請求
+    // 【改用 api 實例來發送請求】
     await api.post(`/products/${props.productId}/reviews`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data'
