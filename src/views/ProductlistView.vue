@@ -141,10 +141,8 @@ const onDropToList = (event) => {
 const addSmartRandomIngredients = () => {
   const grouped = {}
 
+  // 依種類分類所有商品
   for (const product of products.value) {
-    const isInBowl = bowl.value.some(b => b.productsId === product.productsId)
-    if (isInBowl) continue
-
     const catId = product.categoryId
     if (!grouped[catId]) {
       grouped[catId] = []
@@ -153,14 +151,25 @@ const addSmartRandomIngredients = () => {
   }
 
   let added = false
+
   for (const catId in grouped) {
     const items = grouped[catId]
-    if (items.length > 0) {
-      const randomIndex = Math.floor(Math.random() * items.length)
-      const selected = items[randomIndex]
+    if (items.length === 0) continue
+
+    const randomIndex = Math.floor(Math.random() * items.length)
+    const selected = items[randomIndex]
+
+    const existingIndex = bowl.value.findIndex(b => b.categoryId === parseInt(catId))
+
+    if (existingIndex !== -1) {
+      // 替換該分類現有的食材
+      bowl.value.splice(existingIndex, 1, selected)
+    } else {
+      // 該分類還沒有，加進去
       bowl.value.push(selected)
-      added = true
     }
+
+    added = true
   }
 
   if (added) {
