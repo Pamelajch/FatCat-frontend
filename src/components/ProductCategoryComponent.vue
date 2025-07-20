@@ -6,7 +6,8 @@ const categories = ref([])
 const fetchCategories = async () => {
   try {
     const res = await fetch('https://localhost:7017/api/ProductCategories')
-    categories.value = await res.json()
+    const data = await res.json()
+    categories.value = data.filter(cat => cat.productCategoriesId !== 9) // 過濾特殊款泡麵
   } catch (error) {
     console.error('無法取得分類資料:', error)
   }
@@ -20,7 +21,9 @@ const getCategoryColor = (id) => {
     3: '#FF77FF', // 麵粉
     4: '#BE77FF', // 火鍋配料
     5: '#9393FF', // 湯頭
-    6: '#66B3FF'  // 調味料
+    6: '#66B3FF',  // 調味料
+    7: '#FFD700', // 蛋奶類 🥚🧀
+    8: '#A0A0A0'  // 古怪食物 🌀
   }
   return colorMap[id] || '#d1d5db'
 }
@@ -33,7 +36,9 @@ const getEmoji = (id) => {
     3: '🍜', // 麵粉
     4: '🔥', // 火鍋配料
     5: '🥣', // 湯頭
-    6: '🧂'  // 調味料
+    6: '🧂', // 調味料
+    7: '🥚', // 蛋奶類
+    8: '🌀'  // 古怪食物
   }
   return emojiMap[id] || '❓'
 }
