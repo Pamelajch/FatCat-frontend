@@ -10,7 +10,7 @@ const fetchSpecialNoodles = async () => {
   try {
     const res = await fetch('https://localhost:7017/api/Products/special')
     const data = await res.json()
-    cards.value = data.slice(0, 6).map(p => ({
+    cards.value = data.slice(0, 12).map(p => ({
       name: p.name,
       image: `/ProductImages/${p.imageUrl}`,
       description: p.description || '一碗神秘的泡麵...'
@@ -87,7 +87,10 @@ onMounted(() => {
 
 <style scoped>
 .tarot-container {
-  background: linear-gradient(to bottom, #2c003e, #5b108c);
+  background-image: url('/starry-sky.png'); /* 你放的星空圖路徑 */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   color: white;
   min-height: 100vh;
   padding: 2rem 1rem;
@@ -96,19 +99,30 @@ onMounted(() => {
 
 .cards-wrapper {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 每排 3 張 */
+  grid-template-columns: repeat(6, 1fr); /* 一排6張 */
   gap: 1.5rem;
   justify-content: center;
   margin: 2rem auto;
-  max-width: 700px;
+  max-width: 1000px;
 }
 
 .card {
-  width: 150px;
-  height: 220px;
+  width: 180px;
+  height: 260px;
   perspective: 1000px;
   position: relative;
-  overflow: visible; /* 防止動畫溢出被切到 */
+  overflow: visible;
+  transition: transform 0.3s ease;
+}
+
+.card-front img,
+.card-back img {
+  padding: 0;
+  border: none;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
 }
 
 .card-inner {
@@ -121,6 +135,8 @@ onMounted(() => {
 
 .card-inner.flipped {
   transform: rotateY(180deg);
+  box-shadow: 0 0 30px 10px rgba(255, 255, 255, 0.8), 0 0 40px 20px rgba(138, 43, 226, 0.5); /* 白光 + 紫光 */
+  border-radius: 10px;
 }
 
 .card-front,
@@ -138,7 +154,7 @@ onMounted(() => {
 .card-back {
   min-width: 100%;
   min-height: 100%;
-  background-color: #fff;
+  background: transparent;
   transform: rotateY(0deg);
   display: flex; /* 圖片置中並撐滿容器 */
   align-items: center;
@@ -148,8 +164,9 @@ onMounted(() => {
 .card-back img {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* 避免圖片拉爆、被切角 */
-  padding: 10px;
+  object-fit: cover; /* 避免圖片拉爆、被切角 */
+  padding: 0px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1); /* 小小發光而非白邊 */
 }
 
 .card-front {
@@ -176,6 +193,12 @@ onMounted(() => {
 
 .card.flipped {
   transform: rotateY(180deg);
+}
+
+.card:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 25px rgba(153, 102, 255, 0.6); /* 紫色光暈 */
+  z-index: 2;
 }
 
 .start-btn {
