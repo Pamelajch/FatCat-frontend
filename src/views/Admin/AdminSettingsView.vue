@@ -213,7 +213,7 @@ const updateAdmin = async () => {
   if (!validateForm(editForm.value, true)) {
     console.error('表單驗證失敗')
     return
-  }
+  } 
 
   try {
     const adminData = {
