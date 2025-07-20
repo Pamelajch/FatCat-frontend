@@ -224,7 +224,6 @@ onMounted(fetchSpecialProducts)
   width: 100%;
   height: 180px;
   object-fit: cover;
-  margin-top: 10px; /* 圖片上方間距 */
 }
 
 .product-info {
