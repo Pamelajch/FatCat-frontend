@@ -22,7 +22,7 @@ const handleFileChange = (event) => {
 const submitReview = async () => {
   const formData = new FormData();
   
-  // 【確保有將 OrderId 加進去】
+  // 【確保有將 OrderId 加進去】~
   formData.append('OrderId', props.orderId);
   formData.append('Rating', newReview.rating);
   formData.append('Comment', newReview.comment);
