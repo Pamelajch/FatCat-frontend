@@ -12,6 +12,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 import HeaderComponent from './components/HeaderComponent.vue'
 import FooterComponent from './components/FooterComponent.vue'
 import CustomerService from './components/CustomerService.vue'
+import StreamLogo from './components/StreamLogo.vue'
        
 // 應用載入狀態
 const appLoading = ref(true)
@@ -63,6 +64,7 @@ const isAdminPage = computed(() => {
       <main>
         <RouterView />
         <CustomerService v-if="!isAdminPage" />
+        <StreamLogo v-if="!isAdminPage" />
       </main>
       <FooterComponent v-if="!shouldhideHeaderFooter" />
     </div>

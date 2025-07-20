@@ -1,153 +1,142 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useStreamStore } from '@/stores/streamStore'; // 引入 Store
 import axios from 'axios';
 
 // 響應式狀態
-const streamTitle = ref('');
-const isLive = ref(false);
-const streamCredentials = ref(null); // 用於儲存串流金鑰等資訊
+const streamTitleInput = ref('');
+const pastStreams = ref([]);
 const error = ref(null);
 const loading = ref(false);
 
-// 檢查當前是否有正在進行的直播
-const checkCurrentStream = async () => {
+const streamStore = useStreamStore(); // 使用 Store
+
+// 取得過往直播紀錄
+const fetchHistory = async () => {
   try {
-    const response = await axios.get('/api/streaming/current');
-    if (response.data) {
-      isLive.value = true;
-      streamTitle.value = response.data.title;
-      // 如果已經在直播，也顯示 OBS 金鑰資訊
-      fetchCredentials();
-    }
+    const response = await axios.get('/api/streaming/history');
+    pastStreams.value = response.data;
   } catch (err) {
-    console.error("檢查當前直播狀態失敗:", err);
+    console.error("獲取直播歷史失敗:", err);
   }
 };
 
-// 取得 OBS 用的金鑰 (從設定檔讀取，不存入DB)
-const fetchCredentials = () => {
-    // 這裡我們假設後端/start API會回傳金鑰
-    // 如果是已經在直播的狀態，我們可以設計一個新的API來取得金鑰
-    // 為了簡化，我們先在 startStream 成功後儲存
-};
-
-// 開始直播的函式
-const startStream = async () => {
-  if (!streamTitle.value.trim()) {
+// 開始直播
+const handleStartStream = async () => {
+  if (!streamTitleInput.value.trim()) {
     error.value = '請輸入直播標題！';
     return;
   }
   loading.value = true;
   error.value = null;
   try {
-    const response = await axios.post('/api/streaming/start', { title: streamTitle.value });
-    streamCredentials.value = response.data;
-    isLive.value = true;
+    await streamStore.startStream(streamTitleInput.value);
   } catch (err) {
-    error.value = err.response?.data || '開始直播失敗，請稍後再試。';
-    console.error("開始直播失敗:", err);
+    error.value = err.response?.data || '開始直播失敗';
   } finally {
     loading.value = false;
   }
 };
 
-// 結束直播的函式
-const endStream = async () => {
+// 結束直播
+const handleEndStream = async () => {
   loading.value = true;
   error.value = null;
   try {
-    await axios.post('/api/streaming/end');
-    isLive.value = false;
-    streamCredentials.value = null;
-    streamTitle.value = ''; // 清空標題
+    await streamStore.endStream();
+    streamTitleInput.value = ''; // 清空輸入框
+    fetchHistory(); // 結束後重新整理歷史紀錄
   } catch (err) {
-    error.value = err.response?.data || '結束直播失敗，請稍後再試。';
-    console.error("結束直播失敗:", err);
+    error.value = err.response?.data || '結束直播失敗';
   } finally {
     loading.value = false;
   }
 };
 
-// 複製到剪貼簿的輔助函式
+// 複製到剪貼簿
 const copyToClipboard = (text) => {
-  navigator.clipboard.writeText(text).then(() => {
-    alert('已成功複製！');
-  }).catch(err => {
-    console.error('複製失敗:', err);
-    alert('複製失敗，請手動複製。');
-  });
+  navigator.clipboard.writeText(text).then(() => alert('已成功複製！'));
 };
 
-// 元件載入時，檢查一次當前直播狀態
 onMounted(() => {
-    // 為了避免重複呼叫，我們先簡化邏輯
-    // checkCurrentStream();
+  // 元件載入時，檢查一次當前直播狀態並載入歷史
+  streamStore.checkCurrentStream();
+  fetchHistory();
 });
 </script>
 
 <template>
   <div class="container mt-4">
-    <div class="card">
-      <div class="card-header fs-5 fw-bold">
-        <i class="fas fa-video me-2"></i>直播控制台
+    <div class="row">
+      <!-- 左側：直播控制台 -->
+      <div class="col-lg-7">
+        <div class="card">
+          <div class="card-header fs-5 fw-bold"><i class="fas fa-video me-2"></i>直播控制台</div>
+          <div class="card-body">
+            <div v-if="error" class="alert alert-danger">{{ error }}</div>
+
+            <!-- 直播已開始的畫面 -->
+            <div v-if="streamStore.isLive">
+              <h5 class="card-title">🔴 直播進行中：{{ streamStore.currentStreamTitle }}</h5>
+              <p class="text-muted">請將以下資訊複製到你的直播軟體 (例如 OBS) 中。</p>
+              <div v-if="streamStore.streamInfo" class="credentials-box">
+                <div class="mb-3">
+                  <label class="form-label">擷取伺服器</label>
+                  <div class="input-group">
+                    <input type="text" class="form-control" :value="streamStore.streamInfo.ingestEndpoint" readonly>
+                    <button class="btn btn-outline-secondary" @click="copyToClipboard(streamStore.streamInfo.ingestEndpoint)">複製</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">串流金鑰</label>
+                  <div class="input-group">
+                    <input type="password" class="form-control" :value="streamStore.streamInfo.streamKey" readonly>
+                    <button class="btn btn-outline-secondary" @click="copyToClipboard(streamStore.streamInfo.streamKey)">複製</button>
+                  </div>
+                </div>
+              </div>
+              <button class="btn btn-danger w-100 mt-3" @click="handleEndStream" :disabled="loading">
+                <span v-if="loading" class="spinner-border spinner-border-sm"></span> 結束直播
+              </button>
+            </div>
+
+            <!-- 準備開始直播的畫面 -->
+            <div v-else>
+              <h5 class="card-title">準備開始一場新的直播</h5>
+              <div class="mb-3">
+                <label for="streamTitle" class="form-label">直播標題</label>
+                <input type="text" id="streamTitle" class="form-control" v-model="streamTitleInput" placeholder="例如：夏季新品大特賣！">
+              </div>
+              <button class="btn btn-primary w-100" @click="handleStartStream" :disabled="loading">
+                <span v-if="loading" class="spinner-border spinner-border-sm"></span> 開始直播並取得金鑰
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="card-body">
 
-        <div v-if="error" class="alert alert-danger">{{ error }}</div>
-
-        <div v-if="isLive">
-          <h5 class="card-title">🔴 直播進行中：{{ streamTitle }}</h5>
-          <p class="text-muted">請將以下資訊複製到你的直播軟體 (例如 OBS) 中。</p>
-
-          <div v-if="streamCredentials" class="credentials-box">
-            <div class="mb-3">
-              <label class="form-label">擷取伺服器 (Ingest Server)</label>
-              <div class="input-group">
-                <input type="text" class="form-control" :value="streamCredentials.ingestEndpoint" readonly>
-                <button class="btn btn-outline-secondary" @click="copyToClipboard(streamCredentials.ingestEndpoint)">複製</button>
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">串流金鑰 (Stream Key)</label>
-              <div class="input-group">
-                <input type="password" class="form-control" :value="streamCredentials.streamKey" readonly>
-                <button class="btn btn-outline-secondary" @click="copyToClipboard(streamCredentials.streamKey)">複製</button>
-              </div>
-            </div>
+      <!-- 右側：過往直播紀錄 -->
+      <div class="col-lg-5">
+        <div class="card">
+          <div class="card-header fs-5 fw-bold"><i class="fas fa-history me-2"></i>過往直播紀錄</div>
+          <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+            <ul v-if="pastStreams.length > 0" class="list-group list-group-flush">
+              <li v-for="stream in pastStreams" :key="stream.livestreamId" class="list-group-item">
+                <div class="fw-bold">{{ stream.title }}</div>
+                <small class="text-muted">
+                  開始於: {{ new Date(stream.startedAt).toLocaleString() }}
+                </small>
+              </li>
+            </ul>
+            <p v-else class="text-muted text-center">尚無直播紀錄</p>
           </div>
-          
-          <button class="btn btn-danger w-100 mt-3" @click="endStream" :disabled="loading">
-            <span v-if="loading" class="spinner-border spinner-border-sm"></span>
-            結束直播
-          </button>
         </div>
-
-        <div v-else>
-          <h5 class="card-title">準備開始一場新的直播</h5>
-          <div class="mb-3">
-            <label for="streamTitle" class="form-label">直播標題</label>
-            <input type="text" id="streamTitle" class="form-control" v-model="streamTitle" placeholder="例如：夏季新品大特賣！">
-          </div>
-          <button class="btn btn-primary w-100" @click="startStream" :disabled="loading">
-            <span v-if="loading" class="spinner-border spinner-border-sm"></span>
-            開始直播並取得金鑰
-          </button>
-        </div>
-
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.credentials-box {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  margin-top: 1rem;
-}
-.card-header {
-    background-color: #f1f3f5;
-}
+.credentials-box { background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0.5rem; padding: 1.5rem; margin-top: 1rem; }
+.card-header { background-color: #f1f3f5; }
 </style>
