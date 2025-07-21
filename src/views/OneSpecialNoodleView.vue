@@ -6,17 +6,20 @@ const route = useRoute()
 const productId = route.query.id
 
 // ====== 通知流程 ======
-const showNotification = ref(true)
-const messageIndex = ref(0)
-const messages = [
-  '親愛的貓貓們，特殊款泡麵無法更換配料 🍜',
-  '自定義泡麵請前往商品列表 👉'
-]
-const nextMessage = () => {
-  if (messageIndex.value < messages.length - 1) {
-    messageIndex.value++
-  } else {
-    showNotification.value = false
+// ====== 通知流程：卡牌版 ======
+const currentStep = ref(0)
+
+const nextStep = () => {
+  if (currentStep.value === 0) {
+    const card = document.querySelector('.card-image')
+    if (card) {
+      card.classList.add('drop')
+    }
+    setTimeout(() => {
+      currentStep.value = 1
+    }, 600)
+  } else if (currentStep.value === 1) {
+    currentStep.value = 2
   }
 }
 
@@ -99,21 +102,41 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- 通知畫面 -->
-  <div v-if="showNotification" class="notification-overlay">
-    <div class="card-container" :class="{ flipped: messageIndex === 1 }">
-      <div class="card">
-        <div class="face front">
-          <p class="notification-text">{{ messages[0] }}</p>
-          <button class="continue-btn" @click="nextMessage">繼續 ➜</button>
-        </div>
-        <div class="face back">
-          <p class="notification-text">{{ messages[1] }}</p>
-          <button class="continue-btn" @click="nextMessage">進入 ➜</button>
-        </div>
+<!-- 通知畫面 -->
+<div v-if="currentStep < 2" class="notification-wrapper">
+  <div class="card-stage">
+    <!-- 第一張卡牌 -->
+    <div v-if="currentStep === 0" class="first-card-wrapper">
+      <img
+        src="/message-card.png"
+        alt="提示卡片"
+        class="card-image glow"
+      />
+      <div class="card-message">
+        <p>親愛的貓貓們，特殊款泡麵無法更換配料 🍜</p>
       </div>
     </div>
+
+    <!-- 第二張卡牌 -->
+    <transition name="fade-rise">
+      <div v-if="currentStep === 1" class="second-card-wrapper">
+        <img
+          src="/message-card1.png"
+          alt="提示卡片2"
+          class="card-image glow"
+        />
+        <div class="card-message">
+          <p>自定義泡麵請前往商品列表 👉</p>
+        </div>
+      </div>
+    </transition>
+
+    <!-- 按鈕 -->
+    <button class="next-btn" @click="nextStep">
+      {{ currentStep === 0 ? '繼續 ➜' : '進入 ➜' }}
+    </button>
   </div>
+</div>
 
   <!-- 正常內容 -->
   <div v-else class="special-noodle-container">
@@ -190,60 +213,103 @@ onMounted(() => {
 </template>
 
 <style lang="css" scoped>
-/* 通知樣式 */
-.notification-overlay {
+/* ===== 通知樣式（魔法卡牌版） ===== */
+.notification-wrapper {
   position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   background: linear-gradient(135deg, #fff0fa, #ffe4ec);
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   z-index: 9999;
+  overflow: hidden;
 }
 
-.card-container {
-  width: 100%; max-width: 500px; height: 300px;
-  perspective: 1000px;
-}
-
-.card {
-  width: 100%; height: 100%;border-radius: 25px;
+.card-stage {
   position: relative;
-  transform-style: preserve-3d;
-  transition: transform 0.8s;
-}
-
-.card-container.flipped .card {
-  transform: rotateY(180deg);
-}
-
-.face {
-  position: absolute;
-  width: 100%; height: 100%;
-  background: #fff0fa;
-  border: 3px dashed #b067b3;
-  border-radius: 25px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.2);
-  padding: 40px;
-  text-align: center;
-  backface-visibility: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
 }
 
-.back {
-  transform: rotateY(180deg);
+/* 卡牌圖片樣式 */
+.card-image {
+  width: 360px;
+  height: auto;
+  transition: transform 0.5s ease, opacity 0.5s ease;
+  z-index: 1;
+  border-radius: 20px;
 }
 
-.notification-text {
-  font-size: 20px;
+/* 掉落動畫 */
+.card-image.drop {
+  transform: translateY(100vh);
+  opacity: 0;
+}
+
+/* 第二張卡牌浮現動畫 */
+.fade-rise-enter-active {
+  transition: all 0.6s ease;
+}
+.fade-rise-enter-from {
+  transform: translateY(20px);
+  opacity: 0;
+}
+
+/* 光暈特效 */
+.glow {
+  animation: glowPulse 2s infinite alternate;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes glowPulse {
+  from {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+  }
+  to {
+    box-shadow: 0 0 35px rgba(255, 255, 255, 0.8);
+  }
+}
+
+/* 第二張卡牌包裝 */
+.second-card-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 留言文字區塊 */
+.card-message {
+  margin-top: 20px;
+  text-align: center;
+  animation: fadeIn 1s ease-in-out;
+  color: #b03b97;
   font-weight: bold;
-  color: #c84cc4;
-  margin-bottom: 20px;
+  font-size: 18px;
+  text-shadow: 0 0 6px rgba(255, 180, 255, 0.6);
 }
 
-.continue-btn {
+.card-message p {
+  margin: 8px 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 下一步按鈕 */
+.next-btn {
+  margin-top: 20px;
   background-color: #ffb8e2;
   border: none;
   color: white;
@@ -252,6 +318,12 @@ onMounted(() => {
   padding: 10px 25px;
   border-radius: 30px;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 120, 200, 0.3);
+  transition: all 0.3s ease;
+}
+.next-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(255, 120, 200, 0.5);
 }
 
 /* 整個頁面容器 */
