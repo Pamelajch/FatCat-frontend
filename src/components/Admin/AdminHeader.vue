@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, inject } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAdminAuthStore } from '@/stores/adminauth';
 
 const router = useRouter();
+const adminAuthStore = useAdminAuthStore();
 const currentTime = ref('');
 let timer = null;
 const isDropdownOpen = ref(false);
@@ -23,10 +25,11 @@ const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
 };
 
-const logout = () => {
-  localStorage.removeItem('adminToken');
-  localStorage.removeItem('adminUser');
-  localStorage.removeItem('admin');
+const logout = async () => {
+  // localStorage.removeItem('adminToken');
+  // localStorage.removeItem('adminUser');
+  // localStorage.removeItem('admin');
+  await adminAuthStore.logout();
   router.push('/admin/login');
 };
 
