@@ -198,6 +198,13 @@ onMounted(() => {
     <p :key="currentWarning">{{ warningMessages[currentWarning] }}</p>
     </transition>
     </div>
+    <!-- 商品評論區（留給 r謙 實作用 🐱）-->
+    <div class="review-section">
+      <h3>⭐ 貓貓們的評論區</h3>
+      <div class="review-box">
+        <!-- 留空給未來評論列表 -->
+      </div>
+    </div>
     <!-- 推薦商品 -->
     <div class="recommendation-section">
       <h3>你可能也會喜歡 🍜</h3>
@@ -597,6 +604,30 @@ onMounted(() => {
   padding: 4px 6px;
   border: 1px solid #ccc;
   border-radius: 6px;
+}
+
+/* rr評論區的簡單小樣式 */
+.review-section {
+  margin-top: 80px;
+  text-align: center;
+}
+
+.review-section h3 {
+  font-size: 24px;
+  color: #a43f96;
+  margin-bottom: 20px;
+}
+
+.review-box {
+  margin: 0 auto;
+  max-width: 700px;
+  min-height: 120px;
+  padding: 30px;
+  background: rgba(255, 240, 250, 0.5);
+  border-radius: 20px;
+  border: 2px dashed #dba6d6;
+  box-shadow: 0 4px 10px rgba(200, 100, 160, 0.1);
+  backdrop-filter: blur(5px);
 }
 
 /* 推薦商品區塊 */
