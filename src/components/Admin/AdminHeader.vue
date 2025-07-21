@@ -24,7 +24,8 @@ const toggleDropdown = () => {
 };
 
 const logout = () => {
-  localStorage.removeItem('token');
+  localStorage.removeItem('adminToken');
+  localStorage.removeItem('adminUser');
   localStorage.removeItem('admin');
   router.push('/admin/login');
 };
@@ -42,7 +43,7 @@ const updateTime = () => {
 };
 
 onMounted(() => {
-  const storedAdmin = localStorage.getItem('admin');
+  const storedAdmin = localStorage.getItem('adminUser');
   if (storedAdmin) {
     adminInfo.value = JSON.parse(storedAdmin);
   }
