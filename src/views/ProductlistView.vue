@@ -265,9 +265,10 @@ const addSmartRandomIngredients = () => {
     <!-- 食材泡泡，漂浮顯示在湯碗旁邊 -->
     <div class="floating-bubbles">
       <div
-        v-for="item in bowl"
+        v-for="(item, index) in bowl"
         :key="item.productsId"
         class="bubble"
+        :class="`bubble bubble-${index}`"
       >
         <img :src="item.imageUrl" :alt="item.name" class="bubble-img" />
         <span class="bubble-text">{{ item.name }}</span>
@@ -514,29 +515,37 @@ const addSmartRandomIngredients = () => {
 
 .floating-bubbles {
   position: absolute;
-  top: -60px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
   width: 100%;
-  z-index: 2;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none; /* 不擋拖曳 */
 }
 
 .bubble {
-  position: relative;
+  position: absolute;
   background: rgba(255, 255, 255, 0.6);
   border-radius: 20px;
-  padding: 8px 10px 8px 8px;
+  padding: 6px 10px;
   display: flex;
   align-items: center;
   gap: 6px;
   animation: float 3s ease-in-out infinite alternate;
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(4px);
+  pointer-events: auto;
+  z-index: 3;
 }
+
+/* 泡泡分佈在碗的周圍位置 */
+.bubble-0 { top: -30px; left: 50%; transform: translateX(-50%); }
+.bubble-1 { top: 10%; left: 10%; }
+.bubble-2 { top: 50%; left: -30px; transform: translateY(-50%); }
+.bubble-3 { bottom: 10%; left: 10%; }
+.bubble-4 { bottom: -30px; left: 50%; transform: translateX(-50%); }
+.bubble-5 { bottom: 10%; right: 10%; }
+.bubble-6 { top: 50%; right: -30px; transform: translateY(-50%); }
+.bubble-7 { top: 10%; right: 10%; }
 
 .bubble-img {
   width: 30px;
@@ -560,13 +569,10 @@ const addSmartRandomIngredients = () => {
   margin-left: 5px;
 }
 
+/*  動畫（上下漂浮） */
 @keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
-  100% {
-    transform: translateY(-10px);
-  }
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-10px); }
 }
 
 .action-button {
