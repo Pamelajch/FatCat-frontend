@@ -23,7 +23,16 @@ function isAuthRelatedURL(url) {
 // 請求攔截器：自動加上 JWT Token
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token')
+        // 判斷是否為管理員api
+        const isAdminAPI = config.url.includes('/Admin') || config.url.includes('/Notifications/Send')
+        let token = null
+        if (isAdminAPI) {
+            // 取得管理員的 token
+            token = localStorage.getItem('adminToken')
+        } else {
+            // 取得一般使用者的 token
+            token = localStorage.getItem('token')
+        }
         if (token) {
             config.headers.Authorization = `Bearer ${token}`
         }
