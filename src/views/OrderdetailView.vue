@@ -3,7 +3,10 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import OrderItemList from '@/components/OrderItemList.vue'
 import OrderDetail from '@/components/OrderDetail.vue'
+import { useOrderStore } from '@/stores/order'
 
+const orderStore = useOrderStore()
+// 建議加載資料前先檢查是否為空，必要時使用 await fetch
 const route = useRoute()
 const router = useRouter()
 const orderId = route.params.id
@@ -23,6 +26,10 @@ const fetchOrderDetail = async () => {
     console.error('無法載入訂單詳情', err)
   }
 }
+
+const props = defineProps({
+  order: Object
+})
 
 onMounted(fetchOrderDetail)
 </script>
@@ -44,7 +51,7 @@ onMounted(fetchOrderDetail)
             aria-labelledby="panelsStayOpen-headingOne">
             <div class="accordion-body">
               <!-- 訂單商品列表 -->
-              <OrderItemList :items="orderStore.latestOrderItems" />
+              <OrderItemList :items="orderItems" />
             </div>
           </div>
         </div>
@@ -52,8 +59,8 @@ onMounted(fetchOrderDetail)
     </div>
 
     <div class="container">
-      <OrderDetail />
-
+      <OrderDetail :order="order" />
+      
       <div class="mt-4">
         <button type="button" class="btn custom-purple-btn float-end">聯絡我們</button>
         <button type="button" class="btn btn-danger float-end btn-space">取消訂單</button>

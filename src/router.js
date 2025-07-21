@@ -77,7 +77,7 @@ const routes = [
     { path: "/myorders", component: MyOrdersView, name: "myorders" },
     //訂單明細 -- 梓瑋
     //http://localhost:5173/orderdetail
-    // { path: "/orderdetail", component: OrderdetailView, name: "orderdetail" },
+    { path: "/orderdetail/:id", component: OrderdetailView, name: "OrderDetail" },
     //登入頁面
     {
         path: "/login", component: LoginView, name: "login", meta: {
@@ -160,7 +160,6 @@ const routes = [
             { path: 'stream', name: 'AdminStream', component: () => import('./views/Admin/AdminStreamView.vue') },
             { path: '/coupon-add', component: CouponAddView },
             { path: '/coupon-detail/:id', component: CouponDetailView, props: true },
-            { path: '/order-detail/:id', component: OrderDetailView },
             {
                 path: '/admin/shippings/add',
                 component: () => import('@/views/Admin/ShippingAddView.vue')
@@ -170,9 +169,9 @@ const routes = [
                 component: () => import('@/views/Admin/ShippingEditView.vue')
             },
             {
-                path: '/orderdetail/:id',
-                name: 'OrderDetail',
-                component: () => import('@/views/OrderdetailView.vue')
+                path: '/admin/orderdetail/:id',
+                name: 'AdminOrderDetail',
+                component: () => import('@/views/Admin/OrderDetailView.vue')
             }
 
 
