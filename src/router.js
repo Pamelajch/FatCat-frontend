@@ -27,6 +27,7 @@ import CouponAddView from '@/views/Admin/CouponAddView.vue'
 import CouponDetailView from '@/views/Admin/CouponDetailView.vue'
 import OrderDetailView from "./views/Admin/OrderDetailView.vue"
 import StreamViewer from "./views/StreamViewer.vue"
+import DrinkView from "./views/DrinkView.vue"
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
@@ -43,6 +44,8 @@ const routes = [
     { path: "/Specialnoodle", component: SpecialNoodleView, name: "specialnoodle" },
     //http://localhost:5173/OneSpecialNoodle
     { path: "/OneSpecialNoodle", component: OneSpecialNoodleView, name: "onespecialnoodle" },
+    //http://localhost:5173/Drink
+    { path:"/Drink", component:DrinkView, name:"drink"},
     //購物車 --梓瑋
     //http://localhost:5173/cart
     { path: "/cart", component: CartView, name: "cart" },

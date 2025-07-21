@@ -123,6 +123,7 @@
         <RouterLink :to="{name:'jjtest'}" class="icon-btn" title="UserId"><i>UserId查資料表</i></RouterLink>
         <RouterLink :to="{name:'_reviewtest'}" class="icon-btn" title="通知"><i>rr測試站</i></RouterLink>
         <RouterLink :to="{name:'home'}" class="icon-btn" title="首頁"><i class="bi bi-house-door"></i></RouterLink>
+        <RouterLink :to="{name:'drink'}" class="icon-btn" title="飲料"><i class="fa-solid fa-bowl-food"></i></RouterLink>
         <RouterLink :to="{name:'productlist'}" class="icon-btn" title="商品"><i class="fa-solid fa-bowl-food"></i></RouterLink>
         <button class="icon-btn" @click="openOffcanvas" title="購物車">
         <i class="fa fa-shopping-cart"></i>
