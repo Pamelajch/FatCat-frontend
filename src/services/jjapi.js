@@ -45,7 +45,7 @@ api.interceptors.response.use(
                 // 清除本地儲存並導向登入頁
                 localStorage.removeItem('token')
                 localStorage.removeItem('user')
-                window.location.href = '/login'
+                // window.location.href = '/login'
             } else {
                 // 登入流程錯誤，不導向，只紀錄
                 console.log('登入相關 API 失敗，但不重新導向頁面')
