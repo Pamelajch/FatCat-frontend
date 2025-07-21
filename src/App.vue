@@ -13,6 +13,8 @@ import HeaderComponent from './components/HeaderComponent.vue'
 import FooterComponent from './components/FooterComponent.vue'
 import CustomerService from './components/CustomerService.vue'
 import StreamLogo from './components/StreamLogo.vue'
+import { useStreamStore } from './stores/streamStore' 
+
        
 // 應用載入狀態
 const appLoading = ref(true)
@@ -30,11 +32,13 @@ const authStore = useAuthStore()
 //記住管理員登入資訊
 // 獲取admin auth store
 const adminAuthStore = useAdminAuthStore() 
+const streamStore = useStreamStore(); // 建立 stream store 實例
 
 // 在組件掛載時初始化auth狀態
 onMounted(async () => {
   authStore.initializeAuth()
   adminAuthStore.initializeAuth()
+  streamStore.initialize(); // 【在這裡初始化 stream store】
   // 模擬初始載入時間，讓用戶看到LoadingComponent
   await new Promise(resolve => setTimeout(resolve, 2000))
   appLoading.value = false

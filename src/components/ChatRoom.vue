@@ -14,10 +14,37 @@ const props = defineProps({
   }
 });
 
+// --- 新增：定義 sessionStorage 的 Key 和訊息上限 ---
+const CHAT_HISTORY_KEY = 'fatcat_chat_history';
+const MAX_MESSAGES = 50; // 最多保留 50 則訊息
+
+
 const messages = ref([]);
 const newMessage = ref('');
 const connection = ref(null);
 const connectionState = ref('disconnected'); // 'connecting', 'connected', 'disconnected'
+
+// --- 新增：儲存聊天紀錄到 sessionStorage ---
+const saveHistoryToSession = () => {
+  // 只保留最新的 MAX_MESSAGES 則訊息
+  const recentMessages = messages.value.slice(-MAX_MESSAGES);
+  // 將陣列轉換成 JSON 字串後儲存
+  sessionStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(recentMessages));
+};
+
+// --- 新增：從 sessionStorage 載入聊天紀錄 ---
+const loadHistoryFromSession = () => {
+  const storedMessages = sessionStorage.getItem(CHAT_HISTORY_KEY);
+  if (storedMessages) {
+    try {
+      messages.value = JSON.parse(storedMessages);
+    } catch (e) {
+      console.error("解析聊天紀錄失敗:", e);
+      sessionStorage.removeItem(CHAT_HISTORY_KEY); // 如果解析失敗，就清除壞掉的資料
+    }
+  }
+};
+
 
 // 取得聊天室 Token
 const getChatToken = async () => {
@@ -53,10 +80,13 @@ const connectToChat = async () => {
         if (data.Type === 'MESSAGE') {
             messages.value.push({
                 id: data.Id,
-                username: data.Attributes?.username || data.Sender.UserId,
+                username: data.Attributes?.username || data.Sender.UserId.split('-')[1].substring(0, 6),
                 content: data.Content,
             });
-            // 自動滾動到最新訊息
+
+            // 【修改】收到新訊息時，就儲存一次
+            saveHistoryToSession();
+
             nextTick(() => {
                 const chatBox = document.querySelector('.chat-messages');
                 if(chatBox) chatBox.scrollTop = chatBox.scrollHeight;
@@ -81,9 +111,7 @@ const sendMessage = () => {
         const message = {
             Action: 'SEND_MESSAGE',
             Content: newMessage.value.trim(),
-            Attributes: {
-                username: props.userName
-            }
+            Attributes: { username: props.userName }
         };
         connection.value.send(JSON.stringify(message));
         newMessage.value = '';
@@ -91,6 +119,8 @@ const sendMessage = () => {
 }
 
 onMounted(() => {
+    // 【修改】連線前，先載入歷史紀錄
+    loadHistoryFromSession();
     connectToChat();
 });
 
