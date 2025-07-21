@@ -45,7 +45,7 @@ async function sendNotification() {
 </script>
 
 <template>
-  <div class="container">
+  <div class="container-fluid">
     <h2><i class="fas fa-bell me-2"></i>系統通知</h2>
     <div v-if="message" class="alert" :class="message.includes('成功') ? 'alert-success' : 'alert-danger'">{{ message }}</div>
     <form @submit.prevent="sendNotification">
@@ -87,5 +87,5 @@ async function sendNotification() {
 </template>
 
 <style scoped>
-.container { max-width: 700px; margin: 40px auto; }
+
 </style>

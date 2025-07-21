@@ -106,5 +106,5 @@ onMounted(fetchNotifications)
 </template>
 
 <style scoped>
-.container { max-width: 700px; margin: 40px auto; }
+.container { max-width: 80%; margin: 40px auto; }
 </style>

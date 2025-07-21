@@ -4,8 +4,10 @@
     import { computed } from 'vue'
     import { useCartStore } from '@/stores/cart'
     import CartOffcanvas from '@/components/CartOffcanvas.vue'
-    import * as bootstrap from 'bootstrap'  // 新增這行
+    import * as bootstrap from 'bootstrap'  
     import Swal from 'sweetalert2'
+    import {ref,onMounted, watch} from 'vue'
+    import api from '@/services/jjapi'
     //登入登出功能區------------------------------------------
     // 使用auth store和router
     const authStore = useAuthStore()
@@ -107,6 +109,54 @@
       return '/pingu.png'
     })
     //登入登出功能區 end-------------------------------------
+    
+    // 通知功能區------------------------------------------
+    // 未讀通知數量
+    const unreadCount = ref(0)
+
+    async function fetchUnreadCount() {
+      const user = localStorage.getItem('user')
+      const userId = user ? JSON.parse(user).userId : null
+      if (!userId) {
+        unreadCount.value = 0
+        console.log('無法從localstorage 取得 userId，未讀通知數量設為 0')
+        return
+      }
+      if (!isAuthenticated.value){
+        unreadCount.value = 0
+        console.log('未登入，未讀通知數量設為 0')
+        return
+      }
+      try {
+        const res = await api.get(`/Notifications/User/${userId}`)
+        // 統計未讀
+        unreadCount.value = res.data.filter(n => !n.isRead).length
+        console.log('取得未讀通知數量:', unreadCount.value)
+      } catch (error) {
+        unreadCount.value = 0
+        console.error('取得未讀通知數量失敗:', error)
+      }
+    }
+
+    // 頁面載入時取得未讀通知數量
+    onMounted(() => {
+      fetchUnreadCount()
+    })
+    
+    // 如果有登入狀態變化，重新取得未讀數量
+    watch(isAuthenticated, (newVal) => {
+      if (newVal) {
+        fetchUnreadCount()
+      } else {
+        unreadCount.value = 0
+      }
+    })
+
+    // 點擊通知按鈕跳轉到通知頁面
+    function goToNotification() {
+      router.push({ name: 'notification' })
+    }
+    // 通知功能區 end------------------------------------------
 </script>
 
 <template>
@@ -160,8 +210,16 @@
             </template>
           </ul>
         </div>
-
-        <RouterLink :to="{name:'notification'}" class="icon-btn" title="通知"><i class="bi bi-bell"></i></RouterLink>
+        <!-- 通知按鈕 -->
+        <button type="button" class="btn btn-primary position-relative icon-btn"
+                @click="goToNotification" title="通知">
+          <i class="bi bi-bell"></i>
+          <span v-if="unreadCount > 0"
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            {{ unreadCount > 99 ? '99+' : unreadCount }}
+            <span class="visually-hidden">unread messages</span>
+          </span>
+        </button>
       </div>
     </div>
   </header>
