@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useStreamStore } from '@/stores/streamStore';
 import axios from 'axios';
+import ChatRoom from '@/components/ChatRoom.vue'; 
 
 // 【新增】用於控制分頁的狀態
 const activeTab = ref('control'); // 'control' 或 'history'
@@ -64,7 +65,6 @@ onMounted(() => {
 
 <template>
   <div class="container mt-4">
-    <!-- 使用 Bootstrap Navs & Tabs 建立分頁 -->
     <ul class="nav nav-tabs mb-3">
       <li class="nav-item">
         <a class="nav-link" :class="{ active: activeTab === 'control' }" @click.prevent="activeTab = 'control'" href="#">
@@ -78,16 +78,15 @@ onMounted(() => {
       </li>
     </ul>
 
-    <!-- 分頁內容 -->
     <div class="tab-content">
-      <!-- 直播控制台 & 聊天室分頁 -->
+
       <div v-if="activeTab === 'control'" class="tab-pane fade show active">
         <div class="row">
-          <!-- 左側：直播控制台 -->
           <div class="col-lg-7">
             <div class="card">
               <div class="card-body">
                 <div v-if="error" class="alert alert-danger">{{ error }}</div>
+
                 <div v-if="streamStore.isLive">
                   <h5 class="card-title">🔴 直播進行中：{{ streamStore.currentStreamTitle }}</h5>
                   <p class="text-muted">請將以下資訊複製到你的直播軟體 (例如 OBS) 中。</p>
@@ -111,6 +110,7 @@ onMounted(() => {
                     <span v-if="loading" class="spinner-border spinner-border-sm"></span> 結束直播
                   </button>
                 </div>
+
                 <div v-else>
                   <h5 class="card-title">準備開始一場新的直播</h5>
                   <div class="mb-3">
@@ -124,40 +124,39 @@ onMounted(() => {
               </div>
             </div>
           </div>
-          <!-- 右側：聊天室 (預留位置) -->
+
           <div class="col-lg-5">
             <div class="card">
               <div class="card-header fs-5 fw-bold"><i class="fas fa-comments me-2"></i>聊天室</div>
-              <div class="card-body" style="height: 400px;">
-                <p class="text-muted text-center mt-5">聊天室功能將在此處顯示</p>
+              <div class="card-body p-0" style="height: 400px;">
+                <ChatRoom 
+                  v-if="streamStore.isLive" 
+                  user-name="肥貓小編" 
+                />
+                <div v-else class="d-flex justify-content-center align-items-center h-100 text-muted">
+                  直播開始後，聊天室將會啟用
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- 過往直播紀錄分頁 -->
-      <div v-if="activeTab === 'history'" class="tab-pane fade show active">
+        </div> </div> <div v-if="activeTab === 'history'" class="tab-pane fade show active">
         <div class="card">
           <div class="card-body" style="max-height: 600px; overflow-y: auto;">
             <ul v-if="pastStreams.length > 0" class="list-group list-group-flush">
               <li v-for="stream in pastStreams" :key="stream.livestreamId" class="list-group-item">
                 <div class="fw-bold">{{ stream.title }}</div>
-                <small class="text-muted me-5">
+                <small class="text-muted me-3">
                   開始時間: {{ new Date(stream.startedAt).toLocaleString() }}
                 </small>
-                <small class="text-muted">
-                  結束時於: {{ new Date(stream.endedAt).toLocaleString() }}
+                <small class="text-muted" v-if="stream.endedAt">
+                  結束時間: {{ new Date(stream.endedAt).toLocaleString() }}
                 </small>
               </li>
             </ul>
             <p v-else class="text-muted text-center">尚無直播紀錄</p>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</template>
+      </div> </div> </div> </template>
 
 
 <style scoped>

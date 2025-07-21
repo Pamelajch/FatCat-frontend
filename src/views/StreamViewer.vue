@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import axios from 'axios';
+import ChatRoom from '@/components/ChatRoom.vue';
 
 const isLoading = ref(true);
 const streamInfo = ref(null);
@@ -95,29 +96,23 @@ onUnmounted(() => {
 
     <!-- 直播主畫面 -->
     <div v-else class="stream-layout">
+      <!-- 左側：影片播放器 -->
       <div class="video-container">
         <h3 class="stream-title">{{ streamInfo.title }}</h3>
         <div class="player-wrapper">
           <video id="video-player" playsinline muted controls autoplay></video>
         </div>
       </div>
+
+      <!-- 右側：聊天室 -->
       <div class="chat-container">
         <div class="chat-header">
           <h5><i class="fas fa-comments me-2"></i>聊天室</h5>
         </div>
-        <div class="chat-messages">
-          <div class="message">
-            <span class="username admin">肥貓小編：</span>
-            <span class="content">歡迎來到肥貓直播間！有任何問題都可以提出來喔～</span>
-          </div>
-           <div class="message">
-            <span class="username">路人甲：</span>
-            <span class="content">這件衣服好好看！有特價嗎？</span>
-          </div>
-        </div>
-        <div class="chat-input">
-          <input type="text" class="form-control" placeholder="說點什麼..." disabled>
-          <button class="btn btn-primary" disabled>送出</button>
+        <!-- 【整合】在這裡使用 ChatRoom 元件 -->
+        <ChatRoom v-if="streamInfo.chatRoomArn" :room-arn="streamInfo.chatRoomArn" />
+        <div v-else class="d-flex justify-content-center align-items-center h-100 text-muted">
+            聊天室無法載入
         </div>
       </div>
     </div>
