@@ -215,7 +215,8 @@
                 @click="goToNotification" title="通知">
           <i class="bi bi-bell"></i>
           <span v-if="unreadCount > 0"
-                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                class="position-absolute top-0 start-100 badge rounded-pill bg-danger" 
+                style="transform: translate(-50%,2%);">
             {{ unreadCount > 99 ? '99+' : unreadCount }}
             <span class="visually-hidden">unread messages</span>
           </span>
