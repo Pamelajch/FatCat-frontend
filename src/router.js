@@ -77,7 +77,7 @@ const routes = [
     { path: "/myorders", component: MyOrdersView, name: "myorders" },
     //訂單明細 -- 梓瑋
     //http://localhost:5173/orderdetail
-    { path: "/orderdetail", component: OrderdetailView, name: "orderdetail" },
+    // { path: "/orderdetail", component: OrderdetailView, name: "orderdetail" },
     //登入頁面
     {
         path: "/login", component: LoginView, name: "login", meta: {
@@ -168,7 +168,14 @@ const routes = [
             {
                 path: '/admin/shippings/edit/:id',
                 component: () => import('@/views/Admin/ShippingEditView.vue')
+            },
+            {
+                path: '/orderdetail/:id',
+                name: 'OrderDetail',
+                component: () => import('@/views/OrderdetailView.vue')
             }
+
+
 
         ]
     },

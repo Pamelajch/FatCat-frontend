@@ -1,12 +1,30 @@
 <script setup>
-import { onMounted } from 'vue'
-import { useCartStore } from '@/stores/cart'
-import { useOrderStore } from '@/stores/order'
-import OrderItemList from '@/components/OrderItemList.vue' // ✅ 要引入！
+import { onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import OrderItemList from '@/components/OrderItemList.vue'
 import OrderDetail from '@/components/OrderDetail.vue'
 
-const cartStore = useCartStore()
-const orderStore = useOrderStore()
+const route = useRoute()
+const router = useRouter()
+const orderId = route.params.id
+
+const order = ref(null)
+const orderItems = ref([])
+
+const fetchOrderDetail = async () => {
+  try {
+    const [orderRes, itemsRes] = await Promise.all([
+      fetch(`https://localhost:7017/api/Orders/${orderId}`).then(res => res.json()),
+      fetch(`https://localhost:7017/api/OrderDetails/${orderId}`).then(res => res.json())
+    ])
+    order.value = orderRes
+    orderItems.value = itemsRes
+  } catch (err) {
+    console.error('無法載入訂單詳情', err)
+  }
+}
+
+onMounted(fetchOrderDetail)
 </script>
 
 <template>

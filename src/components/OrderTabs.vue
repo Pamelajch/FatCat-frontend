@@ -79,6 +79,7 @@ onMounted(fetchData)
               <th>日期</th>
               <th>總金額</th>
               <th>狀態</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -87,6 +88,11 @@ onMounted(fetchData)
               <td>{{ new Date(order.orderdate).toLocaleDateString() }}</td>
               <td>NT${{ order.payableAmount }}</td>
               <td>{{ getStatusText(order.orderStatusId) }}</td>
+               <td>
+                <router-link :to="`/orderdetail/${order.orderId}`" class="btn btn-outline-primary btn-sm">
+                    查看明細
+                </router-link>
+              </td>
             </tr>
           </tbody>
         </table>
