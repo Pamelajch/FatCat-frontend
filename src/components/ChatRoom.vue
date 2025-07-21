@@ -84,7 +84,7 @@ const connectToChat = async () => {
                 content: data.Content,
             });
 
-            // 【修改】收到新訊息時，就儲存一次~
+            // 【修改】收到新訊息時，就儲存一次
             saveHistoryToSession();
 
             nextTick(() => {
