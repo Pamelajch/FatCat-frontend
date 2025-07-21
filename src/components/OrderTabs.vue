@@ -1,44 +1,39 @@
-<!-- src/components/OrderTabs.vue -->
 <script setup>
-import { ref, computed } from 'vue'
-import { useOrderStore } from '@/stores/order'
+import { ref, onMounted, computed } from 'vue'
+import axios from 'axios'
 import OrderTab from '@/components/OrderTab.vue'
 
-const orderStore = useOrderStore()
 const selectedTab = ref(0)
+const orders = ref([])
+const statuses = ref([])
 
-const tabs = computed(() => [
-  {
-    id: 'pills-1',
-    label: '未處理',
-    orders: orderStore.orders.filter(o => o.status === '未處理'),
-    showReview: false
-  },
-  {
-    id: 'pills-2',
-    label: '處理中',
-    orders: orderStore.orders.filter(o => o.status === '處理中'),
-    showReview: false
-  },
-  {
-    id: 'pills-3',
-    label: '已完成',
-    orders: orderStore.orders.filter(o => o.status === '已完成'),
-    showReview: true
-  },
-  {
-    id: 'pills-4',
-    label: '退貨',
-    orders: orderStore.orders.filter(o => o.status === '退貨'),
-    showReview: false
-  },
-  {
-    id: 'pills-5',
-    label: '已取消',
-    orders: orderStore.orders.filter(o => o.status === '已取消'),
-    showReview: false
+// 取得資料
+const fetchData = async () => {
+  try {
+    const [orderRes, statusRes] = await Promise.all([
+      axios.get('/api/Orders'),
+      axios.get('/api/OrderStatus')
+    ])
+    orders.value = orderRes.data
+    statuses.value = statusRes.data
+  } catch (err) {
+    console.error('資料載入失敗:', err)
   }
-])
+}
+
+onMounted(fetchData)
+
+// 根據狀態建立 tabs
+const tabs = computed(() =>
+  statuses.value.map(status => {
+    return {
+      id: `tab-${status.orderStatusId}`,
+      label: status.description,
+      orders: orders.value.filter(order => order.orderStatusId === status.orderStatusId),
+      showReview: status.orderStatusId === 3 // 已完成才顯示評論功能
+    }
+  })
+)
 </script>
 
 <template>
