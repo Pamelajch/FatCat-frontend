@@ -16,8 +16,8 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
 
     // 初始化認證狀態 - 從 localStorage 讀取認證資訊
     const initializeAuth = () => {
-        const savedToken = localStorage.getItem('token')
-        const savedAdmin = localStorage.getItem('admin')
+        const savedToken = localStorage.getItem('adminToken')
+        const savedAdmin = localStorage.getItem('adminUser')
 
         if (savedToken && savedAdmin) {
             token.value = savedToken
@@ -46,8 +46,8 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
                 }
 
                 // 儲存到 localStorage
-                localStorage.setItem('token', adminData.token)
-                localStorage.setItem('admin', JSON.stringify(admin.value))
+                localStorage.setItem('adminToken', adminData.token)
+                localStorage.setItem('adminUser', JSON.stringify(admin.value))
 
                 return { success: true, message: '登入成功' }
             } else {
@@ -72,8 +72,8 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
             error.value = null
 
             // 清除 localStorage
-            localStorage.removeItem('token')
-            localStorage.removeItem('admin')
+            localStorage.removeItem('adminToken')
+            localStorage.removeItem('adminUser')
 
             return { success: true, message: '登出成功' }
         } catch (err) {
@@ -81,8 +81,8 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
             admin.value = null
             token.value = null
             error.value = null
-            localStorage.removeItem('token')
-            localStorage.removeItem('admin')
+            localStorage.removeItem('adminToken')
+            localStorage.removeItem('adminUser')
 
             return { success: true, message: '登出成功' }
         } finally {
