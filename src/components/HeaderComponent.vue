@@ -244,9 +244,6 @@
                 <RouterLink :to="{ name: 'onespecialnoodle', query: { id: p.productsId } }" @click="closeDropdown">
                 {{ p.name }} 
               </RouterLink>
-                <span style="color: #888; font-size: 0.9em; margin-left: 0.5em;">
-                  /product/{{ p.productsId }}
-                </span>
               </li>
             </ul>
           </div>
