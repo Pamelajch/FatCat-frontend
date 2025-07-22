@@ -150,7 +150,7 @@ const goToPage = (page) => {
             </span>
           </td>
           <td>
-          <RouterLink :to="{ name: 'AdminProductEdit', params: { id: p.productsId } }" class="btn-edit" >編輯</RouterLink>
+          <RouterLink :to="{ name: 'AdminProductEdit', params: { id: p.productsId } }" class="btn-edit">編輯</RouterLink>
             <button class="btn-delete">刪除</button>
             <button class="btn-status" @click="toggleStatus(p)">
               {{ p.isAvailable ? '下架' : '上架' }}
