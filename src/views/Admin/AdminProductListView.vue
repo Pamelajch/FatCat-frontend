@@ -4,7 +4,7 @@
 
 <template>
     <div>
-<h2>yy 全站商品列表</h2>
+<h2>全站商品列表</h2>
     </div>
 </template>
 
