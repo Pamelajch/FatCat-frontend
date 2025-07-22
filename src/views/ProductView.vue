@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import ProductReview from '@/components/ProductReview.vue'
 
 const route = useRoute()
 const productId = route.query.id
@@ -64,7 +65,8 @@ onMounted(() => {
 
     <div v-if="product" class="comment-box">
       <h2 class="comment-title">🔮 魔法評論區</h2>
-      <p style="text-align:center; color:#ccc;">（這裡是評論區，rr交給你）</p>
+       <!-- RRRRRRRRRR 評論區 -->
+        <ProductReview :product-id="route.query.id" />
     </div>
 
     <div v-else class="loading">載入中...</div>

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
+import ProductReview from '@/components/ProductReview.vue'
 
 const route = useRoute()
 const productId = route.query.id
@@ -198,11 +199,12 @@ onMounted(() => {
     <p :key="currentWarning">{{ warningMessages[currentWarning] }}</p>
     </transition>
     </div>
-    <!-- 商品評論區（留給 r謙 實作用 🐱）-->
+    <!-- 商品評論區（留給 r謙 實作用 🐱）--> 
     <div class="review-section">
       <h3>⭐ 貓貓們的評論區</h3>
-      <div class="review-box">
-        <!-- 留空給未來評論列表 -->
+      <div class="review-box"> 
+        <!-- RRRRRRRRRR 評論區 -->
+        <ProductReview :product-id="route.query.id" />
       </div>
     </div>
     <!-- 推薦商品 -->
