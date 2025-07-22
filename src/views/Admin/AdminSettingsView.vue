@@ -279,21 +279,6 @@ const deleteAdmin = async () => {
   }
 }
 
-const updateAdminStatus = async (adminId, newStatus) => {
-  try {
-    const result = await adminAuthStore.updateAdmin(adminId, { status: newStatus })
-    
-    if (result.success) {
-      await fetchAdmins()
-      alert('狀態更新成功')
-    } else {
-      alert(result.message || '狀態更新失敗')
-    }
-  } catch (error) {
-    console.error('狀態更新失敗:', error)
-    alert('狀態更新失敗')
-  }
-}
 
 // 輔助函數
 const openEditModal = (admin) => {
@@ -332,6 +317,10 @@ const getStatusBadgeClass = (status) => {
   return status === 1 ? 'bg-success' : 'bg-secondary'
 }
 
+const formatDate = (dateString) => {
+  if (!dateString) return '未設定'
+  return new Date(dateString).toLocaleDateString('zh-TW')
+}
 
 // 搜尋處理函數（使用防抖）
 const handleSearch = debounce(() => {
