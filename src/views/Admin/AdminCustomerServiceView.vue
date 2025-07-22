@@ -103,7 +103,7 @@ const currentMessages = computed(() => {
 const initConnection = async () => {
   connection.value = new signalR.HubConnectionBuilder()
     .withUrl('https://localhost:7017/chatHub', {
-        accessTokenFactory: () => localStorage.getItem('token')
+        accessTokenFactory: () => localStorage.getItem('adminToken')
     })
     .configureLogging(signalR.LogLevel.Information)
     .build();

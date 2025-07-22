@@ -1,3 +1,4 @@
+//////////////////////// 管理員登入 //////////////////////////////
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '../services/jjapi'

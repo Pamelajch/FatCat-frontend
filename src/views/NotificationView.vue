@@ -77,7 +77,7 @@ onMounted(fetchNotifications)
                 <h5 class="mb-1">{{ n.title }}
                   <span v-if="!n.isRead" class="badge bg-primary ms-2">新</span>
                   <span class="badge bg-info ms-2">
-                    {{ n.notificationType === 5 ? '客訴相關' : n.notificationType === 6 ? '系統公告' : '其他' }}
+                    {{ n.notificationType === 1 ? '訂單' : n.notificationType === 2 ? '付款' : n.notificationType === 3 ? '物流' : n.notificationType === 4 ? '優惠券' : n.notificationType === 5 ? '客訴' : n.notificationType === 6 ? '系統' : n.notificationType === 7 ? '促銷' : n.notificationType === 8 ? '退款' : n.notificationType === 9 ? '評論檢舉' : '其他' }}
                   </span>
                 </h5>
                 <p class="mb-1 text-muted">{{ n.description }}</p>

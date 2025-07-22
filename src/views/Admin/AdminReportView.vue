@@ -128,7 +128,7 @@ const showToast = (message, type = 'success') => {
 const processReport = async (reportId, newStatusId) => {
     if (isProcessing.value) return;
     if (!confirm(`確定要將此案件狀態更改嗎?`)) return;
-    const storedAdmin = localStorage.getItem('admin');
+    const storedAdmin = localStorage.getItem('adminUser');
     const adminInfo = storedAdmin ? JSON.parse(storedAdmin) : null;
     if (!adminInfo || !adminInfo.adminId) {
         showToast('錯誤：找不到管理員登入資訊，請重新登入。', 'error');

@@ -22,9 +22,9 @@ const currentMessages = computed(() => {
 const initConnection = async () => {
   connection.value = new signalR.HubConnectionBuilder()
     .withUrl('https://localhost:7017/chatHub', {
-    // 建立一個函式，它會回傳儲存在 localStorage 的 token
-    // SignalR 在每次連線或重連時，都會自動執行這個函式來取得最新的 token
-    accessTokenFactory: () => localStorage.getItem('token')
+    // 建立一個函式，它會回傳儲存在 localStorage 的 adminToken
+    // SignalR 在每次連線或重連時，都會自動執行這個函式來取得最新的 adminToken
+    accessTokenFactory: () => localStorage.getItem('adminToken') 
   })
   .configureLogging(signalR.LogLevel.Information)
   .build();

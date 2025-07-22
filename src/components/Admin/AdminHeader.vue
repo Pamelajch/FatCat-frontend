@@ -26,9 +26,6 @@ const toggleDropdown = () => {
 };
 
 const logout = async () => {
-  // localStorage.removeItem('adminToken');
-  // localStorage.removeItem('adminUser');
-  // localStorage.removeItem('admin');
   await adminAuthStore.logout();
   router.push('/admin/login');
 };

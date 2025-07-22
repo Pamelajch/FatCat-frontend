@@ -20,7 +20,8 @@ const notificationTypes = [
   { value: 5, label: '客訴相關' },
   { value: 6, label: '系統公告' },
   { value: 7, label: '促銷活動' },
-  { value: 8, label: '退款相關' }
+  { value: 8, label: '退款相關' },
+  { value: 9, label: '評論相關' }
 ]
 
 

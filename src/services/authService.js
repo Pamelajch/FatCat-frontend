@@ -1,5 +1,6 @@
 import api from "./jjapi";
 
+///// 負責使用者登入 (勿與管理員登入混用 !!) ///////////////////////
 // 認證相關的 API 服務
 export const authService = {
     // 呼叫登入 API

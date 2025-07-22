@@ -1,3 +1,5 @@
+///// 負責使用者登入 (勿與管理員登入混用 !!) ///////////////////////
+
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import authService from '../services/authService'

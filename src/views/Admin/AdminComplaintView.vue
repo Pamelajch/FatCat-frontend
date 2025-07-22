@@ -111,7 +111,7 @@ const closeDetailView = () => {
 };
 
 const getAdminId = () => {
-    const storedAdmin = localStorage.getItem('admin');
+    const storedAdmin = localStorage.getItem('adminUser');
     const adminInfo = storedAdmin ? JSON.parse(storedAdmin) : null;
     if (!adminInfo || !adminInfo.adminId) {
         showToast('錯誤：找不到管理員登入資訊，請重新登入。', 'error');

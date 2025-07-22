@@ -135,7 +135,7 @@ const routes = [
         component: () => import('./views/Admin/AdminLayout.vue'),
         meta: { hideHeaderFooter: true, isAdminPage: true },
         beforeEnter: (to, from, next) => {
-            if (localStorage.getItem('token')) {
+            if (localStorage.getItem('adminToken')) {
                 next();
             } else {
                 next('/admin/login');
