@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 
 const DRINK_CATEGORY_ID = 99
 
@@ -52,11 +52,62 @@ const onDrop = (event) => {
 const removeFromCup = (index) => {
   cup.value.splice(index, 1)
 }
+
+// 貓貓預言師輪播
+const messages = [
+  '你確定這樣好喝嗎？',
+  '本喵絕對不喝。',
+  '你開心就好。',
+  '這人腦袋有毛病…',
+  '給本喵來100杯！'
+]
+const currentMessage = ref(messages[0])
+let messageIndex = 0
+let timer = null
+
+onMounted(() => {
+  timer = setInterval(() => {
+    messageIndex = (messageIndex + 1) % messages.length
+    currentMessage.value = messages[messageIndex]
+  }, 5000)
+})
+
+onBeforeUnmount(() => {
+  clearInterval(timer)
+})
 </script>
 
 <template>
   <div class="drink-view">
-    <!-- 分類選單 -->
+
+    <!-- 上方主要互動區域 -->
+    <div class="top-zone">
+      <!-- 左：貓貓預言師 -->
+      <div class="cat-zone">
+        <img src="/cat-head.png" class="cat-img" />
+        <div class="cat-message">{{ currentMessage }}</div>
+      </div>
+
+      <!-- 中：燒杯 -->
+      <div class="cup-drop-area" @dragover.prevent @drop="onDrop">
+        <img :src="cupImage" class="cup-img" />
+      </div>
+
+      <!-- 右：已加入的材料卡片 -->
+      <div class="card-area">
+        <div
+          class="material-card"
+          v-for="(item, index) in cup"
+          :key="item.productsId"
+        >
+          <img :src="item.imageUrl" />
+          <span class="material-name">{{ item.name }}</span>
+          <button class="remove-btn" @click="removeFromCup(index)">❌</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 中下：篩選 -->
     <div class="filter-bar">
       <label>材料風格分類：</label>
       <select v-model="selectedSort">
@@ -66,7 +117,7 @@ const removeFromCup = (index) => {
       </select>
     </div>
 
-    <!-- 材料清單 -->
+    <!-- 最下方：可拖曳材料清單 -->
     <div class="grid">
       <div
         v-for="item in filteredProducts"
@@ -81,46 +132,122 @@ const removeFromCup = (index) => {
       </div>
     </div>
 
-    <!-- 杯子接收區 + 符籙卡片 -->
-    <div class="cup-drop-area" @dragover.prevent @drop="onDrop">
-      <!-- 材料卡片區 -->
-      <div class="card-area">
-        <div
-          class="material-card"
-          v-for="(item, index) in cup"
-          :key="item.productsId"
-          :style="{ top: `${index * 80}px` }"
-        >
-          <img :src="item.imageUrl" />
-          <span class="material-name">{{ item.name }}</span>
-          <button class="remove-btn" @click="removeFromCup(index)">❌</button>
-        </div>
-      </div>
-
-      <!-- 杯子圖片 -->
-      <img :src="cupImage" alt="杯子" class="cup-img" />
-    </div>
   </div>
 </template>
 
 <style scoped>
 .drink-view {
-  padding: 2rem;
+  padding: 2rem 3vw;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
+/* 👉 上方：貓貓、杯子、已選材料 */
+.top-zone {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 3rem;
+  width: 100%;
+}
+
+/* 貓貓預言師 */
+.cat-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 160px;
+}
+.cat-img {
+  width: 100px;
+  height: 100px;
+}
+.cat-message {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid #fff;
+  border-radius: 12px;
+  color: #a27bff;
+  font-weight: bold;
+  text-align: center;
+  font-size: 14px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 10px rgba(200, 200, 255, 0.2);
+  white-space: pre-line;
+  min-width: 120px;
+}
+
+/* 杯子區域 */
+.cup-drop-area {
+  position: relative;
+  width: 200px;
+  height: 300px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+.cup-img {
+  max-height: 100%;
+  max-width: 100%;
+}
+
+/* 材料卡片（右側） */
+.card-area {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.material-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid #d8bbff;
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 10px #a27bff80;
+  animation: floatCard 4s infinite ease-in-out;
+}
+.material-card img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+.material-name {
+  font-weight: bold;
+  color: #a27bff;
+}
+.remove-btn {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  font-size: 20px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+/* 中下方：分類篩選 */
 .filter-bar {
-  margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   gap: 1rem;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
 }
 
+/* 最下方：可拖曳材料清單 */
 .grid {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 20px;
 }
-
 .ingredient-card {
   width: 160px;
   padding: 12px;
@@ -139,60 +266,7 @@ const removeFromCup = (index) => {
   border-radius: 10px;
 }
 
-.cup-drop-area {
-  margin-top: 40px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  height: 300px;
-  position: relative;
-}
-
-.cup-img {
-  max-height: 100%;
-  position: absolute;
-  bottom: 0;
-}
-
-.card-area {
-  position: absolute;
-  bottom: 220px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.material-card {
-  position: relative;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid #d8bbff;
-  border-radius: 12px;
-  padding: 8px 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 0 10px #a27bff80;
-  backdrop-filter: blur(8px);
-  animation: floatCard 4s infinite ease-in-out;
-}
-.material-card img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-}
-.material-name {
-  font-weight: bold;
-  color: #fff;
-}
-.remove-btn {
-  background: none;
-  border: none;
-  color: #ff6b6b;
-  font-size: 20px;
-  cursor: pointer;
-  margin-left: auto;
-}
+/* 卡片漂浮動畫 */
 @keyframes floatCard {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-6px); }
