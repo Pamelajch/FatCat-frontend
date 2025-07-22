@@ -205,75 +205,82 @@
       </RouterLink>
 
       <!-- 搜尋區塊 -->
-    <div class="search-bar position-relative me-3">
-      <input
-        v-model="searchKeyword"
-        @keyup.enter="doSearch"
-        @mouseenter="searchResult && (showSearchDropdown = true)"
-        class="form-control"
-        style="width: 220px; display: inline-block;"
-        placeholder="搜尋商品/分類/活動/優惠券..."
-      />
-      <button class="btn btn-light ms-1" @click="doSearch" style="padding: 0.25rem 0.75rem;">
-        <i class="bi bi-search"></i>
-      </button>
-      <!-- 下拉搜尋結果 -->
-      <div
-        v-if="showSearchDropdown"
-        class="search-dropdown"
-        @mouseleave="closeDropdown"
-
-      >
-        <div v-if="searchLoading" class="p-2 text-center">載入中...</div>
-        <div v-else-if="searchError" class="p-2 text-danger">{{ searchError }}</div>
-        <template v-else-if="searchResult">
-          <div v-if="searchResult.categories.length">
-            <div class="search-title">商品大分類</div>
-            <ul>
-              <li v-for="c in searchResult.categories" :key="c.productCategoriesId">{{ c.name }}</li>
-            </ul>
-          </div>
-          <div v-if="searchResult.sorts.length">
-            <div class="search-title">商品小分類</div>
-            <ul>
-              <li v-for="s in searchResult.sorts" :key="s.sortId">
-                <RouterLink
-                  :to="{ name: 'specialnoodle', query: { category: s.name } }"
-                  @click="closeDropdown"
-               >
-                {{ s.name }}
-              </RouterLink>
-              </li>
-            </ul>
-          </div>
-          <div v-if="searchResult.products.length">
-            <div class="search-title">商品</div>
-            <ul>
-              <li v-for="p in searchResult.products" :key="p.productsId">
-              <RouterLink :to="{ name: 'onespecialnoodle', query: { id: p.productsId } }" @click="closeDropdown">
-                {{ p.name }} 
-              </RouterLink>
-              </li>
-            </ul>
-          </div>
-          <div v-if="searchResult.coupons.length">
-            <div class="search-title">優惠券</div>
-            <ul>
-              <li v-for="c in searchResult.coupons" :key="c.couponId">{{ c.couponCode }} - {{ c.description }}</li>
-            </ul>
-          </div>
-          <div v-if="searchResult.campaigns.length">
-            <div class="search-title">活動</div>
-            <ul>
-              <li v-for="c in searchResult.campaigns" :key="c.campaignId">{{ c.title }}</li>
-            </ul>
-          </div>
-          <div v-if="!searchResult.categories.length && !searchResult.sorts.length && !searchResult.products.length && !searchResult.coupons.length && !searchResult.campaigns.length">
-            <span class="p-2">查無資料</span>
-          </div>
-        </template>
+      <div class="search-bar position-relative me-3" ref="searchBarRef">
+        <div class="group">
+           <svg viewBox="0 0 24 24" aria-hidden="true" class="search-icon">
+              <g>
+                <path
+                  d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z"
+                ></path>
+             </g>
+           </svg> 
+          <input
+              v-model="searchKeyword"
+              @keyup.enter="doSearch"
+              @mouseenter="searchResult && (showSearchDropdown = true)"
+              class="input"
+              type="search"
+              placeholder="搜尋商品/分類/活動/優惠券"
+              name="searchbar"
+              autocomplete="off"
+            />
+        </div>
+        <!-- 下拉搜尋結果 -->
+        <div
+          v-if="showSearchDropdown"
+          class="search-dropdown"
+          @mouseleave="closeDropdown"
+        >
+          <div v-if="searchLoading" class="p-2 text-center">載入中...</div>
+          <div v-else-if="searchError" class="p-2 text-danger">{{ searchError }}</div>
+          <template v-else-if="searchResult">
+            <div v-if="searchResult.categories.length">
+              <div class="search-title">商品大分類</div>
+              <ul>
+                <li v-for="c in searchResult.categories" :key="c.productCategoriesId">{{ c.name }}</li>
+              </ul>
+            </div>
+            <div v-if="searchResult.sorts.length">
+              <div class="search-title">商品小分類</div>
+              <ul>
+                <li v-for="s in searchResult.sorts" :key="s.sortId">
+                  <RouterLink
+                    :to="{ name: 'specialnoodle', query: { category: s.name } }"
+                    @click="closeDropdown"
+                >
+                  {{ s.name }}
+                </RouterLink>
+                </li>
+              </ul>
+            </div>
+            <div v-if="searchResult.products.length">
+              <div class="search-title">商品</div>
+              <ul>
+                <li v-for="p in searchResult.products" :key="p.productsId">
+                <RouterLink :to="{ name: 'onespecialnoodle', query: { id: p.productsId } }" @click="closeDropdown">
+                  {{ p.name }} 
+                </RouterLink>
+                </li>
+              </ul>
+            </div>
+            <div v-if="searchResult.coupons.length">
+              <div class="search-title">優惠券</div>
+              <ul>
+                <li v-for="c in searchResult.coupons" :key="c.couponId">{{ c.couponCode }} - {{ c.description }}</li>
+              </ul>
+            </div>
+            <div v-if="searchResult.campaigns.length">
+              <div class="search-title">活動</div>
+              <ul>
+                <li v-for="c in searchResult.campaigns" :key="c.campaignId">{{ c.title }}</li>
+              </ul>
+            </div>
+            <div v-if="!searchResult.categories.length && !searchResult.sorts.length && !searchResult.products.length && !searchResult.coupons.length && !searchResult.campaigns.length">
+              <span class="p-2">查無資料</span>
+            </div>
+          </template>
+        </div>
       </div>
-    </div>
 
       <!-- 右側按鈕群組 -->
       <div class="d-flex align-items-center gap-3 gap-lg-4">
@@ -371,16 +378,53 @@
   margin-right: 10px; /* 可以依需求微調距離 */
 }
 
+/* 
+搜尋功能樣式 */
+.search-bar {
+  min-width: 220px;
+}
+
+.search-dropdown {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  width: 350px;
+  background: #fff;
+  border: 1px solid #c286cf;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.search-title {
+  font-weight: bold;
+  color: #92559c;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+.search-dropdown ul {
+  padding-left: 1rem;
+  margin-bottom: 0.5rem;
+  color: #212529;
+}
+.search-dropdown li {
+  list-style: disc;
+  font-size: 0.98rem;
+  margin-bottom: 0.15rem;
+}
 /* 下拉選單樣式 */
 .dropdown-menu {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
+  background-color: #f8f0fa;
+  border: 1px solid #c286cf;
   border-radius: 0.375rem;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0.5rem 1rem rgba(146, 85, 0156 0.15);
 }
 
 .dropdown-item {
-  color: #212529;
+  color: #6f42c1;
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -389,13 +433,88 @@
 }
 
 .dropdown-item:hover {
-  background-color: #e9ecef;
-  color: #212529;
+  background-color: #e9d6f7;
+  color: #92559c;
   text-decoration: none;
 }
 
 .dropdown-item i {
   width: 1rem;
+}
+.group {
+  display: flex;
+  line-height: 28px;
+  align-items: center;
+  position: relative;
+  max-width: 350px; /* 桌機時較寬 */
+  width: 100%;
+}
+
+.input {
+  font-family: "Montserrat", "Noto Sans TC", sans-serif;
+  width: 100%;
+  min-width: 0;
+  height: 45px;
+  padding-left: 2.5rem;
+  border: 0;
+  border-radius: 12px;
+  background-color: #f8f0fa;
+  outline: none;
+  color: #6f42c1;
+  transition: all 0.25s cubic-bezier(0.19, 1, 0.22, 1);
+  cursor: text;
+  z-index: 0;
+}
+
+
+.input::placeholder {
+  color: #b48ce3;
+}
+
+.input:hover {
+  box-shadow: 0 0 0 2.5px #c286cf, 0px 0px 25px -15px #b48ce3;
+}
+
+.input:active {
+  transform: scale(0.95);
+}
+.input:focus {
+  background-color: #f3e6fa;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  fill: #b48ce3;
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+  z-index: 1;
+}
+/* 響應式設計 */
+@media (max-width: 992px) {
+  .group {
+    max-width: 250px;
+  }
+}
+@media (max-width: 768px) {
+  .group {
+    max-width: 180px;
+  }
+  .input {
+    height: 38px;
+    font-size: 0.95rem;
+  }
+}
+@media (max-width: 576px) {
+  .group {
+    max-width: 120px;
+  }
+  .input {
+    height: 32px;
+    font-size: 0.9rem;
+    padding-left: 2rem;
+  }
 }
 
 /* 響應式調整 */
@@ -472,6 +591,9 @@
   border-top: 1px solid #dee2e6;
 }
 
+
+
+
 /* 響應式調整 */
 @media (max-width: 992px) {
   .user-greeting {
@@ -492,42 +614,6 @@
     height: 24px;
   }
 }
-/* 
-搜尋功能樣式 */
-.search-bar {
-  min-width: 220px;
-}
 
-.search-dropdown {
-  position: absolute;
-  top: 110%;
-  left: 0;
-  width: 350px;
-  background: #fff;
-  border: 1px solid #c286cf;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-  z-index: 9999;
-  padding: 0.5rem 1rem;
-  max-height: 350px;
-  overflow-y: auto;
-}
-
-.search-title {
-  font-weight: bold;
-  color: #92559c;
-  margin-top: 0.5rem;
-  margin-bottom: 0.25rem;
-}
-.search-dropdown ul {
-  padding-left: 1rem;
-  margin-bottom: 0.5rem;
-  color: #212529;
-}
-.search-dropdown li {
-  list-style: disc;
-  font-size: 0.98rem;
-  margin-bottom: 0.15rem;
-}
 
 </style>   
