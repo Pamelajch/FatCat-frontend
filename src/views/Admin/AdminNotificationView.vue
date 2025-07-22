@@ -4,17 +4,31 @@ import api from '@/services/jjapi'
 
 const title = ref('')
 const description = ref('')
-const receiverType = ref('all_admins') // 預設
+const receiverType = ref('all_users') // 預設
 const receiverIds = ref([]) // 若選特定對象
 const notificationType = ref(6) // 例如 6=系統公告
 
 const sending = ref(false)
 const message = ref('')
 
+// 通知類型選項
+const notificationTypes = [
+  { value: 1, label: '訂單相關' },
+  { value: 2, label: '付款相關' },
+  { value: 3, label: '物流相關' },
+  { value: 4, label: '優惠券相關' },
+  { value: 5, label: '客訴相關' },
+  { value: 6, label: '系統公告' },
+  { value: 7, label: '促銷活動' },
+  { value: 8, label: '退款相關' }
+]
+
+
 // 常用範例
-function fillTemplate(t, d) {
+function fillTemplate(t, d,type = 6) {
   title.value = t
   description.value = d
+  notificationType.value = type
 }
 
 // 發送通知
@@ -60,6 +74,14 @@ async function sendNotification() {
         <div class="form-text">{{ description.length }}/100 字元</div>
       </div>
       <div class="mb-3">
+        <label class="form-label">通知類型 <span class="text-danger">*</span></label>
+        <select v-model="notificationType" class="form-select">
+          <option v-for="type in notificationTypes" :key="type.value" :value="type.value">
+            {{ type.label }}
+          </option>
+        </select>
+      </div>
+      <div class="mb-3">
         <label class="form-label">通知對象 <span class="text-danger">*</span></label>
         <select v-model="receiverType" class="form-select">
           <option value="all_admins">所有管理員</option>
@@ -71,7 +93,7 @@ async function sendNotification() {
         <label class="form-label">請輸入 UserId（可多選, 以逗號分隔）</label>
         <input class="form-control" @input="e => receiverIds.value = e.target.value.split(',').map(s => parseInt(s.trim())).filter(Boolean)" placeholder="例如：1001,1002,1003">
       </div>
-      <div class="mb-3">
+      <div v-if="notificationType === 6" class="mb-3">
         <button type="button" class="btn btn-outline-secondary me-2" @click="fillTemplate('系統維護公告', '系統將於今晚23:00-01:00進行維護，請提前保存工作。')">維護公告</button>
         <button type="button" class="btn btn-outline-secondary me-2" @click="fillTemplate('系統更新通知', '系統已更新至新版本，新增了多項功能改進。')">更新通知</button>
         <button type="button" class="btn btn-outline-secondary me-2" @click="fillTemplate('緊急系統公告', '發現系統異常，請暫停相關操作，技術人員正在處理中。')">緊急公告</button>
