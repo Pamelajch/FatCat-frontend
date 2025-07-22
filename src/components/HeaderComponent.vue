@@ -8,6 +8,42 @@
     import Swal from 'sweetalert2'
     import {ref,onMounted, watch} from 'vue'
     import api from '@/services/jjapi'
+    import { searchAll } from '@/services/searchService.js';
+
+    // 搜尋功能區 -----------------------------------------------------------------
+    const searchKeyword = ref('');
+    const searchResult = ref(null);
+    const searchLoading = ref(false);
+    const searchError = ref('');
+    const showSearchDropdown = ref(false);
+
+    const doSearch = async () => {
+      if (!searchKeyword.value.trim()) {
+        searchError.value = '請輸入關鍵字';
+        searchResult.value = null;
+        showSearchDropdown.value = false;
+        return;
+      }
+      searchError.value = '';
+      searchLoading.value = true;
+      try {
+        const res = await searchAll(searchKeyword.value);
+        searchResult.value = res.data;
+        showSearchDropdown.value = true;
+      } catch (e) {
+        searchError.value = '搜尋失敗';
+        searchResult.value = null;
+        showSearchDropdown.value = false;
+      }
+      searchLoading.value = false;
+    };
+
+    // 點擊外部時關閉下拉
+    const closeDropdown = () => {
+      showSearchDropdown.value = false;
+    };
+    // 搜尋功能區end ----------------------------------------------------------
+        
     //登入登出功能區------------------------------------------
     // 使用auth store和router
     const authStore = useAuthStore()
@@ -167,6 +203,71 @@
         <img src="/cat-logo.png" alt="logo" class="logo-img" />
         <img src="/cat-font.png" alt="" style="height: 50px;">
       </RouterLink>
+
+      <!-- 搜尋區塊 -->
+    <div class="search-bar position-relative me-3">
+      <input
+        v-model="searchKeyword"
+        @keyup.enter="doSearch"
+        @focus="searchResult && (showSearchDropdown = true)"
+        class="form-control"
+        style="width: 220px; display: inline-block;"
+        placeholder="搜尋商品/分類/活動/優惠券..."
+      />
+      <button class="btn btn-light ms-1" @click="doSearch" style="padding: 0.25rem 0.75rem;">
+        <i class="bi bi-search"></i>
+      </button>
+      <!-- 下拉搜尋結果 -->
+      <div
+        v-if="showSearchDropdown"
+        class="search-dropdown"
+      >
+        <div v-if="searchLoading" class="p-2 text-center">載入中...</div>
+        <div v-else-if="searchError" class="p-2 text-danger">{{ searchError }}</div>
+        <template v-else-if="searchResult">
+          <div v-if="searchResult.categories.length">
+            <div class="search-title">商品大分類</div>
+            <ul>
+              <li v-for="c in searchResult.categories" :key="c.productCategoriesId">{{ c.name }}</li>
+            </ul>
+          </div>
+          <div v-if="searchResult.sorts.length">
+            <div class="search-title">商品小分類</div>
+            <ul>
+              <li v-for="s in searchResult.sorts" :key="s.sortId">{{ s.name }}</li>
+            </ul>
+          </div>
+          <div v-if="searchResult.products.length">
+            <div class="search-title">商品</div>
+            <ul>
+              <li v-for="p in searchResult.products" :key="p.productsId">
+                <RouterLink :to="{ name: 'onespecialnoodle', query: { id: p.productsId } }" @click="closeDropdown">
+                {{ p.name }} 
+              </RouterLink>
+                <span style="color: #888; font-size: 0.9em; margin-left: 0.5em;">
+                  /product/{{ p.productsId }}
+                </span>
+              </li>
+            </ul>
+          </div>
+          <div v-if="searchResult.coupons.length">
+            <div class="search-title">優惠券</div>
+            <ul>
+              <li v-for="c in searchResult.coupons" :key="c.couponId">{{ c.couponCode }} - {{ c.description }}</li>
+            </ul>
+          </div>
+          <div v-if="searchResult.campaigns.length">
+            <div class="search-title">活動</div>
+            <ul>
+              <li v-for="c in searchResult.campaigns" :key="c.campaignId">{{ c.title }}</li>
+            </ul>
+          </div>
+          <div v-if="!searchResult.categories.length && !searchResult.sorts.length && !searchResult.products.length && !searchResult.coupons.length && !searchResult.campaigns.length">
+            <span class="p-2">查無資料</span>
+          </div>
+        </template>
+      </div>
+    </div>
 
       <!-- 右側按鈕群組 -->
       <div class="d-flex align-items-center gap-3 gap-lg-4">
@@ -385,4 +486,42 @@
     height: 24px;
   }
 }
-</style> 
+/* 
+搜尋功能樣式 */
+.search-bar {
+  min-width: 220px;
+}
+
+.search-dropdown {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  width: 350px;
+  background: #fff;
+  border: 1px solid #c286cf;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.search-title {
+  font-weight: bold;
+  color: #92559c;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+.search-dropdown ul {
+  padding-left: 1rem;
+  margin-bottom: 0.5rem;
+  color: #212529;
+}
+.search-dropdown li {
+  list-style: disc;
+  font-size: 0.98rem;
+  margin-bottom: 0.15rem;
+}
+
+</style>   
