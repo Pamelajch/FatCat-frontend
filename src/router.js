@@ -36,10 +36,13 @@ const routes = [
     //商品列表 --玥彤
     //http://localhost:5173/productlist
     { path: "/productlist", component: ProductlistView, name: "productlist" },
+    // 
     //http://localhost:5173/Product
     { path: "/Product", component: ProductView, name: "product" },
+    // 特別商品列表 
     //http://localhost:5173/Specialnoodle
     { path: "/Specialnoodle", component: SpecialNoodleView, name: "specialnoodle" },
+    // 商品詳細頁面
     //http://localhost:5173/OneSpecialNoodle
     { path: "/OneSpecialNoodle", component: OneSpecialNoodleView, name: "onespecialnoodle" },
     //購物車 --梓瑋

@@ -209,7 +209,7 @@
       <input
         v-model="searchKeyword"
         @keyup.enter="doSearch"
-        @focus="searchResult && (showSearchDropdown = true)"
+        @mouseenter="searchResult && (showSearchDropdown = true)"
         class="form-control"
         style="width: 220px; display: inline-block;"
         placeholder="搜尋商品/分類/活動/優惠券..."
@@ -221,6 +221,8 @@
       <div
         v-if="showSearchDropdown"
         class="search-dropdown"
+        @mouseleave="closeDropdown"
+
       >
         <div v-if="searchLoading" class="p-2 text-center">載入中...</div>
         <div v-else-if="searchError" class="p-2 text-danger">{{ searchError }}</div>
@@ -234,14 +236,21 @@
           <div v-if="searchResult.sorts.length">
             <div class="search-title">商品小分類</div>
             <ul>
-              <li v-for="s in searchResult.sorts" :key="s.sortId">{{ s.name }}</li>
+              <li v-for="s in searchResult.sorts" :key="s.sortId">
+                <RouterLink
+                  :to="{ name: 'specialnoodle', query: { category: s.name } }"
+                  @click="closeDropdown"
+               >
+                {{ s.name }}
+              </RouterLink>
+              </li>
             </ul>
           </div>
           <div v-if="searchResult.products.length">
             <div class="search-title">商品</div>
             <ul>
               <li v-for="p in searchResult.products" :key="p.productsId">
-                <RouterLink :to="{ name: 'onespecialnoodle', query: { id: p.productsId } }" @click="closeDropdown">
+              <RouterLink :to="{ name: 'onespecialnoodle', query: { id: p.productsId } }" @click="closeDropdown">
                 {{ p.name }} 
               </RouterLink>
               </li>

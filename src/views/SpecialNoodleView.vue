@@ -1,5 +1,8 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router' // add by JJ
+
+const route = useRoute() // add by JJ
 
 const selectedCategory = ref('')     // 先給空，等資料來了再設
 const categories = ref([])           // 動態分類
@@ -55,7 +58,25 @@ const filterProducts = () => {
 
 watch(selectedCategory, filterProducts)
 
-onMounted(fetchSpecialProducts)
+// onMounted(fetchSpecialProducts)
+// 修改 by JJ
+onMounted(()=>{
+  fetchSpecialProducts().then(()=>{
+    // 如果網址有帶category參數，則自動選擇該分類
+    if (route.query.category) {
+      selectedCategory.value = route.query.category
+    }
+  })
+}) 
+// 監聽網址 query 變化，自動切換分類 by JJ
+watch(
+  () => route.query.category,
+  (newCategory) => {
+    if (newCategory && categories.value.includes(newCategory)) {
+      selectedCategory.value = newCategory
+    }
+  }
+)
 </script>
 
 <template>
