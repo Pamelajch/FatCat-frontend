@@ -11,6 +11,7 @@ const deletedAdmins = ref([])
 const loading = ref(false)
 const showRestoreModal = ref(false)
 const selectedAdmin = ref(null)
+const showDetailModal = ref(false)
 
 // 搜尋和篩選
 const searchTerm = ref('')
@@ -104,10 +105,26 @@ const restoreAdmin = async () => {
   }
 }
 
-// 輔助函數
+// 開啟復原管理員 Modal
 const openRestoreModal = (admin) => {
   selectedAdmin.value = admin
   showRestoreModal.value = true
+}
+
+// 開啟詳細資料 Modal
+const openDetailModal = (admin) => {
+  selectedAdmin.value = admin
+  showDetailModal.value = true
+}
+
+
+// 格式化日期
+const formatDate = (dateStr) => {
+  if (!dateStr) return '未提供'
+  const date = new Date(dateStr)
+  if (isNaN(date)) return '格式錯誤'
+  return date.toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', 
+                                        hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
 // 防抖搜尋
@@ -272,6 +289,7 @@ onMounted(() => {
                     </button>
                     <button 
                       class="btn btn-sm btn-outline-info"
+                      @click="openDetailModal(admin)"
                       title="詳細資料"
                     >
                       <i class="bi bi-info-circle me-1"></i>詳細資料
@@ -312,8 +330,90 @@ onMounted(() => {
       </div>
     </div>
 
+    <!-- 詳細資料 Modal -->
+    <div class="modal fade" :class="{ show: showDetailModal }" :style="{ display: showDetailModal ? 'block' : 'none' }" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="bi bi-info-circle me-2"></i>管理員詳細資料
+            </h5>
+            <button type="button" class="btn-close" @click="showDetailModal = false"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label fw-bold">管理員 ID</label>
+                  <p class="form-control-plaintext">{{ selectedAdmin?.adminId }}</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Email</label>
+                  <p class="form-control-plaintext">{{ selectedAdmin?.email }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label fw-bold">姓名</label>
+                  <p class="form-control-plaintext">{{ selectedAdmin?.name }}</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label fw-bold">電話</label>
+                  <p class="form-control-plaintext">{{ selectedAdmin?.phone || '未設定' }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label fw-bold">角色</label>
+                  <p class="form-control-plaintext">
+                    <span class="badge bg-primary">{{ selectedAdmin?.role || '未設定' }}</span>
+                  </p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label fw-bold">狀態</label>
+                  <p class="form-control-plaintext">
+                    <span class="badge bg-secondary ">
+                      已刪除
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+            <!-- <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label fw-bold">建立時間</label>
+                  <p class="form-control-plaintext">{{ formatDate(selectedAdmin?.createdAt) }}</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label fw-bold">最後更新時間</label>
+                  <p class="form-control-plaintext">{{ formatDate(selectedAdmin?.updatedAt) }}</p>
+                </div>
+              </div>
+            </div> -->
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="showDetailModal = false">關閉</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
     <!-- Modal 背景遮罩 -->
-    <div v-if="showRestoreModal" class="modal-backdrop fade show"></div>
+    <div v-if="showRestoreModal || showDetailModal" class="modal-backdrop fade show"></div>
   </div>
 </template>
 
