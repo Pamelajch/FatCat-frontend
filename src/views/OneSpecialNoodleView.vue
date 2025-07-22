@@ -4,6 +4,8 @@ import { useRoute } from 'vue-router'
 import ProductReview from '@/components/ProductReview.vue'
 import api from '@/services/jjapi.js'; // 【rr：引入 api 實例】
 import { useAuthStore } from '@/stores/auth'; // 【rr：引入 Pinia Auth Store】
+import Swal from 'sweetalert2'; // 【rr：引入 SweetAlert2】
+import 'sweetalert2/dist/sweetalert2.min.css'; // 【rr：引入 SweetAlert2 的樣式】
 
 const route = useRoute()
 const productId = route.query.id
@@ -40,28 +42,57 @@ let warningInterval
 
 // 【rr：加入收藏的函式】
 const addToFavorites = async () => {
-  // 型別轉換
+  // 在函式內部進行型別轉換
   const numericProductId = Number(productId);
 
-  if (!numericProductId) {
-    alert('無效的商品 ID，無法加入收藏。');
+  // 使用轉換後的數字進行判斷
+  if (!numericProductId || numericProductId === 0) {
+    Swal.fire({
+      icon: 'error',
+      title: '操作失敗',
+      text: '無效的商品 ID，無法加入收藏。',
+    });
     return;
   }
   
   if (!authStore.isAuthenticated) {
-    alert('請先登入會員，才能將商品加入收藏！');
+    Swal.fire({
+      icon: 'warning',
+      title: '請先登入',
+      text: '登入會員後才能將商品加入收藏喔！',
+    });
     return;
   }
+
   try {
     const response = await api.post('/favorites', { 
-      productId: numericProductId // <--- 使用轉換後的數字 ID
+      // 傳送給後端的也是轉換後的數字
+      productId: numericProductId 
     });
-    
-    alert(response.data.message || '操作成功！');
+
+    if (response.data.message.includes('已在您的收藏清單中')) {
+        Swal.fire({
+            icon: 'info',
+            title: response.data.message,
+            timer: 2000,
+            showConfirmButton: false
+        });
+    } else {
+        Swal.fire({
+            icon: 'success',
+            title: '已加入收藏！',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }
     
   } catch (err) {
     const errorMessage = err.response?.data?.message || err.response?.data || '加入收藏失敗，請稍後再試。';
-    alert(errorMessage);
+    Swal.fire({
+        icon: 'error',
+        title: '加入失敗',
+        text: errorMessage,
+    });
     console.error(`將商品 #${numericProductId} 加入收藏失敗:`, err);
   }
 };
