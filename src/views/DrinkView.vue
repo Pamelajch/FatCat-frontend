@@ -34,6 +34,26 @@ const filteredProducts = computed(() => {
   if (!selectedSort.value) return products.value
   return products.value.filter(p => p.sortId === Number(selectedSort.value))
 })
+const cup = ref([]) // 杯子中的材料（最多 3 種）
+
+// 杯子圖片：有材料就顯示 cup2，否則 cup1
+const cupImage = computed(() =>
+  cup.value.length === 0 ? '/cup1.png' : '/cup2.png'
+)
+
+const onDragStart = (item) => {
+  event.dataTransfer.setData('product-id', item.productsId)
+}
+
+const onDrop = (event) => {
+  const id = parseInt(event.dataTransfer.getData('product-id'))
+  const product = products.value.find(p => p.productsId === id)
+
+  // 避免重複 & 最多三種
+  if (product && !cup.value.some(p => p.productsId === id) && cup.value.length < 3) {
+    cup.value.push(product)
+  }
+}
 </script>
 
 <template>
@@ -50,11 +70,25 @@ const filteredProducts = computed(() => {
 
     <!-- 材料清單 -->
     <div class="grid">
-      <div v-for="item in filteredProducts" :key="item.productsId" class="ingredient-card">
+      <div
+        v-for="item in filteredProducts"
+        :key="item.productsId"
+        class="ingredient-card"
+        draggable="true"
+        @dragstart="onDragStart(item)"
+      >
         <img :src="item.imageUrl" :alt="item.name" />
         <h4>{{ item.name }}</h4>
         <p>{{ item.description }}</p>
       </div>
+    </div>
+    <!-- 杯子接收區 -->
+    <div
+      class="cup-drop-area"
+      @dragover.prevent
+      @drop="onDrop"
+    >
+      <img :src="cupImage" alt="杯子" class="cup-img" />
     </div>
   </div>
 </template>
@@ -94,5 +128,20 @@ const filteredProducts = computed(() => {
 .ingredient-card img {
   width: 100%;
   border-radius: 10px;
+}
+
+.cup-drop-area {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end; /* 杯子會往下貼齊 */
+  height: 300px;          /* 根據最大杯子高度設定 */
+  position: relative;
+}
+
+.cup-img {
+  max-height: 100%;
+  position: absolute;
+  bottom: 0;              /* 杯子貼底部，不會上下晃 */
 }
 </style>
