@@ -1,9 +1,10 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount,watch } from 'vue' // 加入watch by JJ
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const productId = route.query.id
+// const productId = ref(route.query.id) // 用ref包起來  by JJ
 
 // ====== 通知流程 ======
 const showNotification = ref(true)
@@ -46,6 +47,7 @@ const images = ref([])
 const quantity = ref(1)
 
 const fetchProductDetail = async () => {
+  const productId = route.query.id // 取得路由中的商品ID by JJ
   try {
     const res = await fetch(`https://localhost:7017/api/Products/Details/${productId}`)
     const data = await res.json()
@@ -93,9 +95,21 @@ const showNext = () => {
 const productSpecs = ref([])
 const recommendedProducts = ref([])
 
-onMounted(() => {
-  fetchProductDetail()
-})
+// 1. 頁面初次載入
+onMounted(fetchProductDetail)
+watch(()=> route.query.id, fetchProductDetail) // 當路由變更時，重新載入商品資料 by JJ
+
+// // 2. 當路由變更時，重新載入商品資料 by JJ
+// watch(
+//   () => route.query.id,
+//   (newId, oldId) => {
+//     if (newId !== oldId) {
+//       productId.value = newId
+//       fetchProductDetail()
+//     }
+//   }
+// )
+
 </script>
 
 <template>
