@@ -40,7 +40,7 @@ onUnmounted(() => {
 
 <template>
   <div v-if="isLive" class="live-indicator">
-    <a href="/stream" class="live-link">
+    <a href="/stream" class="live-link" target="_blank" rel="noopener noreferrer">
       <div class="live-icon-outer-ring"></div>
       <div class="live-icon">
         <i class="fas fa-video"></i>
