@@ -2,9 +2,12 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import ProductReview from '@/components/ProductReview.vue'
+import api from '@/services/jjapi.js'; // 【rr：引入 api 實例】
+import { useAuthStore } from '@/stores/auth'; // 【rr：引入 Pinia Auth Store】
 
 const route = useRoute()
 const productId = route.query.id
+const authStore = useAuthStore(); // by rr
 
 // ====== 通知流程 ======
 // ====== 通知流程：卡牌版 ======
@@ -34,6 +37,36 @@ const warningMessages = [
 ]
 const currentWarning = ref(0)
 let warningInterval
+
+// 【rr：加入收藏的函式】
+const addToFavorites = async () => {
+  // 型別轉換
+  const numericProductId = Number(productId);
+
+  if (!numericProductId) {
+    alert('無效的商品 ID，無法加入收藏。');
+    return;
+  }
+  
+  if (!authStore.isAuthenticated) {
+    alert('請先登入會員，才能將商品加入收藏！');
+    return;
+  }
+  try {
+    const response = await api.post('/favorites', { 
+      productId: numericProductId // <--- 使用轉換後的數字 ID
+    });
+    
+    alert(response.data.message || '操作成功！');
+    
+  } catch (err) {
+    const errorMessage = err.response?.data?.message || err.response?.data || '加入收藏失敗，請稍後再試。';
+    alert(errorMessage);
+    console.error(`將商品 #${numericProductId} 加入收藏失敗:`, err);
+  }
+};
+// 【rr：加入收藏 結束】
+
 
 onMounted(() => {
   warningInterval = setInterval(() => {
@@ -188,7 +221,12 @@ onMounted(() => {
         </div>
         <div class="button-group">
           <button class="cart-btn">加入購物車</button> <!-- !!!!!!!給仔瑋的!!!!!!! -->
-          <button class="favorite-btn">加入最愛</button> <!-- !!!!!!!給r謙的!!!!!!! -->
+          <button 
+            v-if="authStore.isAuthenticated" 
+            class="favorite-btn" 
+            @click="addToFavorites">
+            加入最愛
+          </button> <!-- !!!!!!!給r謙的!!!!!!!  RRR已完成-->
         </div>
       </div>
     </div>
@@ -199,7 +237,7 @@ onMounted(() => {
     <p :key="currentWarning">{{ warningMessages[currentWarning] }}</p>
     </transition>
     </div>
-    <!-- 商品評論區（留給 r謙 實作用 🐱）--> 
+    <!-- 商品評論區（rr已做好 🐱）--> 
     <div class="review-section">
       <h3>⭐ 貓貓們的評論區</h3>
       <div class="review-box"> 

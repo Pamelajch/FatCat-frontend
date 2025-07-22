@@ -30,12 +30,12 @@ const handleReviewSubmitted = () => {
     <!-- 
         ============================================================
         區塊 A：顯示評論列表的元件
-        我們將 testProductId 傳遞給它
+        我們將 testProductId 傳遞給它  ((已經實際放入了))
         ============================================================
      -->
-    <h3 class="mt-4">商品(單品)評論列表 (ReviewComponent)</h3>
+    <!-- <h3 class="mt-4">商品(單品)評論列表 (ReviewComponent)</h3>
     <ProductReview :product-id="testProductId" />
-    <hr>
+    <hr> -->
 
     <!-- 
         ============================================================
