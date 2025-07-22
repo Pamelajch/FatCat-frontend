@@ -4,7 +4,6 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const productId = route.query.id
-// const productId = ref(route.query.id) // 用ref包起來  by JJ
 
 // ====== 通知流程 ======
 const showNotification = ref(true)
@@ -95,20 +94,8 @@ const showNext = () => {
 const productSpecs = ref([])
 const recommendedProducts = ref([])
 
-// 1. 頁面初次載入
-onMounted(fetchProductDetail)
+onMounted(fetchProductDetail) 
 watch(()=> route.query.id, fetchProductDetail) // 當路由變更時，重新載入商品資料 by JJ
-
-// // 2. 當路由變更時，重新載入商品資料 by JJ
-// watch(
-//   () => route.query.id,
-//   (newId, oldId) => {
-//     if (newId !== oldId) {
-//       productId.value = newId
-//       fetchProductDetail()
-//     }
-//   }
-// )
 
 </script>
 
