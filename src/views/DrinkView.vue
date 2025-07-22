@@ -3,7 +3,6 @@ import { ref, computed } from 'vue'
 
 const DRINK_CATEGORY_ID = 99
 
-// 小分類列表（sortId 對應）
 const drinkSorts = [
   { sortId: '', name: '全部' },
   { sortId: 1, name: '幻覺系' },
@@ -13,9 +12,7 @@ const drinkSorts = [
   { sortId: 5, name: '靈魂系' },
 ]
 
-const selectedSort = ref('') // 當前選擇的小分類（初始為全部）
-
-// 假資料
+const selectedSort = ref('')
 const products = ref([
   { productsId: 201, name: '星光精華', categoryId: DRINK_CATEGORY_ID, sortId: 1, imageUrl: '/magic.png', description: '閃爍微光的神秘液體' },
   { productsId: 202, name: '夢境露滴', categoryId: DRINK_CATEGORY_ID, sortId: 1, imageUrl: '/magic.png', description: '散發淡紫色迷霧的濃縮露' },
@@ -29,30 +26,31 @@ const products = ref([
   { productsId: 210, name: '月影之酒', categoryId: DRINK_CATEGORY_ID, sortId: 5, imageUrl: '/magic.png', description: '濃郁如夜色，深沉如靈魂的低語' }
 ])
 
-// 根據篩選分類過濾材料
 const filteredProducts = computed(() => {
   if (!selectedSort.value) return products.value
   return products.value.filter(p => p.sortId === Number(selectedSort.value))
 })
-const cup = ref([]) // 杯子中的材料（最多 3 種）
 
-// 杯子圖片：有材料就顯示 cup2，否則 cup1
+const cup = ref([])
+
 const cupImage = computed(() =>
   cup.value.length === 0 ? '/cup1.png' : '/cup2.png'
 )
 
-const onDragStart = (item) => {
+const onDragStart = (event, item) => {
   event.dataTransfer.setData('product-id', item.productsId)
 }
 
 const onDrop = (event) => {
   const id = parseInt(event.dataTransfer.getData('product-id'))
   const product = products.value.find(p => p.productsId === id)
-
-  // 避免重複 & 最多三種
   if (product && !cup.value.some(p => p.productsId === id) && cup.value.length < 3) {
     cup.value.push(product)
   }
+}
+
+const removeFromCup = (index) => {
+  cup.value.splice(index, 1)
 }
 </script>
 
@@ -75,19 +73,31 @@ const onDrop = (event) => {
         :key="item.productsId"
         class="ingredient-card"
         draggable="true"
-        @dragstart="onDragStart(item)"
+        @dragstart="(event) => onDragStart(event, item)"
       >
         <img :src="item.imageUrl" :alt="item.name" />
         <h4>{{ item.name }}</h4>
         <p>{{ item.description }}</p>
       </div>
     </div>
-    <!-- 杯子接收區 -->
-    <div
-      class="cup-drop-area"
-      @dragover.prevent
-      @drop="onDrop"
-    >
+
+    <!-- 杯子接收區 + 符籙卡片 -->
+    <div class="cup-drop-area" @dragover.prevent @drop="onDrop">
+      <!-- 材料卡片區 -->
+      <div class="card-area">
+        <div
+          class="material-card"
+          v-for="(item, index) in cup"
+          :key="item.productsId"
+          :style="{ top: `${index * 80}px` }"
+        >
+          <img :src="item.imageUrl" />
+          <span class="material-name">{{ item.name }}</span>
+          <button class="remove-btn" @click="removeFromCup(index)">❌</button>
+        </div>
+      </div>
+
+      <!-- 杯子圖片 -->
       <img :src="cupImage" alt="杯子" class="cup-img" />
     </div>
   </div>
@@ -124,7 +134,6 @@ const onDrop = (event) => {
 .ingredient-card:hover {
   transform: scale(1.05);
 }
-
 .ingredient-card img {
   width: 100%;
   border-radius: 10px;
@@ -134,14 +143,59 @@ const onDrop = (event) => {
   margin-top: 40px;
   display: flex;
   justify-content: center;
-  align-items: flex-end; /* 杯子會往下貼齊 */
-  height: 300px;          /* 根據最大杯子高度設定 */
+  align-items: flex-end;
+  height: 300px;
   position: relative;
 }
 
 .cup-img {
   max-height: 100%;
   position: absolute;
-  bottom: 0;              /* 杯子貼底部，不會上下晃 */
+  bottom: 0;
+}
+
+.card-area {
+  position: absolute;
+  bottom: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.material-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid #d8bbff;
+  border-radius: 12px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 0 10px #a27bff80;
+  backdrop-filter: blur(8px);
+  animation: floatCard 4s infinite ease-in-out;
+}
+.material-card img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+.material-name {
+  font-weight: bold;
+  color: #fff;
+}
+.remove-btn {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  font-size: 20px;
+  cursor: pointer;
+  margin-left: auto;
+}
+@keyframes floatCard {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
 }
 </style>
