@@ -220,6 +220,65 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
         }
     }
 
+    // 獲取已刪除管理員列表
+    const fetchDeletedAdmins = async (queryParams = {}) => {
+        try {
+            isLoading.value = true
+            error.value = null
+
+            const params = new URLSearchParams({
+                searchKeyword: queryParams.searchKeyword || '',
+                sortBy: queryParams.sortBy || 'AdminId',
+                sortOrder: queryParams.sortOrder || 'desc',
+                page: queryParams.page || 1,
+                pageSize: queryParams.pageSize || 10
+            })
+
+            const response = await api.get(`/Admins/deleted?${params}`)
+
+            if (response.data) {
+                return {
+                    success: true,
+                    data: response.data
+                }
+            } else {
+                throw new Error('取得已刪除管理員列表失敗')
+            }
+        } catch (err) {
+            error.value = err.response?.data?.message || err.message || '取得已刪除管理員列表失敗'
+            return { success: false, message: error.value }
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+    // 復原已刪除的管理員
+    const restoreAdmin = async (adminId) => {
+        try {
+            isLoading.value = true
+            error.value = null
+
+            const response = await api.put(`/Admins/${adminId}/restore`)
+
+            if (response.data) {
+                return {
+                    success: true,
+                    message: response.data.message || '管理員復原成功'
+                }
+            } else {
+                throw new Error('復原管理員失敗')
+            }
+        } catch (err) {
+            error.value = err.response?.data?.message || err.message || '復原管理員失敗'
+            return { success: false, message: error.value }
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+
+
+
     // 清除錯誤
     const clearError = () => {
         error.value = null
@@ -243,6 +302,9 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
         updateAdmin,
         deleteAdmin,
         fetchAdmin,
+        fetchDeletedAdmins,
+        restoreAdmin,
+        // 清除錯誤
         clearError
     }
 })

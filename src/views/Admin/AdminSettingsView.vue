@@ -77,12 +77,19 @@ const statusOptions = [
   { value: 0, label: '停用' }
 ]
 
-// 計算屬性 - 從 adminAuthStore 讀取管理員資料
+// 超級管理員權限區域  - 從 adminAuthStore 讀取管理員資料
+// 可以編輯管理員
 const canEdit = computed(() => {
   return adminAuthStore.admin?.role === '超級管理員'
 })
 
+// 可以刪除管理員
 const canDelete = computed(() => {
+  return adminAuthStore.admin?.role === '超級管理員'
+})
+
+// 可以查看已刪除的管理員
+const canViewDeleted = computed(() => {
   return adminAuthStore.admin?.role === '超級管理員'
 })
 
@@ -325,10 +332,6 @@ const getStatusBadgeClass = (status) => {
   return status === 1 ? 'bg-success' : 'bg-secondary'
 }
 
-const formatDate = (dateString) => {
-  if (!dateString) return '未設定'
-  return new Date(dateString).toLocaleDateString('zh-TW')
-}
 
 // 搜尋處理函數（使用防抖）
 const handleSearch = debounce(() => {
@@ -370,6 +373,7 @@ onMounted(() => {
           <h1 class="h3 mb-0 page-title">
             <i class="fa-solid fa-user-shield fa-bounce"></i> 管理員列表
           </h1>
+          <div class="d-flex gap-2">
           <button 
             @click="showCreateModal = true" 
             class="btn btn-custom"
@@ -377,6 +381,15 @@ onMounted(() => {
           >
             <i class="bi bi-person-plus me-1"></i> 新增管理員
           </button>
+          <button 
+            v-if="canViewDeleted"
+            @click="$router.push('/admin/settings/deleted')" 
+            class="btn btn-outline-secondary"
+            type="button"
+          >
+            <i class="bi bi-trash me-1"></i> 查看已刪除的管理員
+          </button>
+          </div>
         </div>
       </div>
       
@@ -515,23 +528,6 @@ onMounted(() => {
                     >
                       <i class="bi bi-trash me-1"></i>刪除
                     </button>
-                    <div class="btn-group" role="group">
-                      <button 
-                        type="button" 
-                        class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                        data-bs-toggle="dropdown"
-                      >
-                        狀態
-                      </button>
-                      <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" @click="updateAdminStatus(admin.adminId, 1)">
-                          <i class="bi bi-check-circle text-success me-2"></i>設為啟用
-                        </a></li>
-                        <li><a class="dropdown-item" href="#" @click="updateAdminStatus(admin.adminId, 0)">
-                          <i class="bi bi-x-circle text-danger me-2"></i>設為停用
-                        </a></li>
-                      </ul>
-                    </div>
                   </div>
                 </td>
               </tr>
@@ -812,7 +808,7 @@ onMounted(() => {
 
 
     <!-- Modal 背景遮罩 -->
-    <div v-if="showCreateModal || showEditModal || showDeleteModal || showDetailModal" class="modal-backdrop fade show"></div>
+    <div v-if="showCreateModal || showEditModal || showDeleteModal || showDetailModal " class="modal-backdrop fade show"></div>
   </div>
 </template>
 

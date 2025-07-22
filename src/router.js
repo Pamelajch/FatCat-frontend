@@ -155,6 +155,7 @@ const routes = [
             { path: 'analysis', name: 'AdminAnalysis', component: () => import('./views/Admin/AdminAnalysisView.vue') },
             { path: 'store-setup', name: 'AdminStoreSetup', component: () => import('./views/Admin/AdminStoreSetupView.vue') },
             { path: 'settings', name: 'AdminSettings', component: () => import('./views/Admin/AdminSettingsView.vue') },
+            { path: 'settings/deleted', name: 'AdminDeleted', component: () => import('./views/Admin/AdminDeletedView.vue') },
             { path: 'logs', name: 'AdminLogs', component: () => import('./views/Admin/AdminLogsView.vue') },
             { path: 'notifications', name: 'AdminNotifications', component: () => import('./views/Admin/AdminNotificationView.vue') },
             { path: 'stream', name: 'AdminStream', component: () => import('./views/Admin/AdminStreamView.vue') },
