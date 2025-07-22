@@ -14,15 +14,26 @@ const isLoading = ref(true)
 const formErrors = ref([])
 
 // ===== API：取得資料 =====
+// ===== API：取得資料 =====
 const fetchProduct = async () => {
   try {
     const res = await fetch(`https://localhost:7017/api/AdminProducts/${productId}`)
     if (!res.ok) throw new Error('找不到該商品')
-    product.value = await res.json()
+    const data = await res.json()
+
+    // ✅ 補上圖片前綴並清理重複 /ProductImages/
+    data.images.forEach(img => {
+      if (!img.imageUrl.startsWith('http')) {
+        const cleaned = img.imageUrl.replace(/^\/+ProductImages\/+/, '/ProductImages/')
+        img.imageUrl = `https://localhost:7017${cleaned}`
+      }
+    })
+
+    product.value = data
   } catch (err) {
     alert('取得商品失敗，請稍後再試')
     console.error(err)
-    router.push({ name: 'AdminProductList' })
+    router.push({ name: 'AdminProducts' })
   }
 }
 
@@ -110,6 +121,12 @@ const uploadImage = async (e) => {
 
     if (res.ok) {
       const newImage = await res.json()
+
+      // ✅ 加這段：補上 /ProductImages/
+      if (!newImage.imageUrl.startsWith('http')) {
+        newImage.imageUrl = `https://localhost:7017/ProductImages/${newImage.imageUrl}`
+      }
+
       product.value.images.push(newImage)
     } else {
       alert('❌ 上傳圖片失敗')
