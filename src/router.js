@@ -27,6 +27,7 @@ import CouponAddView from '@/views/Admin/CouponAddView.vue'
 import CouponDetailView from '@/views/Admin/CouponDetailView.vue'
 import OrderDetailView from "./views/Admin/OrderDetailView.vue"
 import StreamViewer from "./views/StreamViewer.vue"
+import DrinkView from "./views/DrinkView.vue"
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
@@ -46,6 +47,8 @@ const routes = [
     // 商品詳細頁面
     //http://localhost:5173/OneSpecialNoodle
     { path: "/OneSpecialNoodle", component: OneSpecialNoodleView, name: "onespecialnoodle" },
+    //http://localhost:5173/Drink
+    { path:"/Drink", component:DrinkView, name:"drink"},
     //購物車 --梓瑋
     //http://localhost:5173/cart
     { path: "/cart", component: CartView, name: "cart" },
@@ -155,6 +158,7 @@ const routes = [
             { path: 'orders', name: 'AdminOrders', component: () => import('./views/Admin/AdminOrderView.vue') },
             { path: 'shipping', name: 'AdminShipping', component: () => import('./views/Admin/AdminShippingView.vue') },
             { path: 'products', name: 'AdminProducts', component: () => import('./views/Admin/AdminProductListView.vue') },
+            { path: 'productedit/:id', name: 'AdminProductEdit', component: () => import('./views/Admin/AdminProductEditView.vue') },
             { path: 'coupons', name: 'AdminCoupons', component: () => import('./views/Admin/AdminCouponView.vue') },
             { path: 'customer-service', name: 'AdminCustomerService', component: () => import('./views/Admin/AdminCustomerServiceView.vue') },
             { path: 'complaints', name: 'AdminComplaints', component: () => import('./views/Admin/AdminComplaintView.vue') },
