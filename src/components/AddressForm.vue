@@ -319,7 +319,7 @@ const handleSubmit = () => {
      margin-top: 0.25rem;
  }
 .alert { border-radius: 8px;
-     padding: 1rem;
+     padding: 1rem; 
  }
 .alert-success { background-color: #d4edda;
      border-color: #c3e6cb;
