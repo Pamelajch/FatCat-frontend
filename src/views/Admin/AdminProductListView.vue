@@ -1,5 +1,6 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import Swal from 'sweetalert2'
 
 const products = ref([])
 const categories = ref([])
@@ -75,6 +76,38 @@ const toggleStatus = async (product) => {
   }
 }
 
+const confirmDelete = async (id) => {
+  const result = await Swal.fire({
+    title: '確定要刪除嗎？',
+    text: '您可以在廚餘桶復原此商品。',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: '是的，刪除',
+    cancelButtonText: '取消',
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#aaa'
+  })
+
+  if (result.isConfirmed) {
+    try {
+      const res = await fetch(`https://localhost:7017/api/AdminProducts/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (!res.ok) throw new Error('刪除失敗')
+
+      Swal.fire('刪除成功', '商品已被移至廚餘桶 🍜', 'success')
+
+      // 如果你有重新載入商品列表：
+      fetchProducts() // ←這行請改成你自己的重新載入方法
+
+    } catch (err) {
+      console.error(err)
+      Swal.fire('刪除失敗', '請稍後再試', 'error')
+    }
+  }
+}
+
 const currentPage = ref(1)
 const itemsPerPage = 15
 
@@ -93,6 +126,43 @@ const goToPage = (page) => {
     currentPage.value = page
   }
 }
+
+const showTrash = ref(false)
+const deletedProducts = ref([])
+
+const fetchDeletedProducts = async () => {
+  const res = await fetch('https://localhost:7017/api/AdminProducts/deleted')
+  deletedProducts.value = await res.json()
+}
+
+const restoreProduct = async (id) => {
+  const result = await Swal.fire({
+    title: '確定要復原這個商品？',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: '復原',
+    cancelButtonText: '取消'
+  })
+
+  if (!result.isConfirmed) return
+
+  const res = await fetch(`https://localhost:7017/api/AdminProducts/${id}/restore`, {
+    method: 'POST'
+  })
+
+  if (res.ok) {
+    Swal.fire('復原成功', '商品已回到上架區 🧼', 'success')
+    fetchDeletedProducts()
+    //  建議加這行：重新撈目前上架商品（你的主列表）
+    fetchProducts()
+  } else {
+    Swal.fire('復原失敗', '請稍後再試', 'error')
+  }
+}
+
+watch(showTrash, (val) => {
+  if (val) fetchDeletedProducts()
+})
 </script>
 
 <template>
@@ -151,7 +221,7 @@ const goToPage = (page) => {
           </td>
           <td>
           <RouterLink :to="{ name: 'AdminProductEdit', params: { id: p.productsId } }" class="btn-edit">編輯</RouterLink>
-            <button class="btn-delete">刪除</button>
+            <button class="btn-delete" @click="confirmDelete(p.productsId)">刪除</button>
             <button class="btn-status" @click="toggleStatus(p)">
               {{ p.isAvailable ? '下架' : '上架' }}
             </button>
@@ -172,6 +242,39 @@ const goToPage = (page) => {
         <button :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">下一頁</button>
         <p class="result-count">共 {{ filteredProducts.length }} 筆，頁數：{{ currentPage }} / {{ totalPages }}</p>
     </div>
+    <!-- 🗑️ 廚餘桶按鈕 -->
+<button class="btn-trash-float" @click="showTrash = true">🗑️ 廚餘桶</button>
+
+<!-- 🧙‍♂️ 廚餘彈窗 -->
+<div v-if="showTrash" class="modal-overlay">
+  <div class="modal-content">
+    <h3>🗑️ 廚餘桶（可復原商品）</h3>
+    <table v-if="deletedProducts.length">
+      <thead>
+        <tr>
+          <th>名稱</th>
+          <th>分類</th>
+          <th>價格</th>
+          <th>庫存</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="p in deletedProducts" :key="p.productsId">
+          <td>{{ p.name }}</td>
+          <td>{{ p.categoryName }} / {{ p.sortName }}</td>
+          <td>{{ p.price }}</td>
+          <td>{{ p.stock }}</td>
+          <td>
+            <button class="btn-restore" @click="restoreProduct(p.productsId)">復原</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p v-else>目前沒有商品在廚餘桶內 🍜</p>
+    <button class="btn-close" @click="showTrash = false">關閉</button>
+  </div>
+</div>
     </div>
 </template>
 
@@ -249,8 +352,17 @@ button {
 }
 
 .btn-delete {
-  background-color: #f56c6c;
+  background-color: #ff5252;
   color: white;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none; /* 移除底線 */
+  display: inline-block;
+}
+.btn-delete:hover {
+  background-color: #ff867c;
 }
 
 .btn-status {
@@ -283,5 +395,65 @@ button {
 .pagination button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* 浮動按鈕：廚餘桶 */
+.btn-trash-float {
+  position: fixed;
+  bottom: 60px;
+  right: 30px;
+  background-color: #ff7043;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(0,0,0,0.3);
+  z-index: 99;
+}
+.btn-trash-float:hover {
+  background-color: #ff8a65;
+}
+
+/* 彈窗樣式 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 80%;
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+}
+.btn-restore {
+  padding: 6px 14px;
+  background-color: #7c4dff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.btn-restore:hover {
+  background-color: #9575cd;
+}
+.btn-close {
+  margin-top: 1rem;
+  background-color: #999;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
 }
 </style>
