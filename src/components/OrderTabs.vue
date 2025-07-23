@@ -43,9 +43,9 @@ const getStatusText = (statusId) => {
   return status?.description || '未知狀態'
 }
 
-// 找出「已完成」狀態的 ID
+// 找出「已完成（收貨成功）」狀態的 ID
 const completedStatusId = computed(() => {
-  const status = statuses.value.find(s => s.description === '已完成')
+  const status = statuses.value.find(s => s.description === '已完成（收貨成功）')
   return status?.orderStatusId || null
 })
 
@@ -107,7 +107,7 @@ onMounted(fetchData)
 
                 <!-- 顯示申訴按鈕 -->
                 <button
-                  v-if="order.orderStatusId === 3"
+                  v-if="order.orderStatusId === completedStatusId"
                   class="btn btn-outline-danger btn-sm"
                   @click="handleAppeal(order)"
                 >
