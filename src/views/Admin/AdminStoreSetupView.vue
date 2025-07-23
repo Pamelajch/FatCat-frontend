@@ -97,7 +97,7 @@ onMounted(async () => {
   await Promise.all([
     fetchCategories(), // 種類下拉用
     fetchSorts(),      // 小分類用
-    fetchTags()        // 標籤管理用
+    fetchTags()        // 標籤用
   ])
 })
 
