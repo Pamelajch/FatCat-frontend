@@ -95,8 +95,9 @@ const saveEdit = async () => {
 
 onMounted(async () => {
   await Promise.all([
-    fetchCategories(),
-    fetchSorts()
+    fetchCategories(), // 種類下拉用
+    fetchSorts(),      // 小分類用
+    fetchTags()        // 標籤管理用
   ])
 })
 
@@ -184,6 +185,90 @@ const deleteSort = async (id) => {
       method: 'DELETE'
     })
     await fetchSorts()
+    Swal.fire('刪除成功', '', 'success')
+  } catch (err) {
+    console.error('刪除失敗', err)
+    Swal.fire('刪除失敗', '', 'error')
+  }
+}
+
+const tags = ref([])
+const newTagName = ref('')
+const editingTagId = ref(null)
+const editingTagName = ref('')
+
+// 抓取所有標籤
+const fetchTags = async () => {
+  try {
+    const res = await fetch('https://localhost:7017/api/Tags')
+    tags.value = await res.json()
+  } catch (err) {
+    console.error('取得標籤失敗', err)
+  }
+}
+
+// 新增標籤
+const addTag = async () => {
+  if (!newTagName.value.trim()) {
+    return Swal.fire('請輸入標籤名稱', '', 'warning')
+  }
+  try {
+    await fetch('https://localhost:7017/api/Tags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newTagName.value })
+    })
+    newTagName.value = ''
+    await fetchTags()
+    Swal.fire('新增成功', '', 'success')
+  } catch (err) {
+    console.error('新增失敗', err)
+    Swal.fire('新增失敗', '', 'error')
+  }
+}
+
+// 編輯標籤
+const startTagEdit = (tag) => {
+  editingTagId.value = tag.tagsId
+  editingTagName.value = tag.name
+}
+
+const saveTagEdit = async () => {
+  try {
+    await fetch(`https://localhost:7017/api/Tags/${editingTagId.value}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tagsId: editingTagId.value,
+        name: editingTagName.value
+      })
+    })
+    editingTagId.value = null
+    editingTagName.value = ''
+    await fetchTags()
+    Swal.fire('儲存成功', '', 'success')
+  } catch (err) {
+    console.error('更新失敗', err)
+    Swal.fire('更新失敗', '', 'error')
+  }
+}
+
+// 刪除標籤
+const deleteTag = async (id) => {
+  const result = await Swal.fire({
+    title: '確定要刪除這個標籤？',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: '確定刪除',
+    cancelButtonText: '取消'
+  })
+  if (!result.isConfirmed) return
+
+  try {
+    await fetch(`https://localhost:7017/api/Tags/${id}`, {
+      method: 'DELETE'
+    })
+    await fetchTags()
     Swal.fire('刪除成功', '', 'success')
   } catch (err) {
     console.error('刪除失敗', err)
@@ -329,7 +414,41 @@ const deleteSort = async (id) => {
       <!-- 商品標籤 -->
       <div v-if="activeTab === '商品標籤'">
         <h3>🏷️ 商品標籤管理</h3>
-        <p>列出全部標籤並可新增 / 修改 / 刪除。</p>
+
+        <!-- 新增 -->
+        <div class="add-row">
+        <input v-model="newTagName" placeholder="輸入標籤名稱" />
+        <button @click="addTag">➕ 新增</button>
+        </div>
+
+        <!-- 表格 -->
+        <table>
+        <thead>
+            <tr>
+            <th>ID</th>
+            <th>名稱</th>
+            <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="tag in tags" :key="tag.tagsId">
+            <td>{{ tag.tagsId }}</td>
+            <td>
+                <span v-if="editingTagId !== tag.tagsId">{{ tag.name }}</span>
+                <input
+                v-else
+                v-model="editingTagName"
+                placeholder="輸入新名稱"
+                />
+            </td>
+            <td>
+                <button v-if="editingTagId !== tag.tagsId" class="edit-btn" @click="startTagEdit(tag)">✏️ 編輯</button>
+                <button v-else class="edit-btn" @click="saveTagEdit">💾 儲存</button>
+                <button class="delete-btn" @click="deleteTag(tag.tagsId)">🗑 刪除</button>
+            </td>
+            </tr>
+        </tbody>
+        </table>
       </div>
     </div>
   </div>
