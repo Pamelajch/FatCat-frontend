@@ -162,6 +162,13 @@ const setMainImage = async (imageId) => {
     console.error(err)
   }
 }
+
+const cancelEdit = () => {
+  const confirmed = confirm('確定要取消修改嗎？未儲存的變更將會遺失喔！')
+  if (confirmed) {
+    router.push({ name: 'AdminProducts' }) // 換成你的商品列表路由名稱
+  }
+}
 </script>
 
 <template>
@@ -244,7 +251,8 @@ const setMainImage = async (imageId) => {
       </div>
 
       <div class="form-actions">
-        <button type="submit">✔ 儲存變更</button>
+        <button type="submit" class="action-button">✔ 儲存變更</button>
+        <button type="button" class="action-button" @click="cancelEdit">❌ 取消修改</button>
       </div>
     </form>
   </div>
@@ -331,9 +339,12 @@ form textarea {
   width: 100%;
   margin-top: 2rem;
   text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 3rem; /* 按鈕之間的距離 */
 }
 
-button[type="submit"] {
+.action-button {
   padding: 10px 24px;
   background-color: #7c4dff;
   color: white;
@@ -344,7 +355,7 @@ button[type="submit"] {
   transition: 0.3s;
 }
 
-button[type="submit"]:hover {
+.action-button:hover {
   background-color: #9575cd;
 }
 </style>
