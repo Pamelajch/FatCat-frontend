@@ -333,7 +333,7 @@ const handleSubmit = () => {
      background: rgba(0,0,0,0.5);
      z-index: 9999;
      display: flex;
-     align-items: center;
+     align-items: center; 
      justify-content: center;
  }
 .modal-content { background: #fff;
