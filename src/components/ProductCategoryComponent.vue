@@ -57,10 +57,7 @@ onMounted(() => {
         :key="cat.productCategoriesId"
         class="flip-box"
       >
-        <div
-          class="flip-inner"
-          :style="{ backgroundColor: getCategoryColor(cat.productCategoriesId) }"
-        >
+        <div class="flip-inner">
           <!-- 正面：分類名稱 -->
           <div class="flip-front">
             <p class="category-name">{{ cat.name }}</p>
@@ -79,26 +76,30 @@ onMounted(() => {
 .category-container {
   padding: 2rem;
   text-align: center;
-  background-color: #f7f3fa;
+  background: linear-gradient(135deg, #1d0b28, #462a6f, #8949b7);
 }
 
 .title {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: bold;
-  color: #663399;
+  color: #fff;
+  text-shadow:
+    0 0 6px #fff,
+    0 0 10px #d4bfff,
+    0 0 20px #c780ff;
   margin-bottom: 2rem;
 }
 
 .category-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 每列 4 個 */
+  gap: 1rem;
+  justify-items: center;
 }
 
 .flip-box {
-  width: 150px;
-  height: 150px;
+  width: 180px;
+  height: 180px;
   perspective: 1000px;
 }
 
@@ -109,12 +110,16 @@ onMounted(() => {
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.8s;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-image: url('/coin.png'); 
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
   cursor: pointer;
 }
 
 .flip-box:hover .flip-inner {
   transform: rotateY(180deg);
+  box-shadow: 0 0 18px 6px rgba(215, 190, 255, 0.6);
 }
 
 .flip-front, .flip-back {
@@ -126,17 +131,23 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  transform: translateZ(5px);
 }
 
 .flip-back {
-  transform: rotateY(180deg); /* 背面 */
+  transform: rotateY(180deg);
 }
 
 .category-name {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: bold;
-  color: white;
-  text-shadow: 1px 1px 3px #000;
+  color: #fff;
+  text-shadow:
+    0 0 5px #ffffff,
+    0 0 10px #d4bfff,
+    0 0 15px #cba3ff,
+    0 0 20px #b678ff;
+  text-align: center;
 }
 
 .category-emoji {

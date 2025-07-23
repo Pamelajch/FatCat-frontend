@@ -138,6 +138,13 @@ const onDropToList = (event) => {
   }
 }
 
+const removeFromBowl = (id) => {
+  const index = bowl.value.findIndex(p => p.productsId === id)
+  if (index !== -1) {
+    bowl.value.splice(index, 1)
+  }
+}
+
 const addSmartRandomIngredients = () => {
   const grouped = {}
 
@@ -252,17 +259,24 @@ const addSmartRandomIngredients = () => {
 <div class="table-wrapper">
   <img src="/mytable.png" class="table-bg" alt="桌子背景" />
   <div class="bowl" @dragover.prevent @drop="onDrop">
-    <div class="bowl-items">
-      <img
-        v-for="item in bowl"
+    <!-- 湯底 -->
+    <img v-if="bowl.length > 0" src="/soup.png" class="soup-base" alt="湯底" />
+
+    <!-- 食材泡泡，漂浮顯示在湯碗旁邊 -->
+    <div class="floating-bubbles">
+      <div
+        v-for="(item, index) in bowl"
         :key="item.productsId"
-        :src="item.imageUrl"
-        :alt="item.name"
-        class="bowl-img"
-        draggable="true"
-        @dragstart="onDragStart(item, 'bowl')"
-      />
+        class="bubble"
+        :class="`bubble bubble-${index}`"
+      >
+        <img :src="item.imageUrl" :alt="item.name" class="bubble-img" />
+        <span class="bubble-text">{{ item.name }}</span>
+        <button class="remove-btn" @click="removeFromBowl(item.productsId)">❌</button>
+      </div>
     </div>
+
+    <!-- 泡泡動畫 -->
     <div v-if="showBubbles" class="bubble-effect"></div>
   </div>
 </div>
@@ -419,19 +433,21 @@ const addSmartRandomIngredients = () => {
 
 .table-wrapper {
   position: relative;
-  width: 1050px;              /* 調整寬度 */
-  overflow: hidden;          /* 防止圖片溢出 */
+  width: 1050px;
+  overflow: visible;
   display: flex;
   justify-content: center;
   align-items: flex-end;
   margin-top: 40px;
+  margin-bottom: 60px;
 }
 
+/* 桌子背景圖片 */
 .table-bg {
   position: absolute;
   bottom: 0;
-  width: 1050px;              /* 圖片寬度 */
-  height: auto;              /* 高度自動 */
+  width: 100%;
+  height: auto;
   z-index: 0;
   pointer-events: none;
 }
@@ -444,19 +460,32 @@ const addSmartRandomIngredients = () => {
   margin-bottom: 10px;
 }
 
+/* 碗：大小、位置 */
 .bowl {
-  width: 600px; /* 原本 800 改小一點更緊湊 */
+  position: relative;
+  width: 600px;
   height: 600px;
   background-image: url('/pot.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1;
-  margin-bottom: 20px; /* 調整碗跟桌面的距離 */
+  margin-bottom: 20px;
+}
+
+/* 湯底圖片 */
+.soup-base {
+  position: absolute;
+  width: 60%;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%) scaleY(0.95);
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.9;
 }
 
 .action-panel {
@@ -484,24 +513,66 @@ const addSmartRandomIngredients = () => {
   justify-content: center;
 }
 
-.bowl-items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  align-items: center;
-  position: absolute; /* 疊在碗圖上 */
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+.floating-bubbles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none; /* 不擋拖曳 */
 }
 
-.bowl-img {
-  width: 50px;
-  height: 50px;
+.bubble {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: float 3s ease-in-out infinite alternate;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(4px);
+  pointer-events: auto;
+  z-index: 3;
+}
+
+/* 泡泡分佈在碗的周圍位置 */
+.bubble-0 { top: -30px; left: 50%; transform: translateX(-50%); }
+.bubble-1 { top: 10%; left: 10%; }
+.bubble-2 { top: 50%; left: -30px; transform: translateY(-50%); }
+.bubble-3 { bottom: 10%; left: 10%; }
+.bubble-4 { bottom: -30px; left: 50%; transform: translateX(-50%); }
+.bubble-5 { bottom: 10%; right: 10%; }
+.bubble-6 { top: 50%; right: -30px; transform: translateY(-50%); }
+.bubble-7 { top: 10%; right: 10%; }
+
+.bubble-img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   object-fit: cover;
-  border-radius: 6px;
-  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.bubble-text {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+
+.remove-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: #c00;
+  margin-left: 5px;
+}
+
+/*  動畫（上下漂浮） */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-10px); }
 }
 
 .action-button {

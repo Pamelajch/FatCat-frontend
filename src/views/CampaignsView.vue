@@ -5,7 +5,7 @@ import axios from 'axios';
 
 // --- 響應式狀態定義 ---
 const API_URL = 'https://localhost:7017/api/Campaigns'; 
-const BACKEND_URL = 'https://localhost:7017'; // ⚠️ 請再次確認你的後端連接埠
+const BACKEND_URL = 'https://localhost:7017'; 
 
 const campaigns = ref([]);
 const isLoading = ref(true);
@@ -60,10 +60,6 @@ onMounted(async () => {
         <div class="spinner-border theme-spinner" role="status"></div>
       </div>
 
-      <!-- 
-        👇👇👇【結構簡化】👇👇👇
-        我們移除了外層的 campaign-wrapper，直接對 campaign-card 進行 v-for
-      -->
       <div v-if="!isLoading && campaigns.length > 0" class="d-grid gap-5">
         <div 
           v-for="campaign in campaigns" 
@@ -89,9 +85,9 @@ onMounted(async () => {
                 <p class="card-text fs-5 lh-lg">{{ campaign.content }}</p>
               </div>
               <div class="card-footer p-5 pt-0">
-                <a v-if="campaign.callToActionUrl" :href="campaign.callToActionUrl" target="_blank" class="btn btn-theme-action btn-lg">
-                  前往活動連結
-                </a>
+                <router-link v-if="campaign.callToActionUrl" :to="campaign.callToActionUrl" class="btn btn-theme-action btn-lg">
+                    前往購物
+                </router-link>
               </div>
             </div>
           </div>

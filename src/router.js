@@ -26,6 +26,7 @@ import JjtestView from "./views/jjtestView.vue"
 import CouponAddView from '@/views/Admin/CouponAddView.vue'
 import CouponDetailView from '@/views/Admin/CouponDetailView.vue'
 import OrderDetailView from "./views/Admin/OrderDetailView.vue"
+import StreamViewer from "./views/StreamViewer.vue"
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/home
@@ -66,7 +67,10 @@ const routes = [
     //進度追蹤 --如謙
     //http://localhost:5180/feedback
     { path: "/feedback", component: FeedbackView, name: "feedback" },
-    //客服管理者 --如謙 meta 標籤，告訴系統「這是管理頁面」。
+    //直播 --如謙
+    //http://localhost:5180/stream meta 標籤，告訴系統「這是管理頁面」。
+    { path: "/stream", component: StreamViewer, name: "stream-viewer", meta: { isAdminPage: true } },
+    //客服管理者 --如謙 ~ meta 標籤，告訴系統「這是管理頁面」。
     //http://localhost:5180/AdminChat
     { path: "/AdminChat", component: AdminChat, name: "AdminChat", meta: { isAdminPage: true } },
     //訂單結帳 -- 梓瑋

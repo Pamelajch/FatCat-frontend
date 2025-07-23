@@ -39,8 +39,7 @@ const removeFromFavorites = async (productId) => {
   }
 };
 
-// --- 👇👇👇【新增的函式】👇👇👇 ---
-// 加入購物車的函式
+// --- 【加入購物車的函式】 ---
 const addToCart = (product) => {
   // 這裡的 alert 是一個暫時的佔位符
   alert(`已將「${product.productName}」加入購物車！`);
