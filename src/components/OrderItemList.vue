@@ -1,10 +1,14 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import axios from 'axios'
 
-// ✅ 正確使用 props 傳入的 orderId
+// ✅ 傳入 props：orderId 和 orderStatusId
 const props = defineProps({
   orderId: {
+    type: Number,
+    required: true
+  },
+  orderStatusId: {
     type: Number,
     required: true
   }
@@ -12,16 +16,20 @@ const props = defineProps({
 
 const loading = ref(true)
 const error = ref(null)
-
 const orderItems = ref([])
 
+// ✅ 判斷是否為已完成狀態（orderStatusId === 3）
+const isCompleted = computed(() => props.orderStatusId === 3)
+console.log('orderStatusId:', props.orderStatusId)
+// ✅ 計算總金額
 const total = computed(() =>
   orderItems.value.reduce((sum, item) => sum + item.unitprice * item.quantity, 0)
 )
 
+// ✅ 評價按鈕點擊處理（可擴充功能）
 function handleReviewClick(item) {
   console.log('點擊評價按鈕，商品：', item.name)
-  // TODO: 實作評價功能
+  // 🟦 TODO: 這裡可實作開啟評價 modal 或跳轉頁面
 }
 
 onMounted(async () => {
@@ -33,7 +41,9 @@ onMounted(async () => {
       axios.get('https://localhost:7017/api/ProductImages')
     ])
 
-    const orderDetails = orderDetailRes.data.filter(od => Number(od.orderId) === Number(props.orderId))
+    const orderDetails = orderDetailRes.data.filter(
+      od => Number(od.orderId) === Number(props.orderId)
+    )
     const cartItems = cartItemRes.data
     const products = productRes.data
     const images = imageRes.data
@@ -41,8 +51,9 @@ onMounted(async () => {
     const merged = orderDetails.map(od => {
       const cartItem = cartItems.find(ci => ci.itemId === od.itemId)
       const product = products.find(p => p.productsId === cartItem?.productsId)
-
-      const mainImage = images.find(img => img.productId === product?.productsId && img.isMain === 1)
+      const mainImage = images.find(
+        img => img.productId === product?.productsId && img.isMain === 1
+      )
 
       return {
         name: product?.name || '未知商品',
@@ -61,7 +72,6 @@ onMounted(async () => {
   }
 })
 </script>
-
 
 <template>
   <div v-if="loading">載入中...</div>
@@ -84,8 +94,10 @@ onMounted(async () => {
           <div>數量：{{ item.quantity }}</div>
           <div class="text-muted">小計：${{ item.subtotal }}</div>
         </div>
-        <!-- 評價按鈕 -->
-        <button 
+
+        <!-- ✅ 僅在已完成狀態時顯示評價按鈕 -->
+        <button
+          v-if="isCompleted"
           class="btn btn-outline-primary btn-sm"
           @click="handleReviewClick(item)"
         >
@@ -94,7 +106,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- 總金額 -->
+    <!-- ✅ 顯示總金額 -->
     <div class="text-end fw-bold fs-5">
       總金額：<span class="text-danger">${{ total }}</span>
     </div>

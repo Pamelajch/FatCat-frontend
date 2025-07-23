@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import OrderItemList from '@/components/OrderItemList.vue'
 import OrderDetail from '@/components/OrderDetail.vue'
@@ -10,8 +10,8 @@ const orderStore = useOrderStore()
 const route = useRoute()
 const router = useRouter()
 const orderId = route.params.id
-
 const order = ref(null)
+const orderStatusId = computed(() => order.value?.orderStatusId || 0)
 const orderItems = ref([])
 
 const fetchOrderDetail = async () => {
@@ -51,7 +51,10 @@ onMounted(fetchOrderDetail)
             aria-labelledby="panelsStayOpen-headingOne">
             <div class="accordion-body">
               <!-- 訂單商品列表 -->
-              <OrderItemList :order-id="orderId" />
+              <OrderItemList
+                :order-id="Number(orderId)"
+                :order-status-id="Number(orderStatusId)"
+              />
             </div>
           </div>
         </div>
