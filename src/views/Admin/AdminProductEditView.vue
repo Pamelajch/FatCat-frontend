@@ -10,10 +10,11 @@ const productId = route.params.id
 const product = ref(null)
 const categories = ref([])
 const sorts = ref([])
+const allTags = ref([])            // 所有標籤
+const selectedTagIds = ref([])     // 被選中的 tagId 陣列
 const isLoading = ref(true)
 const formErrors = ref([])
 
-// ===== API：取得資料 =====
 // ===== API：取得資料 =====
 const fetchProduct = async () => {
   try {
@@ -55,9 +56,18 @@ const filteredSorts = computed(() => {
 
 // ===== 初始化 =====
 onMounted(async () => {
-  await Promise.all([fetchProduct(), fetchCategories(), fetchSorts()])
+  await Promise.all([
+    fetchProduct(),
+    fetchCategories(),
+    fetchSorts(),
+    fetchTags(),           // 取得所有標籤
+    fetchProductTags()     // 取得該商品目前的標籤
+  ])
 
   // 等資料抓好後再監聽分類變更
+  // 監聽分類變更後，自動清空小分類（避免舊的 sortId 殘留）
+  // 注意：這個 watch 被寫在 onMounted 裡是安全的，因為 setup 只執行一次
+  // 不會有重複註冊的問題（除非將來抽成方法或 composable 才需要改）
   watch(() => product.value.categoryId, () => {
     product.value.sortId = ''
   })
@@ -88,18 +98,19 @@ const updateProduct = async () => {
       body: JSON.stringify(product.value)
     })
 
-    // 先判斷 response 是否成功
     if (!res.ok) {
       const message = await res.text()
       throw new Error(message || '更新失敗，請檢查欄位是否正確')
     }
+
+    // 🏷️ 同步更新標籤
+    await saveProductTags()
 
     // 成功流程
     alert('✅ 更新成功！')
     router.push({ name: 'AdminProducts' })
 
   } catch (err) {
-    // 錯誤處理流程
     alert(`❌ 更新失敗：${err.message}`)
     console.error(err)
   }
@@ -163,6 +174,29 @@ const setMainImage = async (imageId) => {
   }
 }
 
+// 取得所有標籤
+const fetchTags = async () => {
+  const res = await fetch('https://localhost:7017/api/Tags')
+  const data = await res.json()
+  allTags.value = data
+}
+
+// 取得該商品已有標籤
+const fetchProductTags = async () => {
+  const res = await fetch(`https://localhost:7017/api/AdminProducts/${productId}/tags`)
+  const data = await res.json()
+  selectedTagIds.value = data.map(t => t.tagsId)
+}
+
+// 儲存標籤（在儲存商品時一起送出）
+const saveProductTags = async () => {
+  await fetch(`https://localhost:7017/api/AdminProducts/${productId}/tags`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(selectedTagIds.value)
+  })
+}
+
 const cancelEdit = () => {
   const confirmed = confirm('確定要取消修改嗎？未儲存的變更將會遺失喔！')
   if (confirmed) {
@@ -197,6 +231,23 @@ const cancelEdit = () => {
         <label>提醒下限
           <input type="number" v-model.number="product.lowerthanAlert" min="0" />
         </label>
+        <div class="tag-area">
+          <h4>🏷️ 商品標籤</h4>
+          <div class="tag-list">
+            <label
+              v-for="tag in allTags"
+              :key="tag.tagsId"
+              class="tag-item"
+            >
+              <input
+                type="checkbox"
+                :value="tag.tagsId"
+                v-model="selectedTagIds"
+              />
+              {{ tag.name }}
+            </label>
+          </div>
+        </div>
       </div>
 
       <!-- 右欄：狀態、分類、圖片 -->
@@ -224,10 +275,13 @@ const cancelEdit = () => {
             </select>
         </label>
 
-        <label>
-          <input type="checkbox" v-model="product.stockAlert" />
-          啟用庫存提醒
-        </label>
+        <div class="toggle-wrapper">
+          <span class="toggle-label">啟用庫存提醒</span>
+          <label class="switch">
+            <input type="checkbox" v-model="product.stockAlert" />
+            <span class="slider"></span>
+          </label>
+        </div>             
 
         <!-- 🖼️ 圖片區 -->
         <div class="image-area">
@@ -304,6 +358,34 @@ form textarea {
   min-height: 80px;
 }
 
+.tag-area {
+  margin-top: 1.5rem;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 0.5rem;
+}
+
+.tag-item {
+  background: #f6f0ff;
+  padding: 4px 8px;
+  border-radius: 12px;
+  border: 1px solid #c9aaff;
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.tag-item:hover {
+  background: #e9d8ff;
+}
+
 .image-area {
   margin-top: 2rem;
 }
@@ -333,6 +415,69 @@ form textarea {
   color: #2e7d32;
   font-weight: bold;
   margin-top: 6px;
+}
+
+.toggle-wrapper {
+  display: flex;
+  flex-direction: column; /* 讓它變成上下排列 */
+  align-items: flex-start; /* 或 center */
+  gap: 6px;
+  margin-top: 1rem;
+}
+
+.toggle-label {
+  font-size: 1rem;
+  user-select: none;
+  line-height: 1.3;
+}
+
+/* 開關外框 */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+
+/* 隱藏原生 checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* 滑動按鈕 */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc; /* 預設灰色 */
+  transition: 0.4s;
+  border-radius: 28px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+/* 開啟狀態顏色 */
+.switch input:checked + .slider {
+  background-color: #4caf50; /* 綠色 */
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(22px);
 }
 
 .form-actions {
