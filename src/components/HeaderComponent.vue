@@ -270,7 +270,7 @@
               </ul>
             </div>
             <div v-if="!searchResult.categories.length && !searchResult.sorts.length && !searchResult.products.length && !searchResult.coupons.length && !searchResult.campaigns.length">
-              <span class="p-2">查無資料</span>
+              <span class="p-2">查無結果</span>
             </div>
           </template>
         </div>
@@ -336,6 +336,9 @@
 </template>
 
 <style lang="css" scoped>
+.p-2{
+  color: gray;
+}
 .custom-header {
   background-color: #c286cf; /* 紫色背景 */
   color: white;
