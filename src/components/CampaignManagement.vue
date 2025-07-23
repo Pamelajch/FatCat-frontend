@@ -5,7 +5,7 @@ import axios from 'axios';
 // --- 響應式狀態定義 ---
 
 // ⚠️ 已更新：API 網址現在對應到你的 AdminCampaignController
-const API_URL = 'https://localhost:7017/api/admin/AdminCampaign'; // ⚠️ 請再次確認你的後端連接埠
+const API_URL = 'https://localhost:7017/api/admin/AdminCampaign'; // ⚠️
 
 // 用於儲存從後端取回的活動列表
 const campaigns = ref([]);
