@@ -24,7 +24,7 @@ function isAuthRelatedURL(url) {
 api.interceptors.request.use(
     (config) => {
         // 判斷是否為管理員api
-        const isAdminAPI = config.url.includes('/Admin') || config.url.includes('/Notifications/Send')
+        const isAdminAPI = config.url.includes('/Admin') || config.url.includes('/admin') || config.url.includes('/Notifications/Send')
         let token = null
         if (isAdminAPI) {
             // 取得管理員的 token
