@@ -51,7 +51,7 @@ onMounted(fetchOrderDetail)
             aria-labelledby="panelsStayOpen-headingOne">
             <div class="accordion-body">
               <!-- 訂單商品列表 -->
-              <OrderItemList :items="orderItems" />
+              <OrderItemList :items="orderItems" :order-id="orderId" />
             </div>
           </div>
         </div>
