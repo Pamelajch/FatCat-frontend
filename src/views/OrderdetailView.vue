@@ -1,12 +1,37 @@
 <script setup>
-import { onMounted } from 'vue'
-import { useCartStore } from '@/stores/cart'
-import { useOrderStore } from '@/stores/order'
-import OrderItemList from '@/components/OrderItemList.vue' // ✅ 要引入！
+import { onMounted, ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import OrderItemList from '@/components/OrderItemList.vue'
 import OrderDetail from '@/components/OrderDetail.vue'
+import { useOrderStore } from '@/stores/order'
 
-const cartStore = useCartStore()
 const orderStore = useOrderStore()
+// 建議加載資料前先檢查是否為空，必要時使用 await fetch
+const route = useRoute()
+const router = useRouter()
+const orderId = route.params.id
+const order = ref(null)
+const orderStatusId = computed(() => order.value?.orderStatusId || 0)
+const orderItems = ref([])
+
+const fetchOrderDetail = async () => {
+  try {
+    const [orderRes, itemsRes] = await Promise.all([
+      fetch(`https://localhost:7017/api/Orders/${orderId}`).then(res => res.json()),
+      fetch(`https://localhost:7017/api/OrderDetails/${orderId}`).then(res => res.json())
+    ])
+    order.value = orderRes
+    orderItems.value = itemsRes
+  } catch (err) {
+    console.error('無法載入訂單詳情', err)
+  }
+}
+
+const props = defineProps({
+  order: Object
+})
+
+onMounted(fetchOrderDetail)
 </script>
 
 <template>
@@ -26,7 +51,10 @@ const orderStore = useOrderStore()
             aria-labelledby="panelsStayOpen-headingOne">
             <div class="accordion-body">
               <!-- 訂單商品列表 -->
-              <OrderItemList :items="orderStore.latestOrderItems" />
+              <OrderItemList
+                :order-id="Number(orderId)"
+                :order-status-id="Number(orderStatusId)"
+              />
             </div>
           </div>
         </div>
@@ -34,8 +62,8 @@ const orderStore = useOrderStore()
     </div>
 
     <div class="container">
-      <OrderDetail />
-
+      <OrderDetail :order="order" />
+      
       <div class="mt-4">
         <button type="button" class="btn custom-purple-btn float-end">聯絡我們</button>
         <button type="button" class="btn btn-danger float-end btn-space">取消訂單</button>

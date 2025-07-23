@@ -17,8 +17,9 @@ const router = useRouter()
 const selectedStatusId = ref(null) // 目前選中的訂單狀態分頁
 
 const goToOrderDetail = (orderId) => {
-  router.push(`/order-detail/${orderId}`)
+  router.push(`/admin/orderdetail/${orderId}`)
 }
+
 
 const fetchAllData = async () => {
   try {

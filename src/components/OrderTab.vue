@@ -1,4 +1,4 @@
-<!-- components/OrderTab.vue -->
+<!-- components/OrderTab.vue
 <template>
   <div class="tab-pane fade" :class="{ show: active, active: active }" :id="id" role="tabpanel" :aria-labelledby="labelledby">
     <ul class="list-group">
@@ -76,4 +76,4 @@ const checkout = useCheckoutStore()
   color: white;
   border-color: #92559c;
 }
-</style>
+</style> -->

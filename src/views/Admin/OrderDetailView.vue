@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getOrderById, getOrderStatuses, getShippingStatuses } from '@/services/orderService'
 import axios from 'axios'
+import { computed } from 'vue'
 
 // 拿到 orderId
 const route = useRoute()
@@ -12,6 +13,14 @@ const orderId = route.params.id
 const order = ref(null)
 // 訂單明細列表 (API: OrderDetails，需要另外寫service)
 const orderDetails = ref([])
+
+const orderTotal = computed(() => {
+  return orderDetails.value.reduce((sum, item) => {
+    const qty = item.quantity ?? 0
+    const price = item.unitprice ?? 0
+    return sum + qty * price
+  }, 0)
+})
 
 // 狀態相關
 const orderStatuses = ref([])
@@ -98,22 +107,40 @@ onMounted(fetchData)
       <button @click="updateStatus" class="btn btn-success mb-3">更新狀態</button>
 
       <h4>訂單商品明細</h4>
-        <table class="table table-bordered">
-        <thead>
-            <tr>
-            <th>商品名稱</th>
-            <th>數量</th>
-            <th>價格</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="detail in orderDetails" :key="detail.orderdetailId">
-            <td>{{ detail.productName }}</td>
-            <td>{{ detail.quantity ?? '無資料' }}</td>
-            <td>{{ detail.unitprice ?? '無資料' }}</td>
-            </tr>
-        </tbody>
-        </table>
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>商品名稱</th>
+      <th>數量</th>
+      <th>價格</th>
+      <th>小計</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr v-for="detail in orderDetails" :key="detail.orderdetailId">
+      <td>{{ detail.productName }}</td>
+      <td>{{ detail.quantity ?? '無資料' }}</td>
+      <td>{{ detail.unitprice ?? '無資料' }}</td>
+      <td>
+        {{
+          detail.quantity != null && detail.unitprice != null
+            ? detail.quantity * detail.unitprice
+            : '無資料'
+        }}
+      </td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="3" class="text-end fw-bold">明細加總：</td>
+      <td class="fw-bold">{{ orderTotal }}</td>
+    </tr>
+  </tfoot>
+</table>
+
+<!-- 顯示實際訂單記錄的總金額 -->
+<p>訂單紀錄總金額（payableAmount）：{{ order.payableAmount }}</p>
+
     </div>
 
     <div v-else>載入中...</div>
