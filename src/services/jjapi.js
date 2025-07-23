@@ -23,7 +23,8 @@ function isAuthRelatedURL(url) {
 // 請求攔截器：自動加上 JWT Token
 api.interceptors.request.use(
     (config) => {
-        // 判斷是否為管理員api
+        // 判斷是否為管理員api 只要是包含 /Admin 或 /admin 的 API 都視為管理員 API
+        // 以及 /Notifications/Send API 使用 管理員的 token
         const isAdminAPI = config.url.includes('/Admin') || config.url.includes('/admin') || config.url.includes('/Notifications/Send')
         let token = null
         if (isAdminAPI) {
