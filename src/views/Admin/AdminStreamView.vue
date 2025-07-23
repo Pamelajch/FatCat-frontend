@@ -4,6 +4,7 @@ import { useStreamStore } from '@/stores/streamStore';
 import axios from 'axios';
 import ChatRoom from '@/components/ChatRoom.vue';
 
+// --- 功能區塊：元件狀態 ---
 const activeTab = ref('control');
 const streamTitleInput = ref('');
 const pastStreams = ref([]);
@@ -21,13 +22,14 @@ const fetchHistory = async () => {
   }
 };
 
+// --- 功能區塊：事件處理 ---
 const handleStartStream = async () => {
   if (!streamTitleInput.value.trim()) {
     error.value = '請輸入直播標題！';
     return;
   }
   
-  // 【★ 新增功能 ★】開始新直播前，清除舊的聊天紀錄
+  // 【★ 功能#1 ★】開始新直播前，清除舊的聊天紀錄
   sessionStorage.removeItem('fatcat_chat_history');
 
   loading.value = true;
@@ -64,20 +66,36 @@ onMounted(() => {
   streamStore.checkCurrentStream();
   fetchHistory();
 });
-
 </script>
 
 <template>
   <div class="container mt-4">
+    <!-- 【★ 核心還原#1 ★】將您遺失的分頁導覽加回來 -->
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item">
+        <a class="nav-link" :class="{ active: activeTab === 'control' }" @click.prevent="activeTab = 'control'" href="#">
+          <i class="fas fa-video me-1"></i> 直播控制台
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" :class="{ active: activeTab === 'history' }" @click.prevent="activeTab = 'history'" href="#">
+          <i class="fas fa-history me-1"></i> 過往直播紀錄
+        </a>
+      </li>
+    </ul>
+
     <div class="tab-content">
+      <!-- 功能區塊：直播控制台頁面 -->
       <div v-if="activeTab === 'control'" class="tab-pane fade show active">
         <div class="row">
           
+          <!-- 【★ 核心還原#2 ★】將您遺失的左側控制台區塊完整加回來 -->
           <div class="col-lg-7">
             <div class="card">
               <div class="card-body">
                 <div v-if="error" class="alert alert-danger">{{ error }}</div>
 
+                <!-- 情況一：直播進行中 -->
                 <div v-if="streamStore.isLive">
                   <h5 class="card-title">🔴 直播進行中：{{ streamStore.currentStreamTitle }}</h5>
                   <p class="text-muted">以下為串流資訊：</p>
@@ -102,6 +120,7 @@ onMounted(() => {
                   </button>
                 </div>
 
+                <!-- 情況二：沒有直播 -->
                 <div v-else>
                   <h5 class="card-title">準備開始一場新的直播</h5>
                   <div class="mb-3">
@@ -116,10 +135,15 @@ onMounted(() => {
             </div>
           </div>
 
+          <!-- 右側：聊天室區塊 -->
           <div class="col-lg-5">
             <div class="card">
               <div class="card-header fs-5 fw-bold"><i class="fas fa-comments me-2"></i>聊天室</div>
               <div class="card-body p-0" style="height: 400px;">
+                <!-- 
+                  【★ 功能#2 ★】確保 ChatRoom 在直播時才顯示，
+                  並明確傳入 roomArn 和固定的管理者名稱 
+                -->
                 <ChatRoom 
                   v-if="streamStore.isLive && streamStore.streamInfo?.chatRoomArn" 
                   :room-arn="streamStore.streamInfo.chatRoomArn"
@@ -133,7 +157,27 @@ onMounted(() => {
           </div>
         </div>
       </div>
+
+      <!-- 【★ 核心還原#3 ★】將您遺失的過往直播紀錄頁面加回來 -->
+      <div v-if="activeTab === 'history'" class="tab-pane fade show active">
+        <div class="card">
+          <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+            <ul v-if="pastStreams.length > 0" class="list-group list-group-flush">
+              <li v-for="stream in pastStreams" :key="stream.livestreamId" class="list-group-item">
+                <div class="fw-bold">{{ stream.title }}</div>
+                <small class="text-muted me-3">
+                  開始時間: {{ new Date(stream.startedAt).toLocaleString() }}
+                </small>
+                <small class="text-muted" v-if="stream.endedAt">
+                  結束時間: {{ new Date(stream.endedAt).toLocaleString() }}
+                </small>
+              </li>
+            </ul>
+            <p v-else class="text-muted text-center">尚無直播紀錄</p>
+          </div>
+        </div>
       </div>
+    </div>
   </div>
 </template>
 
