@@ -43,13 +43,22 @@ const getStatusText = (statusId) => {
   return status?.description || '未知狀態'
 }
 
+// 找出「已完成」狀態的 ID
+const completedStatusId = computed(() => {
+  const status = statuses.value.find(s => s.description === '已完成')
+  return status?.orderStatusId || null
+})
+
+// 預留未來實作的申訴處理函式
+const handleAppeal = (order) => {
+  console.log('申訴功能待實作，訂單 ID:', order.orderId)
+}
+
 onMounted(fetchData)
 </script>
 
 <template>
   <div class="container mt-4">
-  
-
     <!-- 若尚未登入 -->
     <div v-if="!authStore.isAuthenticated">
       <p class="text-danger">請先登入以查看您的訂單。</p>
@@ -88,10 +97,22 @@ onMounted(fetchData)
               <td>{{ new Date(order.orderdate).toLocaleDateString() }}</td>
               <td>NT${{ order.payableAmount }}</td>
               <td>{{ getStatusText(order.orderStatusId) }}</td>
-               <td>
-                <router-link :to="`/orderdetail/${order.orderId}`" class="btn btn-outline-primary btn-sm">
-                    查看明細
+              <td>
+                <router-link
+                  :to="`/orderdetail/${order.orderId}`"
+                  class="btn btn-outline-primary btn-sm me-2"
+                >
+                  查看明細
                 </router-link>
+
+                <!-- 顯示申訴按鈕 -->
+                <button
+                  v-if="order.orderStatusId === 3"
+                  class="btn btn-outline-danger btn-sm"
+                  @click="handleAppeal(order)"
+                >
+                  申訴
+                </button>
               </td>
             </tr>
           </tbody>
