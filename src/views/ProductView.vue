@@ -2,7 +2,9 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import ProductReview from '@/components/ProductReview.vue'
+import { useCartStore } from '@/stores/cart'
 
+const cartStore = useCartStore()
 const route = useRoute()
 const productId = route.query.id
 const product = ref(null)
@@ -15,6 +17,22 @@ const fetchProductDetail = async () => {
   } catch (error) {
     console.error('無法取得商品資料:', error)
   }
+}
+
+const addToCart = () => {
+  if (!product.value) {
+    alert('尚未載入商品，無法加入購物車')
+    return
+  }
+
+  cartStore.addItem({
+    id: product.value.productsId,
+    name: product.value.name,
+    price: product.value.price ?? 0,
+    image: product.value.imageUrl || ''
+  })
+
+  alert('✨ 已加入購物車！')
 }
 
 onMounted(() => {
@@ -47,7 +65,7 @@ onMounted(() => {
           <p class="description">{{ product.description }}</p>
 
           <div class="action-buttons">
-            <button class="action-button cart-btn">加入購物車 ✨</button>
+            <button class="action-button cart-btn" @click="addToCart">加入購物車 ✨</button>
             <button class="action-button favorite-btn">💖 收藏</button>
           </div>
 
