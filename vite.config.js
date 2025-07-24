@@ -19,7 +19,11 @@ export default defineConfig({
   server: {
     port: 5180, // 固定 port
     strictPort: true, //如果被占用就報錯，不自動換port
-    host: 'localhost', // 明確設定主機
+    allowedHosts: [
+      'localhost',
+      '.ngrok-free.app'
+    ],
+    // host: 'localhost', // 明確設定主機
     proxy: { //導向圖片image資料夾用的
       '/ProductImages': {
         target: 'https://localhost:7017',
