@@ -7,7 +7,6 @@ import UserView from "./views/UserView.vue"
 import NotificationView from "./views/NotificationView.vue"
 import ProductView from "./views/ProductView.vue"
 import CampaignsView from '@/views/CampaignsView.vue'
-import _ReviewTestView from "@/views/_ReviewTestView.vue"
 import CheckoutView from "./views/CheckoutView.vue"
 import CheckoutfinishView from "./views/CheckoutfinishView.vue"
 import MyOrdersView from "./views/MyOrdersView.vue"
@@ -64,9 +63,6 @@ const routes = [
     //活動 --如謙
     //http://localhost:5180/campaigns
     { path: "/campaigns", component: CampaignsView, name: "campaigns" },
-    //rr測試站 --如謙
-    //http://localhost:5180/_reviewtest
-    { path: "/_reviewtest", component: _ReviewTestView, name: "_reviewtest" },
     //進度追蹤 --如謙
     //http://localhost:5180/feedback
     { path: "/feedback", component: FeedbackView, name: "feedback" },
