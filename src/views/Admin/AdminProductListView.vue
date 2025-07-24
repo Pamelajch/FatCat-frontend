@@ -99,7 +99,7 @@ const confirmDelete = async (id) => {
       Swal.fire('刪除成功', '商品已被移至廚餘桶 🍜', 'success')
 
       // 如果你有重新載入商品列表：
-      fetchProducts() // ←這行請改成你自己的重新載入方法
+      fetchProducts() // 重新載入方法
 
     } catch (err) {
       console.error(err)
@@ -170,6 +170,7 @@ watch(showTrash, (val) => {
     <h2>📦 全站商品列表</h2>
 
     <!-- 🔍 篩選區 -->
+    <div class="top-bar">
     <div class="filter-box">
       <input type="text" v-model="keyword" placeholder="搜尋商品 / 分類 / 小分類" />
 
@@ -193,7 +194,8 @@ watch(showTrash, (val) => {
         <option value="下架">下架</option>
       </select>
     </div>
-
+      <RouterLink :to="{ name: 'AdminProductCreate' }" class="btn-create" >➕ 新增商品</RouterLink>
+    </div>
     <!-- 📋 商品表格 -->
     <table class="product-table">
       <thead>
@@ -283,6 +285,13 @@ watch(showTrash, (val) => {
   padding: 1rem;
 }
 
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+
 .filter-box {
   display: flex;
   flex-wrap: wrap;
@@ -295,6 +304,22 @@ watch(showTrash, (val) => {
   padding: 8px 12px;
   border: 1px solid #ccc;
   border-radius: 8px;
+}
+
+.btn-create {
+  background-color: #7c4dff;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.btn-create:hover {
+  background-color: #9575cd;
 }
 
 .product-table {
