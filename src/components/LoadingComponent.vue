@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useCartStore } from '@/stores/cart' // ✅ 引入購物車 store
 
+const cartStore = useCartStore()
 // 塔羅功能
 const cards = ref([])
 const selectedIndex = ref(null)
@@ -51,7 +53,9 @@ const fetchSpecialNoodles = async () => {
     const res = await fetch('https://localhost:7017/api/Products/special')
     const data = await res.json()
     cards.value = data.slice(0, 12).map(p => ({
+      id: p.productsId,          // 加入 id
       name: p.name,
+      price: p.price,            // 加入 price
       image: `/ProductImages/${p.imageUrl}`,
       description: p.description || '一碗神秘的泡麵...'
     }))
@@ -79,8 +83,16 @@ const reset = () => {
   selectedIndex.value = null
 }
 
+// ✅ 加入購物車功能
 const addToCart = (noodle) => {
-  alert(`已將 ${noodle.name} 加入購物車！`)
+  const itemToAdd = {
+    id: noodle.id,
+    name: noodle.name,
+    price: noodle.price || 0,
+    image: noodle.image
+  }
+  cartStore.addItem(itemToAdd)
+  alert(`✅ 已將 ${noodle.name} 加入購物車！`)
 }
 
 // 初始化：抓泡麵 & 開啟貓咪預言循環
