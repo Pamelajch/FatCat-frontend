@@ -137,12 +137,32 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .drink-view {
-  padding: 2rem 3vw;
-  max-width: 1400px;
-  margin: 0 auto;
+  min-height: 100vh;
+  padding: 2rem;
+  background-image: url('/magicdrink.png');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 2rem;
+}
+
+/* 毛玻璃遮罩效果 */
+.drink-view::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.1); /* 淡淡的霧感 */
+  backdrop-filter: blur(14px);          /* 毛玻璃模糊 */
+  z-index: 0;
+}
+
+/* 讓內容蓋在毛玻璃上面 */
+.drink-view > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* 👉 上方：貓貓、杯子、已選材料 */
