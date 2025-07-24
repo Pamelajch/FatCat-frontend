@@ -33,6 +33,8 @@ const showReportModal = ref(false);    // 控制檢舉彈窗的顯示/隱藏
 const reportingReviewId = ref(null); // 儲存使用者正在檢舉的是哪一則評論的 ID
 const authStore = useAuthStore();    // 建立 Auth store 的實例，方便在 template 中使用
 const currentSort = ref('default');  // 【排序功能】儲存使用者當前選擇的排序方式
+const showImageModal = ref(false);// 【圖片 Modal 功能】新增控制圖片 Modal 的狀態
+const selectedImage = ref(null);
 
 // ========================================================================
 // 區塊 4：計算屬性 (Computed Properties)
@@ -99,6 +101,24 @@ const openReportModal = (reviewId) => {
 const closeReportModal = () => {
   showReportModal.value = false;
   reportingReviewId.value = null;
+};
+// ========================================================================
+// 區塊 6.5：圖片 Modal 相關方法
+// ========================================================================
+const getImageUrl = (filePath) => {
+  // 如果 filePath 已經是完整的 URL，就直接回傳，否則進行拼接
+  if (!filePath) return '';
+  return filePath.startsWith('http') ? filePath : `${BACKEND_URL}${filePath}`;
+};
+
+const openImageModal = (imagePath) => {
+  selectedImage.value = getImageUrl(imagePath);
+  showImageModal.value = true;
+};
+
+const closeImageModal = () => {
+  showImageModal.value = false;
+  selectedImage.value = null; // 最好在關閉時清除，避免舊圖片殘留
 };
 
 // ========================================================================
@@ -170,9 +190,18 @@ onMounted(() => {
           <p class="card-text mt-3">{{ review.comment }}</p>
           
           <div v-if="review.attachments && review.attachments.length > 0" class="attachments mt-2">
-            <a v-for="att in review.attachments" :key="att.filePath" :href="`${BACKEND_URL}${att.filePath}`" target="_blank" title="點擊放大">
-              <img :src="`${BACKEND_URL}${att.filePath}`" class="img-thumbnail me-2" alt="review attachment">
-            </a>
+            <small class="text-muted d-block mb-2">附件照片：</small>
+            <div class="attachment-grid">
+              <img 
+                v-for="att in review.attachments" 
+                :key="att.filePath" 
+                :src="getImageUrl(att.filePath)"
+                :alt="att.fileName || 'review attachment'"
+                class="attachment-thumbnail"
+                @click="openImageModal(att.filePath)"
+                @error="$event.target.src = '/images/products/default.jpg'"
+              />
+            </div>
           </div>
 
           <div v-if="review.response" class="official-response mt-3 p-3">
@@ -186,9 +215,28 @@ onMounted(() => {
       <p>還沒有任何評論，快來搶頭香！</p>
     </div>
     
-    <ReportModal v-if="showReportModal" :review-id="reportingReviewId" @close="closeReportModal" />
+    <Teleport to="body">
+  <div 
+    v-if="showImageModal" 
+    class="image-modal-overlay" 
+    @click="closeImageModal"
+  >
+    <div class="image-modal-content" @click.stop>
+      <i class="fas fa-times image-modal-close" @click="closeImageModal"></i>
+      <img 
+        :src="selectedImage" 
+        alt="預覽圖片" 
+        class="modal-image"
+      />
+    </div>
   </div>
-</template>
+</Teleport>
+
+ <ReportModal v-if="showReportModal" :review-id="reportingReviewId" @close="closeReportModal" />
+
+  </div> </template>
+
+
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
@@ -197,10 +245,71 @@ onMounted(() => {
 .review-card { border-left: 4px solid #0d6efd; }
 .star { color: #e0e0e0; font-size: 1.5rem; } 
 .star.filled { color: #ffa600; }
-.attachments img { width: 80px; height: 80px; object-fit: cover; cursor: pointer; transition: transform 0.2s ease; }
-.attachments img:hover { transform: scale(1.1); }
 .official-response { background-color: #f6f6f6; border-radius: 5px; border: 1px solid #eee; }
 .review-actions .btn-link { text-decoration: none; font-size: 0.8rem; }
 .review-actions .btn-link:hover { text-decoration: underline; }
 .sort-control { max-width: 180px; }
+/* --- 附件縮圖樣式 --- */
+.attachment-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px; /* 圖片間距 */
+}
+
+.attachment-thumbnail {
+  width: 80px; 
+  height: 80px; 
+  object-fit: cover; 
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  border-radius: 4px;
+  border: 1px solid #dee2e6; /* 沿用 bootstrap img-thumbnail 的邊框色 */
+}
+
+.attachment-thumbnail:hover {
+  opacity: 0.8;
+}
+
+/* --- 圖片 Modal 彈窗樣式 --- */
+.image-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 15px;
+}
+
+.image-modal-content {
+  position: relative;
+  display: flex;
+}
+
+.modal-image {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.image-modal-close {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  font-size: 2rem;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  text-shadow: 0 0 8px rgba(0,0,0,0.8);
+}
+
+.image-modal-close:hover {
+  transform: scale(1.2);
+}
 </style>

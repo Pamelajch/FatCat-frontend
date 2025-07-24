@@ -4,21 +4,6 @@
 // ========================================================================
 import { ref, onMounted, computed } from 'vue';
 import api from '@/services/jjapi.js'; 
-// 以下兩個元件在此頁面可能不需要，但先保留，以防未來需要
-import HelpfulnessVoting from './HelpfulnessVoting.vue';
-import ReportModal from './ReportModal.vue';
-
-// ========================================================================
-// 區塊 2：Props
-// 【核心修正】「我的評論紀錄」頁面不需要從外部接收任何 props，
-// 因為它應該自動根據登入狀態去抓取資料。所以我們將整個 defineProps 區塊移除。
-// ========================================================================
-// const props = defineProps({
-//   productId: {
-//     type: Number,
-//     required: true
-//   }
-// });
 
 // ========================================================================
 // 區塊 3：響應式狀態定義
@@ -122,41 +107,42 @@ onMounted(() => {
     <div v-if="!isLoading && reviews.length > 0" class="review-list">
       <div v-for="review in reviews" :key="review.reviewId" class="review-card card mb-3">
         <div class="card-body">
-          <div class="review-header d-flex align-items-start mb-2">
-            <div class="flex-grow-1">
-              <small class="text-muted">針對商品</small>
-              <h6 class="card-title mb-0">{{ review.productName || '商品名稱' }}</h6>
-            </div>
-            <div class="ms-auto text-end">
-              <div class="rating-stars mb-2">
-                <span v-for="n in 5" :key="n" class="star" :class="{ 'filled': n <= review.rating }">★</span>
+            <div class="review-header d-flex align-items-start mb-2">
+              <div class="flex-grow-1">
+                <small class="text-muted">針對商品</small>
+                <h6 class="card-title mb-0">{{ review.productName || '商品名稱' }}</h6>
               </div>
-              <small class="text-muted">{{ new Date(review.createdAt).toLocaleDateString() }}</small>
+              <div class="ms-auto text-end">
+                <div class="rating-stars mb-2">
+                  <span v-for="n in 5" :key="n" class="star" :class="{ 'filled': n <= review.rating }">★</span>
+                </div>
+                <small class="text-muted">{{ new Date(review.createdAt).toLocaleDateString() }}</small>
+              </div>
             </div>
-          </div>
-          <p class="card-text mt-3">{{ review.comment }}</p>
-          <div v-if="review.attachments && review.attachments.length > 0" class="attachments mt-3">
-            <small class="text-muted d-block mb-2">附件照片：</small>
-            <div class="attachment-grid">
-              <img 
-                v-for="(attachment, index) in review.attachments" 
-                :key="index"
-                :src="getImageUrl(attachment.filePath)"
-                :alt="attachment.fileName"
-                :title="attachment.fileName"
-                class="attachment-thumbnail"
-                @click="openImageModal(attachment.filePath)"
-                @error="$event.target.src = '/images/products/default.jpg'"
-              />
+            <p class="card-text mt-3">{{ review.comment }}</p>
+            
+            <div v-if="review.attachments && review.attachments.length > 0" class="attachments mt-3">
+              <small class="text-muted d-block mb-2">附件照片：</small>
+              <div class="attachment-grid">
+                <img 
+                  v-for="(attachment, index) in review.attachments" 
+                  :key="index"
+                  :src="getImageUrl(attachment.filePath)"
+                  :alt="attachment.fileName"
+                  :title="attachment.fileName"
+                  class="attachment-thumbnail"
+                  @click="openImageModal(attachment.filePath)"
+                  @error="$event.target.src = '/images/products/default.jpg'"
+                />
+              </div>
             </div>
-          </div>
-          <div v-if="review.response" class="official-response mt-3 p-3">
-            <strong>店家回覆：</strong> {{ review.response }}
-          </div>
+            <div v-if="review.response" class="official-response mt-3 p-3">
+              <strong>店家回覆：</strong> {{ review.response }}
+            </div>
 
-          <div v-if="!review.status" class="hidden-review-warning mt-3">
-            此評論已隱藏！被檢舉原因：{{ review.hiddenReason || '管理員未提供特定原因' }}，有問題請洽客服。
-          </div>
+            <div v-if="!review.status" class="hidden-review-warning mt-3">
+              此評論已隱藏！被檢舉原因：{{ review.hiddenReason || '管理員未提供特定原因' }}，有問題請洽客服。
+            </div>
 
         </div>
       </div>
@@ -166,26 +152,22 @@ onMounted(() => {
       <p>您尚未發表任何評論。</p>
     </div>
 
-     <!-- 圖片預覽 Modal -->
-    <div 
-      v-if="showImageModal" 
-      class="image-modal-overlay" 
-      @click="closeImageModal"
-    >
-      <div class="image-modal-content" @click.stop>
-        <button 
-          type="button" 
-          class="btn-close image-modal-close" 
-          @click="closeImageModal"
-        ></button>
-        <img 
-          :src="selectedImage" 
-          alt="預覽圖片" 
-          class="modal-image"
-        />
+    <Teleport to="body">
+      <div 
+        v-if="showImageModal" 
+        class="image-modal-overlay" 
+        @click="closeImageModal"
+      >
+        <div class="image-modal-content" @click.stop>
+          <i class="fas fa-times image-modal-close" @click="closeImageModal"></i>
+          <img 
+            :src="selectedImage" 
+            alt="預覽圖片" 
+            class="modal-image"
+          />
+        </div>
       </div>
-    </div>
-    
+    </Teleport>
     <ReportModal v-if="showReportModal" :review-id="reportingReviewId" @close="closeReportModal" />
   </div>
 </template>
@@ -210,5 +192,73 @@ onMounted(() => {
     border-radius: 0.25rem;
     border: 1px solid #f5c2c7;
     font-size: 0.9rem;
+}
+/* 縮圖樣式 */
+.attachments .attachment-thumbnail {
+  width: 80px; 
+  height: 80px; 
+  object-fit: cover; 
+  cursor: pointer;
+  /* 我們稍微保留一點點 transition，讓點擊時有更平滑的視覺效果 */
+  transition: opacity 0.2s ease;
+  border-radius: 4px; /* 加個小圓角更好看 */
+}
+
+.attachments .attachment-thumbnail:hover {
+  /* 移除 transform: scale(1.1) */
+  /* 改成用透明度變化來提示可點擊 */
+  opacity: 0.8;
+}
+
+/* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
+
+
+/* vvvvvvvvvv 【樣式修改點 2】 vvvvvvvvvvvv */
+/* 新增 Teleport Modal 相關樣式 */
+
+/* 背景遮罩層 */
+.image-modal-overlay {
+  position: fixed; /* 固定位置，覆蓋整個視窗 */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7); /* 半透明黑 */
+  display: flex; /* 使用 flex 輕鬆實現垂直水平置中 */
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* 確保在最上層 */
+  padding: 15px; /* 給內容一點邊距，避免貼邊 */
+}
+
+/* 圖片和關閉按鈕的容器 */
+.image-modal-content {
+  position: relative; /* 為了讓關閉按鈕可以絕對定位 */
+  display: flex;
+}
+
+/* 放大後的圖片 */
+.modal-image {
+  max-width: 90vw;   /* 最大寬度不超過視窗寬度的 90% */
+  max-height: 90vh; /* 最大高度不超過視窗高度的 90% */
+  object-fit: contain;
+  border-radius: 8px; /* 加個圓角 */
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* 加個陰影更有立體感 */
+}
+
+/* 關閉按鈕 (X) */
+.image-modal-close {
+  position: absolute;
+  top: -15px;      /* 定位到圖片容器的右上角偏外側 */
+  right: -15px;
+  font-size: 2rem; /* 放大 icon */
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  text-shadow: 0 0 8px rgba(0,0,0,0.8); /* 給文字加點陰影，在複雜背景下更清晰 */
+}
+
+.image-modal-close:hover {
+  transform: scale(1.2); /* 滑鼠移過去稍微放大 */
 }
 </style>
