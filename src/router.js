@@ -157,6 +157,7 @@ const routes = [
             { path: 'members', name: 'AdminMembers', component: () => import('./views/Admin/AdminMemberView.vue') },
             { path: 'orders', name: 'AdminOrders', component: () => import('./views/Admin/AdminOrderView.vue') },
             { path: 'shipping', name: 'AdminShipping', component: () => import('./views/Admin/AdminShippingView.vue') },
+            { path: 'productcreate', name:'AdminProductCreate', component: () => import('./views/Admin/AdminProductCreateView.vue')},
             { path: 'products', name: 'AdminProducts', component: () => import('./views/Admin/AdminProductListView.vue') },
             { path: 'productedit/:id', name: 'AdminProductEdit', component: () => import('./views/Admin/AdminProductEditView.vue') },
             { path: 'coupons', name: 'AdminCoupons', component: () => import('./views/Admin/AdminCouponView.vue') },
