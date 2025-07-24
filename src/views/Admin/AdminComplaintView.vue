@@ -14,6 +14,7 @@ const complaints = ref([]);
 const selectedComplaint = ref(null);
 const isLoading = ref(true);
 const error = ref(null);
+const BACKEND_URL = 'https://localhost:7017'; 
 
 // --- 篩選與搜尋 ---
 const activeStatus = ref(0);
@@ -42,6 +43,9 @@ const toast = reactive({
   message: '',
   type: 'success',
 });
+
+const showImageModal = ref(false);
+const selectedImage = ref(null);
 
 // ========================================================================
 // 區塊 3：計算屬性 (Computed Properties)
@@ -179,6 +183,23 @@ const refreshData = async () => {
     selectedComplaint.value = updatedComplaint || null;
 };
 
+// 【新增】圖片 Modal 相關方法
+const getImageUrl = (filePath) => {
+  if (!filePath) return '';
+  return filePath.startsWith('http') ? filePath : `${BACKEND_URL}${filePath}`;
+};
+
+const openImageModal = (imagePath) => {
+  selectedImage.value = getImageUrl(imagePath);
+  showImageModal.value = true;
+};
+
+const closeImageModal = () => {
+  showImageModal.value = false;
+  selectedImage.value = null;
+};
+
+
 // ========================================================================
 // 區塊 5：監聽器 (Watchers)
 // ========================================================================
@@ -295,6 +316,19 @@ onMounted(async () => {
             <hr>
             <h5><strong>主旨:</strong> {{ selectedComplaint.subject }}</h5>
             <p class="description-box">{{ selectedComplaint.description }}</p>
+            <div v-if="selectedComplaint.attachments && selectedComplaint.attachments.length > 0" class="attachments-section mt-3">
+            <h6><strong>附件照片:</strong></h6>
+            <div class="attachment-grid">
+              <img
+                v-for="att in selectedComplaint.attachments"
+                :key="att.attachmentId"
+                :src="getImageUrl(att.filePath)"
+                alt="申訴附件"
+                class="attachment-thumbnail"
+                @click="openImageModal(att.filePath)"
+              />
+            </div>
+          </div>
             
             <!-- 客服回覆區 -->
             <div v-if="selectedComplaint.responseText" class="response-box mt-3">
@@ -328,7 +362,16 @@ onMounted(async () => {
       </div>
     </div>
   </div>
-</template>
+  <Teleport to="body">
+      <div v-if="showImageModal" class="image-modal-overlay" @click="closeImageModal">
+        <div class="image-modal-content" @click.stop>
+          <i class="fas fa-times image-modal-close" @click="closeImageModal"></i>
+          <img :src="selectedImage" alt="圖片預覽" class="modal-image" />
+        </div>
+      </div>
+    </Teleport>
+
+   </template>
 
 <style scoped>
 /* ======================================================================== */
@@ -546,4 +589,48 @@ onMounted(async () => {
 @keyframes spinner-anim {
     to { transform: rotate(360deg); }
 }
+.attachments-section {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+}
+
+.attachment-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 0.5rem;
+}
+
+.attachment-thumbnail {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  transition: opacity 0.2s;
+}
+
+.attachment-thumbnail:hover {
+  opacity: 0.8;
+}
+
+/* --- 圖片 Modal 彈窗樣式 (如果全域已有可省略) --- */
+.image-modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 9999;
+}
+.image-modal-content { position: relative; }
+.modal-image {
+  max-width: 90vw; max-height: 90vh; border-radius: 8px;
+}
+.image-modal-close {
+  position: absolute; top: -15px; right: -15px; font-size: 2rem; color: white;
+  cursor: pointer; text-shadow: 0 0 8px rgba(0,0,0,0.8);
+  transition: transform 0.2s;
+}
+.image-modal-close:hover { transform: scale(1.2); }
 </style>

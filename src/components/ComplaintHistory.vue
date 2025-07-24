@@ -12,6 +12,9 @@ import api from '@/services/jjapi.js';
 const complaints = ref([]); // 用來存放從 API 獲取的申訴歷史列表
 const isLoading = ref(true);  // 控制「載入中...」訊息的顯示
 const error = ref(null);      // 存放錯誤訊息
+const BACKEND_URL = 'https://localhost:7017';
+const showImageModal = ref(false);// 【新增】圖片 Modal 相關狀態
+const selectedImage = ref(null);
 
 // ========================================================================
 // 區塊 3：主要方法 (Methods)
@@ -38,6 +41,23 @@ const fetchMyComplaints = async () => {
     isLoading.value = false;
   }
 };
+
+// 【新增】圖片 Modal 相關方法
+const getImageUrl = (filePath) => {
+  if (!filePath) return '';
+  return filePath.startsWith('http') ? filePath : `${BACKEND_URL}${filePath}`;
+};
+
+const openImageModal = (imagePath) => {
+  selectedImage.value = getImageUrl(imagePath);
+  showImageModal.value = true;
+};
+
+const closeImageModal = () => {
+  showImageModal.value = false;
+  selectedImage.value = null;
+};
+
 
 // ========================================================================
 // 區塊 4：生命週期鉤子 (Lifecycle Hooks)
@@ -86,6 +106,22 @@ onMounted(() => {
         </span>
 
         <!-- 如果有客服回覆，就顯示出來 -->
+         <div v-if="complaint.attachments && complaint.attachments.length > 0" class="mt-3">
+          <p class="mb-1 fw-bold">您上傳的附件:</p>
+          <div class="attachment-grid">
+            <img
+              v-for="att in complaint.attachments"
+              :key="att.attachmentId"
+              :src="getImageUrl(att.filePath)"
+              alt="申訴附件"
+              class="attachment-thumbnail"
+              @click="openImageModal(att.filePath)"
+            />
+          </div>
+        </div>
+
+        <div v-if="complaint.responseText" class="mt-3 p-3 bg-light border rounded">
+          </div>
         <div v-if="complaint.responseText" class="mt-3 p-3 bg-light border rounded">
             <p class="mb-1 fw-bold">客服回覆:</p>
             <p class="mb-0">{{ complaint.responseText }}</p>
@@ -96,4 +132,56 @@ onMounted(() => {
       </div>
     </div>
   </div>
-</template>
+  
+    <Teleport to="body">
+          <div v-if="showImageModal" class="image-modal-overlay" @click="closeImageModal">
+            <div class="image-modal-content" @click.stop>
+              <i class="fas fa-times image-modal-close" @click="closeImageModal"></i>
+              <img :src="selectedImage" alt="圖片預覽" class="modal-image" />
+            </div>
+          </div>
+        </Teleport>
+
+ </template>
+
+<style scoped>
+/* --- ComplaintHistory 的樣式 --- */
+.attachment-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.attachment-thumbnail {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  transition: transform 0.2s;
+}
+
+.attachment-thumbnail:hover {
+  transform: scale(1.05);
+  border-color: #999;
+}
+
+/* --- 圖片 Modal 彈窗樣式 (如果全域已有可省略) --- */
+.image-modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 9999;
+}
+.image-modal-content { position: relative; }
+.modal-image {
+  max-width: 90vw; max-height: 90vh; border-radius: 8px;
+}
+.image-modal-close {
+  position: absolute; top: -15px; right: -15px; font-size: 2rem; color: white;
+  cursor: pointer; text-shadow: 0 0 8px rgba(0,0,0,0.8);
+  transition: transform 0.2s;
+}
+.image-modal-close:hover { transform: scale(1.2); }
+</style>
