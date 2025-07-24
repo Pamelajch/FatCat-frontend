@@ -1,6 +1,8 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import api from '@/services/jjapi.js'; // 👈 確保只匯入 api
+import Swal from 'sweetalert2'; 
+import 'sweetalert2/dist/sweetalert2.min.css'; 
 
 // --- Props & Emits ---
 const props = defineProps({
@@ -36,7 +38,11 @@ const fetchReportReasons = async () => {
 
 const submitReport = async () => {
   if (!currentReport.reasonTypeId) {
-    alert('請選擇一個檢舉原因。');
+    emit('close');
+    Swal.fire({
+      icon: 'warning',
+      title: '請選擇一個檢舉原因',
+    });
     return;
   }
   try {
@@ -45,14 +51,29 @@ const submitReport = async () => {
       reasonComment: currentReport.reasonComment
     };
     
-    // 【改用 api 實例發送請求】
     await api.post(`/reviews/${props.reviewId}/report`, payload);
     
-    alert('感謝您的檢舉，我們將會盡快處理。');
-    emit('close');
+    // 【修改處】將 emit('close') 移到 Swal.fire() 的前面
+    // 這樣就會先關閉視窗，再顯示提示
+    emit('close'); 
+    
+    Swal.fire({
+      icon: 'success',
+      title: '檢舉已送出',
+      text: '感謝您的回報，我們將會盡快處理。',
+    });
+    
   } catch (err) {
     console.error('提交檢舉失敗:', err);
-    alert('提交失敗，請稍後再試。');
+    
+    // 【修改處】錯誤時也一樣，先關閉視窗再提示
+    emit('close');
+    
+    Swal.fire({
+      icon: 'error',
+      title: '提交失敗',
+      text: '發生未知錯誤，請稍後再試。',
+    });
   }
 };
 

@@ -27,29 +27,13 @@ const handleReviewSubmitted = () => {
     <h1>rr 各個元件的測試區塊</h1>
     <hr>
 
-    <!-- 
-        ============================================================
-        區塊 A：顯示評論列表的元件
-        我們將 testProductId 傳遞給它  ((已經實際放入了))
-        ============================================================
-     -->
-    <!-- <h3 class="mt-4">商品(單品)評論列表 (ReviewComponent)</h3>
-    <ProductReview :product-id="testProductId" />
-    <hr> -->
-
-    <!-- 
-        ============================================================
-        區塊 B：發表新評論的表單元件
-        我們將 testProductId 和 testOrderId 都傳遞給它
-        ============================================================
-     -->
-    <h3 class="mt-4">發表新評論 (PostReviewForm)</h3>
+     <!-- <h3 class="mt-4">發表新評論 (PostReviewForm)</h3>
     <PostReviewForm 
         :product-id="testProductId" 
         :order-id="testOrderId"
         @review-submitted="handleReviewSubmitted" 
     />
-    <hr>
+    <hr> -->
 
     <!-- 
         ============================================================

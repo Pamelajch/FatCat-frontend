@@ -29,6 +29,8 @@ const isLoading = ref(true);
 const error = ref(null);
 const showReportModal = ref(false); 
 const reportingReviewId = ref(null);
+const showImageModal = ref(false);
+const selectedImage = ref(null);
 
 // ========================================================================
 // 區塊 4：計算屬性
@@ -79,7 +81,25 @@ const closeReportModal = () => {
 };
 
 // ========================================================================
-// 區塊 7：生命週期鉤子
+// 區塊 7：圖片預覽相關方法
+// ========================================================================
+const openImageModal = (imagePath) => {
+  selectedImage.value = `${BACKEND_URL}${imagePath}`;
+  showImageModal.value = true;
+};
+
+const closeImageModal = () => {
+  showImageModal.value = false;
+  selectedImage.value = null;
+};
+
+// 建構完整的圖片 URL
+const getImageUrl = (filePath) => {
+  return `${BACKEND_URL}${filePath}`;
+};
+
+// ========================================================================
+// 區塊 8：生命週期鉤子
 // ========================================================================
 onMounted(() => {
   fetchMyReviews(); // 呼叫修正後的函式
@@ -115,8 +135,21 @@ onMounted(() => {
             </div>
           </div>
           <p class="card-text mt-3">{{ review.comment }}</p>
-          <div v-if="review.attachments && review.attachments.length > 0" class="attachments mt-2">
+          <div v-if="review.attachments && review.attachments.length > 0" class="attachments mt-3">
+            <small class="text-muted d-block mb-2">附件照片：</small>
+            <div class="attachment-grid">
+              <img 
+                v-for="(attachment, index) in review.attachments" 
+                :key="index"
+                :src="getImageUrl(attachment.filePath)"
+                :alt="attachment.fileName"
+                :title="attachment.fileName"
+                class="attachment-thumbnail"
+                @click="openImageModal(attachment.filePath)"
+                @error="$event.target.src = '/images/products/default.jpg'"
+              />
             </div>
+          </div>
           <div v-if="review.response" class="official-response mt-3 p-3">
             <strong>店家回覆：</strong> {{ review.response }}
           </div>
@@ -131,6 +164,26 @@ onMounted(() => {
     
     <div v-if="!isLoading && reviews.length === 0" class="text-center text-muted py-4">
       <p>您尚未發表任何評論。</p>
+    </div>
+
+     <!-- 圖片預覽 Modal -->
+    <div 
+      v-if="showImageModal" 
+      class="image-modal-overlay" 
+      @click="closeImageModal"
+    >
+      <div class="image-modal-content" @click.stop>
+        <button 
+          type="button" 
+          class="btn-close image-modal-close" 
+          @click="closeImageModal"
+        ></button>
+        <img 
+          :src="selectedImage" 
+          alt="預覽圖片" 
+          class="modal-image"
+        />
+      </div>
     </div>
     
     <ReportModal v-if="showReportModal" :review-id="reportingReviewId" @close="closeReportModal" />
