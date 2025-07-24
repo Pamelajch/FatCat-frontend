@@ -1,27 +1,45 @@
-<!-- src/components/GuessULikeSection.vue -->
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
 
-const products = ref([
-  {
-    id: 101,
-    name: '社畜最愛宵夜麵',
-    imageUrl: '/fakenoodle.jpg',
-    tag: '強檔'
-  },
-  {
-    id: 102,
-    name: '小女友泡麵套餐',
-    imageUrl: '/fakenoodle.jpg',
-    tag: '推薦'
-  },
-  {
-    id: 103,
-    name: '16塊腹肌指定口味',
-    imageUrl: '/fakenoodle.jpg',
-    tag: '人氣'
+// 猜你喜歡商品列表
+const products = ref([])
+
+onMounted(async () => {
+  try {
+    // 並行抓取產品與圖片
+    const [productRes, imageRes] = await Promise.all([
+      axios.get('https://localhost:7017/api/Products'),
+      axios.get('https://localhost:7017/api/ProductImages')
+    ])
+
+    const productList = productRes.data
+    const imageList = imageRes.data
+
+    // 1️⃣ 隨機打亂商品順序
+    const shuffled = productList.sort(() => 0.5 - Math.random())
+
+    // 2️⃣ 選擇前三筆
+    const selected = shuffled.slice(0, 3)
+
+    // 3️⃣ 合併圖片與商品資料
+    const result = selected.map(p => {
+      const mainImage = imageList.find(img => img.productId === p.productsId && img.isMain === 1)
+      return {
+        id: p.productsId,
+        name: p.name,
+        imageUrl: mainImage
+          ? `https://localhost:7017/ProductImages/${mainImage.imageUrl}` // ✅ 改這裡
+          : '/ProductImages/default.jpg',
+        tag: '推薦'
+      }
+    })
+
+    products.value = result
+  } catch (error) {
+    console.error('猜你喜歡資料抓取失敗:', error)
   }
-])
+})
 </script>
 
 <template>
