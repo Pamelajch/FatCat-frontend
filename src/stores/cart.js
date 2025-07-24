@@ -4,7 +4,7 @@ import axios from 'axios'
 
 export const useCartStore = defineStore('cart', () => {
     const items = ref(JSON.parse(localStorage.getItem('cart')) || [
-        // {
+        // { 
         //     id: 1,
         //     name: '一般般牛肉片',
         //     price: 5,
