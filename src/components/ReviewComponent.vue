@@ -87,11 +87,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- ================================================================== -->
-  <!-- 區塊 8：頁面 HTML 結構                                           -->
-  <!-- ================================================================== -->
   <div class="review-section my-5">
-    <!-- 標題和平均評分 -->
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h3 class="mb-0">我的評論紀錄 ({{ reviews.length }})</h3>
       <div v-if="reviews.length > 0" class="average-rating">
@@ -100,42 +96,35 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 錯誤或載入中訊息 -->
     <div v-if="error" class="alert alert-warning">{{ error }}</div>
     <div v-if="isLoading" class="text-center py-4"><div class="spinner-border"></div></div>
 
-    <!-- 評論列表 -->
     <div v-if="!isLoading && reviews.length > 0" class="review-list">
       <div v-for="review in reviews" :key="review.reviewId" class="review-card card mb-3">
         <div class="card-body">
           <div class="review-header d-flex align-items-start mb-2">
-            
-            <!-- vvvvvvvvvv 【修改】顯示是針對哪個商品的評論 vvvvvvvvvvvv -->
             <div class="flex-grow-1">
               <small class="text-muted">針對商品</small>
               <h6 class="card-title mb-0">{{ review.productName || '商品名稱' }}</h6>
             </div>
-            
             <div class="ms-auto text-end">
-              <!-- 星星評分 -->
               <div class="rating-stars mb-2">
                 <span v-for="n in 5" :key="n" class="star" :class="{ 'filled': n <= review.rating }">★</span>
               </div>
               <small class="text-muted">{{ new Date(review.createdAt).toLocaleDateString() }}</small>
             </div>
           </div>
-
           <p class="card-text mt-3">{{ review.comment }}</p>
-          
           <div v-if="review.attachments && review.attachments.length > 0" class="attachments mt-2">
-             <a v-for="att in review.attachments" :key="att.filePath" :href="`${BACKEND_URL}${att.filePath}`" target="_blank" title="點擊放大">
-               <img :src="`${BACKEND_URL}${att.filePath}`" class="img-thumbnail me-2" alt="review attachment">
-             </a>
-          </div>
-
+            </div>
           <div v-if="review.response" class="official-response mt-3 p-3">
             <strong>店家回覆：</strong> {{ review.response }}
           </div>
+
+          <div v-if="!review.status" class="hidden-review-warning mt-3">
+            此評論已隱藏！被檢舉原因：{{ review.hiddenReason || '管理員未提供特定原因' }}，有問題請洽客服。
+          </div>
+
         </div>
       </div>
     </div>
@@ -144,12 +133,7 @@ onMounted(() => {
       <p>您尚未發表任何評論。</p>
     </div>
     
-    <!-- 檢舉 Modal 在此頁面可能不需要，但先保留 -->
-    <ReportModal 
-      v-if="showReportModal" 
-      :review-id="reportingReviewId"
-      @close="closeReportModal" 
-    />
+    <ReportModal v-if="showReportModal" :review-id="reportingReviewId" @close="closeReportModal" />
   </div>
 </template>
 
@@ -166,4 +150,12 @@ onMounted(() => {
 .official-response { background-color: #f6f6f6; border-radius: 5px; border: 1px solid #eee; }
 .review-actions .btn-link { text-decoration: none; font-size: 0.8rem; }
 .review-actions .btn-link:hover { text-decoration: underline; }
+.hidden-review-warning {
+    background-color: #f8d7da; /* 粉紅底 */
+    color: #842029; /* 紅字 */
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
+    border: 1px solid #f5c2c7;
+    font-size: 0.9rem;
+}
 </style>

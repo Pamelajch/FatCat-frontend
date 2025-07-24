@@ -59,16 +59,6 @@ const fetchReports = async () => {
   error.value = null;
   try {
     const response = await axios.get('/api/ReviewReports/admin-view');
-
-    // ============================================================
-    // vvvvvvvvvvvv 【核心偵錯步驟】 vvvvvvvvvvvv
-    // ============================================================
-    // 我們在這裡印出從後端收到的最原始的資料，看看究竟有幾筆
-    console.log('從後端收到的原始資料:', response.data);
-    console.log('收到的總筆數:', response.data.length);
-    // ============================================================
-    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
     allReports.value = response.data;
   } catch (err) {
     console.error("Failed to fetch reports:", err);
