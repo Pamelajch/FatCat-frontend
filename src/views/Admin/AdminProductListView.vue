@@ -14,7 +14,16 @@ const selectedStatus = ref('')
 // 撈商品資料（已包含 categoryId、sortId）
 const fetchProducts = async () => {
   const res = await fetch('https://localhost:7017/api/AdminProducts')
-  products.value = await res.json()
+  const data = await res.json() // 🔹 這行不能少！
+
+  products.value = data.map(p => {
+    return {
+      ...p,
+      mainImage: p.mainImage?.startsWith('/ProductImages/')
+        ? p.mainImage
+        : `/ProductImages/${p.mainImage}`
+    }
+  })
 }
 
 // 撈分類資料
