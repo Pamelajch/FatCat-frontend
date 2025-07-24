@@ -126,6 +126,10 @@ const submitProduct = async () => {
     console.error(err)
   }
 }
+
+const cancelCreate = () => {
+  router.push({ name: 'AdminProducts' })
+}
 </script>
 
 <template>
@@ -229,6 +233,7 @@ const submitProduct = async () => {
       <!-- 提交按鈕 -->
       <div class="form-actions">
         <button type="submit">✔ 儲存商品</button>
+        <button type="button" class="cancel-btn" @click="cancelCreate">✖ 取消新增</button>
       </div>
     </form>
   </div>
@@ -318,22 +323,36 @@ h2 {
 }
 
 .form-actions {
-  text-align: center;
+  width: 100%;
   margin-top: 2rem;
+  text-align: center;
 }
 
 .form-actions button {
-  background-color: #7c4dff;
-  color: white;
   padding: 10px 24px;
+  font-size: 1.1rem;
   border: none;
   border-radius: 8px;
-  font-size: 1rem;
   cursor: pointer;
   transition: 0.3s;
+  margin: 0 10px;
 }
 
-.form-actions button:hover {
+.form-actions button[type="submit"] {
+  background-color: #7c4dff;
+  color: white;
+}
+
+.form-actions button[type="submit"]:hover {
   background-color: #9575cd;
+}
+
+.cancel-btn {
+  background-color: #cccccc;
+  color: #333;
+}
+
+.cancel-btn:hover {
+  background-color: #aaaaaa;
 }
 </style>
