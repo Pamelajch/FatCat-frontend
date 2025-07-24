@@ -152,13 +152,15 @@ const runAway = () => {
     </div>
 
     <!-- 中下：篩選 -->
-    <div class="filter-bar">
-      <label>材料風格分類：</label>
-      <select v-model="selectedSort">
-        <option v-for="sort in drinkSorts" :key="sort.sortId" :value="sort.sortId">
-          {{ sort.name }}
-        </option>
-      </select>
+    <div class="filter-container">
+      <div class="filter-card">
+        <label for="sort-select">🧪 材料風格分類：</label>
+        <select id="sort-select" v-model="selectedSort">
+          <option v-for="sort in drinkSorts" :key="sort.sortId" :value="sort.sortId">
+            {{ sort.name }}
+          </option>
+        </select>
+      </div>
     </div>
 
     <!-- 最下方：可拖曳材料清單 -->
@@ -335,14 +337,47 @@ const runAway = () => {
   margin-left: auto;
 }
 
-/* 中下方：分類篩選 */
-.filter-bar {
+/* 篩選區包裝容器：置中用 */
+.filter-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 魔法小卡片樣式 */
+.filter-card {
   display: flex;
   align-items: center;
   gap: 1rem;
-  font-size: 16px;
-  font-weight: bold;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid #e0c3ff;
+  border-radius: 16px;
+  box-shadow: 0 0 12px #a27bff66;
+  backdrop-filter: blur(10px);
   color: #fff;
+  font-weight: bold;
+  animation: floatCard 6s ease-in-out infinite;
+}
+
+/* 下拉選單樣式美化 */
+.filter-card select {
+  background: rgba(255, 255, 255, 0.15);
+  color: black;
+  padding: 8px 12px;
+  border: 1px solid #d8bbff;
+  border-radius: 10px;
+  font-size: 14px;
+  backdrop-filter: blur(6px);
+  appearance: none;
+  cursor: pointer;
+  box-shadow: 0 0 6px #ffffff33;
+}
+
+.filter-card select:focus {
+  outline: none;
+  border-color: #ffccff;
+  box-shadow: 0 0 8px #eac8ff;
 }
 
 /* 最下方：可拖曳材料清單 */
