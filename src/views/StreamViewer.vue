@@ -159,14 +159,13 @@ onUnmounted(() => {
 
         <div class="featured-product-container">
           <transition name="fade" mode="out-in">
-            <div v-if="featuredProduct" :key="featuredProduct.id" class="featured-product-card">
-              <img :src="`https://localhost:7017${featuredProduct.imageUrl}`" class="product-thumb" alt="商品圖片">
-              <div class="product-info">
-                <p class="product-name">{{ featuredProduct.name }}</p>
-                <a :href="`/productlist/product?id=${featuredProduct.id}`" target="_blank" rel="noopener noreferrer" class="btn-details">
-                  詳情
-                </a>
-              </div>
+            <div v-if="featuredProduct" :key="featuredProduct.id" class="featured-product-card promo-style">
+              <div class="promo-badge">🔥 現正主打商品!!</div>
+              <img :src="`https://localhost:7017/ProductImages/${featuredProduct.imageUrl}`" class="product-thumb" alt="商品圖片">
+              <p class="product-name">{{ featuredProduct.name }}</p>
+              <a :href="`/OneSpecialNoodle?id=${featuredProduct.id}`" target="_blank" rel="noopener noreferrer" class="btn-details">
+                詳情
+              </a>
             </div>
             <div v-else class="featured-product-placeholder">
               <i class="fas fa-shopping-bag placeholder-icon"></i>
@@ -222,6 +221,18 @@ onUnmounted(() => {
     align-items: flex-start;
 }
 
+.chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    min-width: 300px;
+    align-self: stretch;
+}
+
 .stream-title {
     margin-bottom: 1rem;
     font-size: 1.8rem;
@@ -257,9 +268,8 @@ onUnmounted(() => {
     }
 }
 
-/* ====== 【版面修正與新增樣式】 ====== */
 
-/* 左側容器 (影片+商品)，佔據主要空間 */
+/* ====== 主打商品區塊樣式 ====== */
 .stream-content-left {
     flex: 3;
     display: flex;
@@ -267,20 +277,6 @@ onUnmounted(() => {
     gap: 1.5rem;
 }
 
-/* 右側聊天室容器，固定寬度，高度填滿 */
-.chat-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-    min-width: 300px; /* 確保最小寬度 */
-    align-self: stretch; /* 讓聊天室高度能跟左側對齊 */
-}
-
-/* 主打商品容器，固定高度 */
 .featured-product-container {
     height: 122px; 
 }
@@ -305,51 +301,83 @@ onUnmounted(() => {
 /* 主打商品卡片本體 */
 .featured-product-card {
     display: flex;
-    align-items: center;
-    gap: 1rem;
+    justify-content: center; /* 水平置中 */
+    align-items: center;    /* 垂直置中 */
+    gap: 1.5rem;            /* 項目之間的間距 */
     padding: 1rem;
     height: 100%;
-    background-color: white;
     border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    border: 2px solid #ff4d4d;
+    position: relative;
+    overflow: hidden;
 }
 
+/* 促銷風格 */
+.promo-style {
+    color: white;
+    background: linear-gradient(135deg, #ff7e5f, #feb47b);
+    border: 2px solid #ff7e5f;
+    box-shadow: 0 5px 20px rgba(254, 180, 123, 0.5);
+    animation: pulse-bg 2s infinite;
+}
+
+@keyframes pulse-bg {
+    0% { box-shadow: 0 5px 20px rgba(254, 180, 123, 0.4); }
+    50% { box-shadow: 0 5px 30px rgba(255, 126, 95, 0.7); }
+    100% { box-shadow: 0 5px 20px rgba(254, 180, 123, 0.4); }
+}
+
+/* 促銷標籤 */
+.promo-badge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: #ff4d4d;
+    color: white;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border-radius: 8px 0 8px 0;
+    z-index: 2;
+}
+
+/* 商品縮圖 */
 .product-thumb {
-    width: 90px;
-    height: 90px;
+    width: 80px;  /* 稍微縮小圖片 */
+    height: 80px;
     object-fit: cover;
     border-radius: 6px;
     flex-shrink: 0;
+    border: 2px solid white;
 }
 
-.product-info {
-    flex-grow: 1;
-}
-
+/* 商品名稱 */
 .product-name {
     font-weight: bold;
-    font-size: 1.1rem;
-    margin: 0 0 0.5rem 0;
-    color: #333;
+    font-size: 1.5rem; /* 加大名稱字體 */
+    margin: 0;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
 
+/* 詳情按鈕 */
 .btn-details {
-    background-color: #ff4d4d;
-    color: white;
+    background-color: white;
+    color: #ff7e5f;
     text-decoration: none;
-    padding: 0.4rem 1.2rem;
+    padding: 0.5rem 1.5rem; /* 加大按鈕 */
     border-radius: 20px;
     font-weight: bold;
-    transition: background-color 0.2s;
+    transition: all 0.2s;
     display: inline-block;
+    border: 1px solid white;
+    flex-shrink: 0; /* 避免按鈕被壓縮 */
 }
 
 .btn-details:hover {
-    background-color: #e60000;
+    background-color: #fff5f2;
+    transform: scale(1.05);
 }
 
-/* 淡入淡出動畫 */
 .fade-enter-active,
 .fade-leave-active {
     transition: opacity 0.3s ease;

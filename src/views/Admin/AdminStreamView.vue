@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useStreamStore } from '@/stores/streamStore';
 import axios from 'axios';
 import ChatRoom from '@/components/ChatRoom.vue';
-import { HubConnectionBuilder } from '@microsoft/signalr'; // 【 SignalR】
+import { HubConnectionBuilder } from '@microsoft/signalr';
 import Swal from 'sweetalert2';
 
 // --- 功能區塊：元件狀態 ---
@@ -13,11 +13,9 @@ const pastStreams = ref([]);
 const error = ref(null);
 const loading = ref(false);
 const streamStore = useStreamStore();
-
-// --- 【為「主打商品」功能新增的狀態】 ---
-const connection = ref(null); // SignalR 連線實例
-const productIdToFeature = ref(''); // 綁定輸入框的商品 ID
-const currentFeaturedProduct = ref(null); // 用於顯示當前主打的商品資訊
+const connection = ref(null);
+const productIdToFeature = ref('');
+const currentFeaturedProduct = ref(null);
 
 // --- 功能區塊：API 呼叫 ---
 const fetchHistory = async () => {
@@ -35,10 +33,7 @@ const handleStartStream = async () => {
     error.value = '請輸入直播標題！';
     return;
   }
-  
-  // 【★ 功能#1 ★】開始新直播前，清除舊的聊天紀錄
   sessionStorage.removeItem('fatcat_chat_history');
-
   loading.value = true;
   error.value = null;
   try {
@@ -49,7 +44,6 @@ const handleStartStream = async () => {
     loading.value = false;
   }
 };
-
 const handleEndStream = async () => {
   loading.value = true;
   error.value = null;
@@ -63,56 +57,44 @@ const handleEndStream = async () => {
     loading.value = false;
   }
 };
-
 const copyToClipboard = (text) => {
   navigator.clipboard.writeText(text).then(() => Swal.fire('已成功複製！', '', 'success'));
 };
 
 // --- 【「主打商品」功能的函式】 ---
-
-/**
- * @description 建立並啟動與後端 SignalR Hub 的連線
- */
 const setupSignalRConnection = () => {
   const hubUrl = "https://localhost:7017/chatHub";
-  
   connection.value = new HubConnectionBuilder()
-    .withUrl(hubUrl) // 暫時移除 token 相關邏輯，先確保連線本身能建立
+    .withUrl(hubUrl, {
+      accessTokenFactory: () => localStorage.getItem('adminToken')
+    })
     .withAutomaticReconnect()
     .build();
-    
-  // 取得管理者 token
-  const adminToken = localStorage.getItem('adminToken');
-  if (adminToken) {
-    // 將 admin_token 作為查詢參數附加到 URL
-    connection.value.baseUrl = `${hubUrl}?admin_token=${encodeURIComponent(adminToken)}`;
-  } else {
-    console.error("找不到管理者 Token，無法建立 SignalR 連線");
-    Swal.fire('連線錯誤', '找不到管理者登入資訊，請重新登入。', 'error');
-    return;
-  }
 
-  // 功能說明：監聽來自伺服器的「收到主打商品」廣播
+  // 監聽廣播，更新本地狀態
   connection.value.on("ReceiveFeaturedProduct", (product) => {
-    currentFeaturedProduct.value = product;
+    currentFeaturedProduct.value = product; // 這行會更新 UI
+    Swal.fire({
+        icon: 'success',
+        title: '商品上架成功！',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000
+    });
   });
-
-  // 功能說明：監聽來自伺服器的「清除主打商品」廣播
   connection.value.on("ReceiveClearProduct", () => {
     currentFeaturedProduct.value = null;
     productIdToFeature.value = '';
   });
-
-  // 功能說明：監聽來自伺服器的「操作失敗」訊息
   connection.value.on("FeatureProductFailed", (errorMessage) => {
     Swal.fire('操作失敗', errorMessage, 'error');
   });
 
-  // 功能說明：開始連線
+  // 開始連線
   connection.value.start()
     .then(() => {
       console.log('✅ SignalR 已連接 (管理者)');
-      // 連線成功後，呼叫 JoinAsAdmin 將自己加入管理員群組
       connection.value.invoke('JoinAsAdmin');
     })
     .catch(err => {
@@ -121,50 +103,32 @@ const setupSignalRConnection = () => {
     });
 };
 
-/**
- * @description 點擊「上架商品」按鈕時呼叫
- */
 const featureProduct = () => {
   if (!productIdToFeature.value.trim()) {
     Swal.fire('請輸入商品 ID', '', 'warning');
     return;
   }
   if (connection.value?.state === 'Connected') {
-    // 呼叫 Hub 的 FeatureProduct 方法
     connection.value.invoke("FeatureProduct", productIdToFeature.value.trim());
   } else {
     Swal.fire('連線中斷', '與伺服器的連線已中斷，請刷新頁面重試。', 'error');
   }
 };
 
-/**
- * @description 點擊「下架商品」按鈕時呼叫
- */
 const clearProduct = () => {
   if (connection.value?.state === 'Connected') {
-    // 呼叫 Hub 的 ClearFeaturedProduct 方法
     connection.value.invoke("ClearFeaturedProduct");
   } else {
      Swal.fire('連線中斷', '與伺服器的連線已中斷，請刷新頁面重試。', 'error');
   }
 };
-// --- 【「主打商品」函式結束】 ---
-
 
 // --- 功能區塊：生命週期鉤子 ---
-
-/**
- * @description 元件掛載時執行一次，用於初始化頁面狀態和建立連線
- */
 onMounted(() => {
   streamStore.checkCurrentStream();
   fetchHistory();
-  setupSignalRConnection(); // signalr
+  setupSignalRConnection();
 });
-
-/**
- * @description 元件銷毀前執行，用於清理連線，避免記憶體洩漏
- */
 onUnmounted(() => {
   if (connection.value) {
     connection.value.stop();
@@ -245,7 +209,7 @@ onUnmounted(() => {
                 <div v-if="currentFeaturedProduct">
                   <p class="mb-2"><strong>目前主打商品：</strong></p>
                   <div class="d-flex align-items-center p-2 rounded" style="background-color: #f8f9fa;">
-                    <img :src="`https://localhost:7017${currentFeaturedProduct.imageUrl}`" style="width: 50px; height: 50px; object-fit: cover;" class="me-3 rounded">
+                    <img :src="`https://localhost:7017/ProductImages/${currentFeaturedProduct.imageUrl}`" style="width: 50px; height: 50px; object-fit: cover;" class="me-3 rounded">
                     <div class="flex-grow-1">
                       <div class="fw-bold">{{ currentFeaturedProduct.name }}</div>
                       <small class="text-muted">ID: {{ currentFeaturedProduct.id }} | 價格: ${{ currentFeaturedProduct.price }}</small>
@@ -308,3 +272,4 @@ onUnmounted(() => {
 .card-header { background-color: #f1f3f5; }
 .nav-link { cursor: pointer; }
 </style>
+
