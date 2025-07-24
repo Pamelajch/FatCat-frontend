@@ -3,7 +3,9 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { computed } from 'vue'
 import { watch } from 'vue'
+import { useCartStore } from '@/stores/cart'
 
+const cartStore = useCartStore()
 const router = useRouter()
 
 // 前往產品詳情
@@ -188,6 +190,25 @@ const addSmartRandomIngredients = () => {
     alert('每個分類都已經有一個食材囉～無法再抽了 😺')
   }
 }
+
+const addToCart = () => {
+  if (bowl.value.length === 0) {
+    alert('請先選擇至少一樣食材再加入購物車～')
+    return
+  }
+
+  bowl.value.forEach(product => {
+    cartStore.addItem({
+      id: product.productsId, // 注意這裡使用 id 屬性
+      name: product.name,
+      price: product.price ?? 0,
+      image: product.imageUrl || '' // 預設圖已處理好
+    })
+  })
+
+  alert('已成功加入購物車 🛒')
+  bowl.value = [] // ✅ 加完清空
+}
 </script>
 
 <template>
@@ -286,7 +307,8 @@ const addSmartRandomIngredients = () => {
   <div class="button-group">
     <button @click="bowl = []" class="action-button">清空碗</button>
     <button @click="addSmartRandomIngredients" class="action-button">隨機抽選食材 🎯</button>
-    <button class="action-button">加入購物車</button>
+    <button class="action-button" @click="addToCart">加入購物車</button>
+
     <RouterLink :to="{ name: 'specialnoodle' }">
       <button class="action-button">查看特殊款泡麵 ➜</button>
     </RouterLink>
