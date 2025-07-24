@@ -46,6 +46,42 @@ const getEmoji = (id) => {
 onMounted(() => {
   fetchCategories()
 })
+
+const createRipple = (e) => {
+  const target = e.currentTarget;
+  const ripple = document.createElement('span');
+  ripple.classList.add('ripple');
+
+  const rect = target.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  const x = e.clientX - rect.left - size / 2;
+  const y = e.clientY - rect.top - size / 2;
+
+  ripple.style.width = ripple.style.height = `${size}px`;
+  ripple.style.left = `${x}px`;
+  ripple.style.top = `${y}px`;
+
+  target.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+};
+
+const spawnTrail = (x, y) => {
+  const trail = document.createElement('span');
+  trail.classList.add('trail-dot');
+  trail.style.left = `${x}px`;
+  trail.style.top = `${y}px`;
+  document.body.appendChild(trail);
+
+  setTimeout(() => {
+    trail.remove();
+  }, 800);
+};
+
+onMounted(() => {
+  window.addEventListener('mousemove', (e) => {
+    spawnTrail(e.clientX, e.clientY);
+  });
+});
 </script>
 
 <template>
@@ -57,7 +93,7 @@ onMounted(() => {
         :key="cat.productCategoriesId"
         class="flip-box"
       >
-        <div class="flip-inner">
+        <div class="flip-inner" @click="createRipple">
           <!-- 正面：分類名稱 -->
           <div class="flip-front">
             <p class="category-name">{{ cat.name }}</p>
@@ -152,5 +188,49 @@ onMounted(() => {
 
 .category-emoji {
   font-size: 2.5rem;
+}
+</style>
+
+<style>
+/* 點擊 ripple */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(0);
+  animation: ripple-effect 0.6s ease-out;
+  pointer-events: none;
+  z-index: 10;
+}
+@keyframes ripple-effect {
+  to {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* 游動波紋軌跡 */
+.trail-dot {
+  position: fixed;
+  width: 24px;
+  height: 24px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 80%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  animation: steam-fade 1.2s ease-out forwards;
+  filter: blur(4px);
+  opacity: 0.7;
+}
+@keyframes steam-fade {
+  0% {
+    transform: scale(0.5) translate(-50%, -50%) translateY(0);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.5) translate(-50%, -50%) translateY(-20px) rotate(10deg);
+    opacity: 0;
+  }
 }
 </style>

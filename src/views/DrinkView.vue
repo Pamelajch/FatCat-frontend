@@ -378,7 +378,6 @@ const runAway = () => {
 }
 
 /* 星光粒子效果 */
-/* ✨ 魔法星塵粒子 */
 .particles {
   position: absolute;
   inset: 0;
