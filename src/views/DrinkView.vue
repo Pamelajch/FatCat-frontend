@@ -1,6 +1,11 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 
+const catRef = ref(null)
+const catX = ref(0)
+const catY = ref(0)
+let catFloatTimer = null
+
 const colors = ['#ffffffcc', '#e2b8ffcc', '#ffe6aacc'] // 白、粉紫、淡金（都有透明度）
 
 const particles = ref(Array.from({ length: 80 }, () => {
@@ -85,11 +90,31 @@ onMounted(() => {
     messageIndex = (messageIndex + 1) % messages.length
     currentMessage.value = messages[messageIndex]
   }, 5000)
+  floatCat()
+  catFloatTimer = setInterval(floatCat, 3000)
 })
 
 onBeforeUnmount(() => {
-  clearInterval(timer)
+  clearInterval(catFloatTimer)
 })
+
+const floatCat = () => {
+  catX.value = Math.random() * 40 - 20 // -20 ~ +20 px
+  catY.value = Math.random() * 30 - 15
+  if (catRef.value) {
+    catRef.value.style.transform = `translate(${catX.value}px, ${catY.value}px)`
+  }
+}
+
+const runAway = () => {
+  const x = Math.random() * 200 - 100
+  const y = Math.random() * 150 - 75
+  if (catRef.value) {
+    catRef.value.style.transition = 'transform 0.5s ease'
+    catRef.value.style.transform = `translate(${x}px, ${y}px)`
+    setTimeout(floatCat, 1000) // 一秒後回復漂浮
+  }
+}
 </script>
 
 <template>
@@ -98,8 +123,12 @@ onBeforeUnmount(() => {
     <!-- 上方主要互動區域 -->
     <div class="top-zone">
       <!-- 左：貓貓預言師 -->
-      <div class="cat-zone">
-        <img src="/cat-head.png" class="cat-img" />
+      <div
+        class="cat-zone"
+        ref="catRef"
+        @mouseenter="runAway"
+      >
+        <img src="/cat-head.png" class="cat-img glowy" />
         <div class="cat-message">{{ currentMessage }}</div>
       </div>
 
@@ -231,6 +260,29 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 10px rgba(200, 200, 255, 0.2);
   white-space: pre-line;
   min-width: 120px;
+}
+
+.glowy {
+  filter: drop-shadow(0 0 10px #ffffff)
+          drop-shadow(0 0 14px #e2b8ff)
+          drop-shadow(0 0 20px #ffe6aa);
+  transition: transform 0.5s ease;
+  animation: glowPulse 4s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0% {
+    filter: drop-shadow(0 0 10px #ffffff)
+            drop-shadow(0 0 14px #e2b8ff);
+  }
+  50% {
+    filter: drop-shadow(0 0 16px #ffffff)
+            drop-shadow(0 0 20px #ffddcc);
+  }
+  100% {
+    filter: drop-shadow(0 0 10px #ffffff)
+            drop-shadow(0 0 14px #e2b8ff);
+  }
 }
 
 /* 杯子區域 */
