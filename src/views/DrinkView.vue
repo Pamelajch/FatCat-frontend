@@ -1,6 +1,21 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 
+const colors = ['#ffffffcc', '#e2b8ffcc', '#ffe6aacc'] // 白、粉紫、淡金（都有透明度）
+
+const particles = ref(Array.from({ length: 80 }, () => {
+  const size = Math.random() * 4 + 2 // 2~6px
+  return {
+    top: Math.random() * 100 + '%',
+    left: Math.random() * 100 + '%',
+    size: size + 'px',
+    duration: Math.random() * 4 + 3 + 's',
+    delay: Math.random() * 5 + 's',
+    color: colors[Math.floor(Math.random() * colors.length)],
+    opacity: size < 3 ? 0.4 : 0.8
+  }
+}))
+
 const DRINK_CATEGORY_ID = 99
 
 const drinkSorts = [
@@ -131,7 +146,24 @@ onBeforeUnmount(() => {
         <p>{{ item.description }}</p>
       </div>
     </div>
-
+    <!-- 星光粒子效果 -->
+    <div class="particles">
+      <div
+        v-for="(p, i) in particles"
+        :key="i"
+        class="particle"
+        :style="{
+          top: p.top,
+          left: p.left,
+          width: p.size,
+          height: p.size,
+          background: p.color,
+          opacity: p.opacity,
+          animationDuration: p.duration,
+          animationDelay: p.delay
+        }"
+      ></div>
+    </div>
   </div>
 </template>
 
@@ -165,7 +197,7 @@ onBeforeUnmount(() => {
   z-index: 1;
 }
 
-/* 👉 上方：貓貓、杯子、已選材料 */
+/* 上方：貓貓、杯子、已選材料 */
 .top-zone {
   display: flex;
   justify-content: center;
@@ -272,7 +304,7 @@ onBeforeUnmount(() => {
   width: 160px;
   padding: 12px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.466);
   backdrop-filter: blur(6px);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   text-align: center;
@@ -291,5 +323,46 @@ onBeforeUnmount(() => {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-6px); }
   100% { transform: translateY(0px); }
+}
+
+/* 星光粒子效果 */
+/* ✨ 魔法星塵粒子 */
+.particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(2px);
+  box-shadow: 0 0 8px currentColor;
+  animation: twinkle 6s ease-in-out infinite, float 10s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(4px, -6px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
 }
 </style>
