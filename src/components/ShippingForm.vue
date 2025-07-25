@@ -1,178 +1,240 @@
 <template>
   <ul class="list-group">
     <li class="list-group-item">
-      <h3>送貨資料填寫</h3>
+      <h3>選擇送貨地址</h3>
     </li>
 
-    <li class="list-group-item">
-      送貨方式:
-      <div>
-        <select class="form-select form-select-sm" v-model.number="selectedShippingId">
-          <option disabled value="">請選擇送貨方式</option>
-          <option
-            v-for="option in shippingOptions"
-            :key="option.shippingId"
-            :value="option.shippingId"
-          >
-            {{ option.name }}
-          </option>
-        </select>
-        <span class="text-danger" v-if="errors.shippingId">請選擇送貨方式</span>
+    <!-- 載入狀態 -->
+    <li class="list-group-item" v-if="isLoading">
+      <div class="text-center">
+        <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+          <span class="visually-hidden">載入中...</span>
+        </div>
+        載入地址中...
       </div>
     </li>
 
-    <!-- 宅配地址輸入 -->
-    <li class="list-group-item" v-if="selectedShipping?.shippingTypeId === 1">
-      收件地址:
-      <div>
-        <input type="text" class="form-control" v-model="recipientAddress" />
-        <span class="text-danger" v-if="errors.recipientAddress">請輸入收件地址</span>
-      </div>
-    </li>
+    <!-- 地址列表 -->
+    <template v-else>
+      <!-- 沒有地址時顯示提示 -->
+      <li class="list-group-item" v-if="addressList.length === 0">
+        <div class="text-center text-muted">
+          <i class="bi bi-geo-alt" style="font-size: 2rem;"></i>
+          <p class="mt-2 mb-0">尚未新增任何地址</p>
+          <router-link to="/user" class="btn btn-outline-primary btn-sm mt-2">
+            前往地址管理
+          </router-link>
+        </div>
+      </li>
 
-    <!-- 超商取貨選門市 -->
-    <li class="list-group-item" v-if="selectedShipping?.shippingTypeId === 2">
-      超商取貨:
-      <div class="d-flex align-items-center">
-        <button class="btn btn-outline-primary btn-sm me-2" @click="selectStore">選擇門市</button>
-        <span v-if="storeName">{{ storeName }}</span>
-      </div>
-      <span class="text-danger" v-if="errors.storeName">請選擇門市</span>
-    </li>
+      <!-- 地址選項 -->
+      <li 
+        v-for="address in addressList" 
+        :key="address.addressId"
+        class="list-group-item address-option"
+        :class="{ 'selected': selectedAddressId === address.addressId }"
+      >
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="radio"
+            name="selectedAddress"
+            :id="'address-' + address.addressId"
+            :value="address.addressId"
+            v-model="selectedAddressId"
+          />
+          <label class="form-check-label w-100" :for="'address-' + address.addressId">
+            <div class="address-content">
+              <div class="address-header">
+                <span v-if="address.isDefault" class="badge bg-success me-2">預設</span>
+                <span class="address-type-badge">
+                  {{ address.addressType === 1 ? '宅配' : '超商取貨' }}
+                </span>
+              </div>
+              <div class="recipient-info">
+                <strong>{{ address.recipientName }}</strong>
+                <span class="text-muted ms-2">{{ address.phoneNumber }}</span>
+              </div>
+              <div class="address-detail">
+                <span v-if="address.addressType === 1">
+                  {{ address.city }}{{ address.district }}{{ address.addressDetail }}
+                </span>
+                <span v-else>
+                  {{ address.storeName }}
+                </span>
+              </div>
+            </div>
+          </label>
+        </div>
+      </li>
+    </template>
 
-    <li class="list-group-item">
-      收件人姓名:
-      <div>
-        <input type="text" class="form-control" v-model="recipientName" />
-        <span class="text-danger" v-if="errors.recipientName">請輸入收件人姓名</span>
-      </div>
-    </li>
-
-    <li class="list-group-item">
-      收件人電話:
-      <div>
-        <input type="text" class="form-control" v-model="recipientPhone" />
-        <span class="text-danger" v-if="errors.recipientPhone">請輸入收件人電話</span>
-      </div>
-    </li>
-
-    <li class="list-group-item">
+    <!-- 同會員資料填入選項 -->
+    <li class="list-group-item" v-if="addressList.length > 0">
       <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="sameAsMember" v-model="sameAsMember" />
-        <label class="form-check-label" for="sameAsMember">同會員資料填入</label>
+        <input 
+          class="form-check-input" 
+          type="checkbox" 
+          id="sameAsMember" 
+          v-model="sameAsMember" 
+        />
+        <label class="form-check-label" for="sameAsMember">
+          同會員資料填入
+        </label>
       </div>
+    </li>
+
+    <!-- 錯誤訊息 -->
+    <li class="list-group-item" v-if="errors.addressId">
+      <span class="text-danger">請選擇送貨地址</span>
     </li>
   </ul>
 </template>
 
-
 <script setup>
-import { ref, onMounted, watch, computed, defineExpose } from 'vue'
-import axios from 'axios'
+import { ref, onMounted, watch, defineExpose } from 'vue'
+import api from '@/services/jjapi.js'
 import { useCheckoutStore } from '@/stores/checkout'
 
 const checkout = useCheckoutStore()
 
-const shippingOptions = ref([])
-const selectedShippingId = ref('')
-const recipientName = ref('')
-const recipientPhone = ref('')
-const recipientAddress = ref('')
-const storeName = ref('')
+// 狀態管理
+const addressList = ref([])
+const selectedAddressId = ref('')
 const sameAsMember = ref(false)
+const isLoading = ref(false)
 
+// 錯誤處理
 const errors = ref({
-  shippingId: false,
-  recipientName: false,
-  recipientPhone: false,
-  recipientAddress: false,
-  storeName: false
+  addressId: false
 })
 
-const selectedShipping = computed(() =>
-  shippingOptions.value.find(s => s.shippingId === Number(selectedShippingId.value))
-)
-
-onMounted(async () => {
+// 載入地址列表
+const loadAddresses = async () => {
+  isLoading.value = true
   try {
-    const res = await axios.get('https://localhost:7017/api/Shippings')
-    shippingOptions.value = res.data
+    const res = await api.get('/address')
+    if (res.data && res.data.success) {
+      addressList.value = res.data.data
+      
+      // 預設選擇預設地址
+      const defaultAddr = addressList.value.find(a => a.isDefault)
+      if (defaultAddr) {
+        selectedAddressId.value = defaultAddr.addressId
+      } else if (addressList.value.length > 0) {
+        // 如果沒有預設地址，選擇第一個
+        selectedAddressId.value = addressList.value[0].addressId
+      }
+    }
   } catch (error) {
-    console.error('取得送貨方式失敗:', error)
+    console.error('載入地址失敗:', error)
+  } finally {
+    isLoading.value = false
   }
-})
-
-// 監聽 checkbox 勾選時從 store 帶入資料
-watch(sameAsMember, (val) => {
-  if (val) {
-    recipientName.value = checkout.name
-    recipientPhone.value = checkout.phone
-  } else {
-    recipientName.value = ''
-    recipientPhone.value = ''
-  }
-})
-
-// 同步到 store
-watch(selectedShippingId, (newId) => {
-  checkout.shippingId = newId
-  const selected = shippingOptions.value.find(s => s.shippingId === Number(newId))
-  checkout.shippingFee = selected?.shippingFee ?? 0
-  checkout.shippingTypeId = selected?.shippingTypeId ?? null
-})
-
-watch(recipientName, val => checkout.recipientName = val)
-watch(recipientPhone, val => checkout.recipientPhone = val)
-watch(recipientAddress, val => checkout.recipientAddress = val)
-watch(storeName, val => checkout.storeName = val)
-watch(sameAsMember, val => checkout.sameAsMember = val)
-
-// 🔘 假的選擇門市功能
-function selectStore() {
-  storeName.value = '7-11 台北南京店' // 先硬寫模擬，未來串接 API
 }
 
-// ✅ 驗證方法
+// 當選擇地址時，同步到 checkout store
+watch(selectedAddressId, (id) => {
+  errors.value.addressId = false
+  
+  const addr = addressList.value.find(a => a.addressId === id)
+  if (addr) {
+    checkout.recipientName = addr.recipientName
+    checkout.recipientPhone = addr.phoneNumber
+    checkout.shippingAddressId = addr.addressId
+    checkout.addressType = addr.addressType
+    
+    // 組合完整地址
+    if (addr.addressType === 1) {
+      checkout.recipientAddress = (addr.city || '') + (addr.district || '') + (addr.addressDetail || '')
+      checkout.storeName = ''
+    } else {
+      checkout.recipientAddress = ''
+      checkout.storeName = addr.storeName || ''
+    }
+  }
+})
+
+// 同會員資料填入功能
+watch(sameAsMember, (val) => {
+  checkout.sameAsMember = val
+  if (val) {
+    // 如果勾選同會員資料，可以從會員資料填入
+    // 這裡可以根據需求實作
+  }
+})
+
+// 驗證方法
 function validateShippingInfo() {
   let isValid = true
-
-  // reset
-  errors.value.shippingId = false
-  errors.value.recipientName = false
-  errors.value.recipientPhone = false
-  errors.value.recipientAddress = false
-  errors.value.storeName = false
-
-  if (!selectedShippingId.value) {
-    errors.value.shippingId = true
+  
+  // 重置錯誤
+  errors.value.addressId = false
+  
+  if (!selectedAddressId.value) {
+    errors.value.addressId = true
     isValid = false
   }
-  if (!recipientName.value.trim()) {
-    errors.value.recipientName = true
-    isValid = false
-  }
-  if (!recipientPhone.value.trim()) {
-    errors.value.recipientPhone = true
-    isValid = false
-  }
-
-  // 根據類型額外驗證
-  if (selectedShipping.value?.shippingTypeId === 1) {
-    if (!recipientAddress.value.trim()) {
-      errors.value.recipientAddress = true
-      isValid = false
-    }
-  }
-
-  if (selectedShipping.value?.shippingTypeId === 2) {
-    if (!storeName.value.trim()) {
-      errors.value.storeName = true
-      isValid = false
-    }
-  }
-
+  
   return isValid
 }
 
+// 初始化
+onMounted(() => {
+  loadAddresses()
+})
+
 defineExpose({ validateShippingInfo })
 </script>
+
+<style scoped>
+.address-option {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.address-option:hover {
+  background-color: #f8f9fa;
+}
+
+.address-option.selected {
+  background-color: #e3f2fd;
+  border-color: #2196f3;
+}
+
+.address-content {
+  margin-left: 0.5rem;
+}
+
+.address-header {
+  margin-bottom: 0.5rem;
+}
+
+.address-type-badge {
+  background: #92559c;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.recipient-info {
+  margin-bottom: 0.25rem;
+}
+
+.address-detail {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.form-check-input:checked {
+  background-color: #92559c;
+  border-color: #92559c;
+}
+
+.form-check-input:focus {
+  border-color: #92559c;
+  box-shadow: 0 0 0 0.25rem rgba(146, 85, 156, 0.25);
+}
+</style>

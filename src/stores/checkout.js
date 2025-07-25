@@ -8,17 +8,19 @@ export const useCheckoutStore = defineStore('checkout', () => {
     const email = ref('')
 
     // 送貨資料
+    const shippingId = ref(null)
+    const recipientName = ref('')
+    const recipientPhone = ref('')
+    const recipientAddress = ref('') // 新增：完整收件地址
+    const shippingAddressId = ref(null) // 新增：選擇的地址ID
+    const addressType = ref(null) // 新增：地址類型 (1=宅配, 2=超商)
+    const sameAsMember = ref(false)
 
     // 新增：宅配地址
     const address = ref('')
 
     // 新增：超商門市資訊
     const storeName = ref('')
-
-    const shippingId = ref(null)
-    const recipientName = ref('')
-    const recipientPhone = ref('')
-    const sameAsMember = ref(false)
 
     // 優惠 & 金額
     const productTotal = ref(2000)
@@ -38,8 +40,11 @@ export const useCheckoutStore = defineStore('checkout', () => {
                 shippingId: shippingId.value,
                 recipientName: recipientName.value,
                 recipientPhone: recipientPhone.value,
+                recipientAddress: recipientAddress.value, // 新增
+                shippingAddressId: shippingAddressId.value, // 新增
+                addressType: addressType.value, // 新增
                 address: address.value,
-                storeName: storeName.value, // 新增
+                storeName: storeName.value,
                 couponId: couponId.value,
                 shippingFee: shippingFee.value,
                 discount: discount.value,
@@ -62,7 +67,7 @@ export const useCheckoutStore = defineStore('checkout', () => {
 
     return {
         name, phone, email,
-        shippingId, recipientName, recipientPhone, sameAsMember, address, storeName,
+        shippingId, recipientName, recipientPhone, recipientAddress, shippingAddressId, addressType, sameAsMember, address, storeName,
         couponId, shippingFee, discount, total,
         productTotal,
         submitOrder

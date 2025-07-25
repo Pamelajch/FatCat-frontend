@@ -17,19 +17,28 @@
         <li class="list-group-item">送貨方式：
           <div>{{ selectedShipping?.name || '未選擇' }}</div>
         </li>
-        <!-- 顯示宅配地址 -->
-        <li class="list-group-item" v-if="selectedShipping?.shippingTypeId === 1">
+        
+        <!-- 顯示收件人資訊 -->
+        <li class="list-group-item">收件人姓名：
+          <div>{{ checkout.recipientName || '未填寫' }}</div>
+        </li>
+        <li class="list-group-item">收件人電話：
+          <div>{{ checkout.recipientPhone || '未填寫' }}</div>
+        </li>
+        
+        <!-- 根據地址類型顯示不同資訊 -->
+        <li class="list-group-item" v-if="checkout.addressType === 1 && checkout.recipientAddress">
           收件地址：
-          <div>{{ checkout.recipientAddress || '未填寫' }}</div>
+          <div>{{ checkout.recipientAddress }}</div>
         </li>
-
-        <!-- 顯示超商門市名稱 -->
-        <li class="list-group-item" v-else-if="selectedShipping?.shippingTypeId === 2">
+        <li class="list-group-item" v-else-if="checkout.addressType === 2 && checkout.storeName">
           取貨門市：
-          <div>{{ checkout.storeName || '未選擇' }}</div>
+          <div>{{ checkout.storeName }}</div>
         </li>
-        <li class="list-group-item">收件人姓名：<div>{{ checkout.recipientName }}</div></li>
-        <li class="list-group-item">收件人電話：<div>{{ checkout.recipientPhone }}</div></li>
+        <li class="list-group-item" v-else>
+          收件地址：
+          <div class="text-muted">未選擇地址</div>
+        </li>
       </ul>
     </div>
 
@@ -80,7 +89,7 @@ onMounted(async () => {
     couponOptions.value = couponRes.data
     shippingOptions.value = shippingRes.data
 
-    checkout.productTotal = productTotal.value  // ✅ 新增這行
+    checkout.productTotal = productTotal.value
 
     recalculateTotal()
   } catch (error) {
@@ -95,4 +104,9 @@ const selectedCoupon = computed(() =>
 const selectedShipping = computed(() =>
   shippingOptions.value.find(s => s.shippingId === checkout.shippingId)
 )
+
+// 重新計算總金額
+const recalculateTotal = () => {
+  checkout.total = productTotal.value + checkout.shippingFee - checkout.discount
+}
 </script>
