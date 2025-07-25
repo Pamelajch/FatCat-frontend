@@ -1,5 +1,6 @@
 <script setup>
 import { useCartStore } from '@/stores/cart'
+import { useOrderStore } from '@/stores/order'
 import { useCheckoutStore } from '@/stores/checkout'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -13,6 +14,7 @@ import PaymentInfo from '@/components/PaymentInfo.vue'
 const router = useRouter()
 const cartStore = useCartStore()
 const checkoutStore = useCheckoutStore()
+const orderStore = useOrderStore()
 
 const shippingFormRef = ref()
 const isSubmitting = ref(false)
@@ -24,7 +26,10 @@ async function handleCheckout() {
   isSubmitting.value = true
 
   try {
-    // === Step 1: Orders ===
+    // 備份購物車資料（深拷貝）
+    orderStore.setOrderItems(JSON.parse(JSON.stringify(cartStore.items)))
+
+    // Step 1: 新增訂單
     const orderPayload = {
       userId: checkoutStore.userId,
       orderdate: new Date().toISOString(),
@@ -37,17 +42,14 @@ async function handleCheckout() {
       shippingStatusId: checkoutStore.shippingStatusId,
       supportpaymentMethodId: checkoutStore.paymentMethodId ?? null
     }
-
-    console.log('📝 Orders payload:', orderPayload)
-
     const orderRes = await axios.post('/api/Orders', orderPayload)
     const orderId = orderRes.data.orderId
     if (!orderId) throw new Error('未取得 orderId')
 
-    // === Step 2: ShoppingCartItems ===
+    // Step 2: 新增購物車項目
     const cartPayload = cartStore.items.map(i => ({
       itemId: 0,
-      productsId: i.id, // 對應原始 Product.Id
+      productsId: i.id,
       quantity: i.quantity,
       unitprice: i.price
     }))
@@ -55,30 +57,28 @@ async function handleCheckout() {
     const itemIds = cartRes.data
     if (!Array.isArray(itemIds)) throw new Error('未取得 itemIds')
 
-    // === Step 3: OrderDetails ===
-      const orderDetails = cartStore.items.map(item => ({
-  OrderId: orderId,
-  ItemId: item.id, // ✅ Product.Id，不是 ShoppingCartItem.Id
-  ProductName: item.name ?? '',
-  Quantity: item.quantity,
-  Unitprice: item.price
-}))
-await axios.post('/api/OrderDetails/batch', orderDetails)
-
-
+    // Step 3: 新增訂單詳情
+    const orderDetails = cartStore.items.map(item => ({
+      OrderId: orderId,
+      ItemId: item.id,
+      ProductName: item.name ?? '',
+      Quantity: item.quantity,
+      Unitprice: item.price
+    }))
+    await axios.post('/api/OrderDetails/batch', orderDetails)
 
     alert('✅ 訂單已送出！')
-    cartStore.clearCart()
+
+    // 不清空購物車，等完成頁按按鈕時才清空
     router.push('/checkoutfinish')
   } catch (err) {
     console.error('❌ 訂單送出失敗', err.response?.data || err)
     alert('訂單送出失敗，請查看 Console 錯誤')
-    console.table(err.response?.data?.errors); // ⬅️ 這一行關鍵
+    console.table(err.response?.data?.errors)
   } finally {
     isSubmitting.value = false
   }
 }
-
 </script>
 
 <template>
@@ -89,8 +89,12 @@ await axios.post('/api/OrderDetails/batch', orderDetails)
       <div class="accordion col-lg-10 container mb-5" id="accordionPanelsStayOpenExample">
         <div class="accordion-item">
           <h2 class="accordion-header" id="panelsStayOpen-headingOne">
-            <button class="accordion-button" type="button" data-bs-toggle="collapse"
-              data-bs-target="#panelsStayOpen-collapseOne">
+            <button
+              class="accordion-button"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#panelsStayOpen-collapseOne"
+            >
               <h3>購物車</h3>
             </button>
           </h2>
@@ -121,32 +125,27 @@ await axios.post('/api/OrderDetails/batch', orderDetails)
   </div>
 </template>
 
-
 <style scoped>
 .custom-purple-btn {
   background-color: #92559c;
   border-color: #92559c;
   color: white;
 }
-
 .custom-purple-btn:hover {
   background-color: #7b4583;
   border-color: #7b4583;
 }
-
 .custom-purple-outline-btn {
   background-color: transparent;
   border: 2px solid #92559c;
   color: #92559c;
   transition: all 0.3s ease;
 }
-
 .custom-purple-outline-btn:hover {
   background-color: #92559c;
   color: white;
   border-color: #92559c;
 }
-
 .btn-space {
   margin-right: 10px;
 }

@@ -1,20 +1,28 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted } from 'vue' 
 import { useCartStore } from '@/stores/cart'
 import { useOrderStore } from '@/stores/order'
-import OrderItemList from '@/components/OrderItemList.vue' // ✅ 要引入！
-import OrderSummary from '@/components/OrderSummary.vue' // ⬅️ 加入整合後的元件
-
+import { useRouter } from 'vue-router'
+//import OrderItemList from '@/components/OrderItemList.vue'
+import OrderSummary from '@/components/OrderSummary.vue'
+import CartItemList from '@/components/CartItemList.vue'
 const cartStore = useCartStore()
 const orderStore = useOrderStore()
+const router = useRouter()
 
 onMounted(() => {
   if (cartStore.items.length > 0) {
     orderStore.setOrderItems(cartStore.items)
-    cartStore.clearCart()
+    // ❌ 不要馬上清空購物車
   }
 })
+
+const goToMyOrders = () => {
+  cartStore.clearCart() // ✅ 在點按鈕時清空購物車
+  router.push('/myorders') // ✅ 導向「我的訂單」頁面
+}
 </script>
+
 
 <template>
   <div class="page-content-wrapper pt-5 pb-5">
@@ -41,8 +49,7 @@ onMounted(() => {
             aria-labelledby="panelsStayOpen-headingOne"
           >
             <div class="accordion-body">
-             <!-- 替換 CartItemList -->
-              <OrderItemList :items="orderStore.latestOrderItems" />
+              <CartItemList />
             </div>
           </div>
         </div>
@@ -51,9 +58,10 @@ onMounted(() => {
       <!-- ✅ 整合後的個人/送貨/付款資訊元件 -->
       <OrderSummary />
 
-      <router-link to="/myorders">
-        <button type="button" class="btn custom-purple-btn float-end">我的訂單</button>
-      </router-link>
+      <!-- 原本是 router-link，要改成按鈕並加 click 事件 -->
+      <button type="button" class="btn custom-purple-btn float-end" @click="goToMyOrders">
+        我的訂單
+      </button>
     </div>
   </div>
 </template>
