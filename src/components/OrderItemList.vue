@@ -4,6 +4,7 @@ import axios from 'axios'
 import Swal from 'sweetalert2'; // by rr
 import 'sweetalert2/dist/sweetalert2.min.css'; // by rr
 import PostReviewForm from '@/components/PostReviewForm.vue' // by rr
+import api from '@/services/jjapi.js'; //by rr
 
 // ✅ 傳入 props：orderId 和 orderStatusId
 const props = defineProps({
@@ -34,21 +35,22 @@ const total = computed(() =>
 )
 
 // rr 修改後的評價按鈕點擊處理
-function handleReviewClick(item) {
-  console.log('點擊評價按鈕，商品：', item.name)
-  console.log('selectedItem 變數狀態：', selectedItem)
-  console.log('item 資料：', item)
-  
+function handleReviewClick(item) {  
   // 設定選中的商品和顯示評論表單
   selectedItem.value = item
   showReviewForm.value = true
-  
-  console.log('設定後 selectedItem.value：', selectedItem.value)
-  console.log('設定後 showReviewForm.value：', showReviewForm.value)
 }
 
 // 處理評論提交成功的回調
 function handleReviewSubmitted() {
+  if (selectedItem.value) {
+    const reviewedItem = orderItems.value.find(
+      item => item.productId === selectedItem.value.productId
+    );
+    if (reviewedItem) {
+      reviewedItem.hasBeenReviewed = true;
+    }
+  }
   showReviewForm.value = false
   selectedItem.value = null
   
@@ -97,9 +99,19 @@ onMounted(async () => {
         quantity: cartItem?.quantity || 0,
         subtotal: (cartItem?.unitprice || 0) * (cartItem?.quantity || 0),
         image: mainImage ? `/images/products/${mainImage.imageUrl}` : '/images/products/default.jpg',
-        productId: product?.productsId // rr新增：評論表單需要的 productId
+        productId: product?.productsId, // rr新增：評論表單需要的 productId
+        hasBeenReviewed: false // rr新增 預設都是「未評價」
       }
     })
+    const reviewedResponse = await api.get(`/reviews/by-user/reviewed-products`);//by rr
+    const reviewedProductIds = reviewedResponse.data; // 得到陣列
+
+    // 遍歷訂單項目，只要商品的 productId 在上面那個列表裡，就標記為「已評價」
+    merged.forEach(item => {
+      if (reviewedProductIds.includes(item.productId)) {
+        item.hasBeenReviewed = true;
+      }
+    });
 
     orderItems.value = merged
   } catch (err) {
@@ -133,13 +145,23 @@ onMounted(async () => {
         </div>
 
         <!-- ✅ 僅在已完成狀態時顯示評價按鈕 RRRRRRRRRRRRRRRR-->
-        <button
-          v-if="isCompleted"
-          class="btn btn-outline-primary btn-sm"
+        <template v-if="isCompleted">
+        <button 
+          v-if="item.hasBeenReviewed" 
+          class="btn btn-secondary btn-sm" 
+          disabled
+        >
+          已評價
+        </button>
+        
+        <button 
+          v-else 
+          class="btn btn-outline-primary btn-sm" 
           @click="handleReviewClick(item)"
         >
           評價
         </button>
+      </template>
       </div>
     </div>
 
