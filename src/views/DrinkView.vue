@@ -415,8 +415,12 @@ const runAway = () => {
   transform: scale(1.05);
 }
 .ingredient-card img {
-  width: 100%;
+  width: 120px;
+  height: 120px;
+  object-fit: cover; /* 裁切並填滿區域 */
   border-radius: 10px;
+  display: block;
+  margin: 0 auto;
 }
 
 /* 卡片漂浮動畫 */
