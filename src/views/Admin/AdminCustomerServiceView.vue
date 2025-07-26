@@ -121,7 +121,7 @@ const initConnection = async () => {
     if (userMessages.value.has(userId)) {
         userMessages.value.get(userId).push({
             type: 'system',
-            message: '使用者已離開對話。',
+            message: '會員已離開對話。',
             timestamp: new Date().toLocaleTimeString('zh-TW', {
                 hour: '2-digit',
                 minute: '2-digit'
@@ -276,21 +276,26 @@ const scrollToBottom = () => {
           <div class="chat-messages" ref="messagesContainer">
             <div 
                 v-for="(msg, index) in currentMessages" 
-                :key="index" 
-                class="message" 
-                :class="`${msg.type}-message`">
+                  :key="index" 
+                  class="message" 
+                  :class="{
+                    'admin-message': msg.type.includes('admin'),
+                    'user-message': msg.type.includes('user'),
+                    'system-message': msg.type === 'system'
+                  }">
                 <div class="message-content">
-                  <p v-if="msg.type === 'text' || msg.type === 'admin' || msg.type === 'user'">{{ msg.message }}</p>
-                  <a v-else-if="msg.type.includes('image')" :href="`${BACKEND_URL}${msg.message}`" target="_blank">
-                    <img :src="`${BACKEND_URL}${msg.message}`" class="chat-image" alt="聊天圖片" />
+                  <a v-if="msg.type.includes('image')" :href="`${BACKEND_URL}${msg.message}`" target="_blank">
+                      <img :src="`${BACKEND_URL}${msg.message}`" class="chat-image" alt="聊天圖片" />
                   </a>
+
+                  <p v-else>{{ msg.message }}</p>
 
                   <div class="timestamp">{{ msg.timestamp }}</div>
                 </div>
               </div>
             </div>
           <div class="chat-input">
-            <button @click="triggerFileUpload" class="upload-btn" title="傳送圖片">📎</button>
+            <button @click="triggerFileUpload" class="upload-btn" title="傳送圖片">✚</button>
             <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none" accept="image/*" />
 
             <input 
@@ -415,9 +420,12 @@ const scrollToBottom = () => {
   font-size: 16px;
 }
 .chat-image {
-  max-width: 100%;
+  max-width: 100%; /* 限制圖片最大寬度為其容器寬度 */
+  max-height: 250px; /* 【建議】可以再加一個最大高度，避免長條圖撐爆畫面 */
   border-radius: 10px;
   cursor: pointer;
+  display: block; /* 避免圖片下方可能出現的多餘空白 */
+  object-fit: cover; /* 確保圖片在指定尺寸內被妥善裁剪 */
 }
 .upload-btn {
   background: none;

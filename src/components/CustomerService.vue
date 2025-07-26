@@ -213,10 +213,32 @@ onUnmounted(() => {
 });
 
 // --- 區塊作用：7. FAQ 靜態資料 ---
+// 將固定的文字內容放在這裡，方便管理
 const faqData = {
-  account: { /* ... */ },
-  delivery: { /* ... */ },
-  product: { /* ... */ }
+  account: {
+    title: '帳號相關問題',
+    items: [
+      { q: '如何修改我的密碼？', a: '請點擊頭像進入會員中心，選擇「修改密碼」即可進行變更喵。' },
+      { q: '收不到手機驗證碼怎麼辦？', a: '請確認手機號碼是否正確，或稍後再試。如果問題持續，請直接「聯繫客服」讓我們為您處理。' },
+      { q: '忘記帳號了怎麼辦？', a: '您可以嘗試使用註冊時的 Email 作為帳號登入，或點擊登入頁面的「忘記密碼」功能喵。' }
+    ]
+  },
+  delivery: {
+    title: '商品配送問題',
+    items: [
+      { q: '下單後多久會出貨？', a: '客製化泡麵需要精心製作，我們會在您下單後的 3-5 個工作天內為您出貨喵。' },
+      { q: '如何修改配送地址？', a: '在訂單狀態變為「已出貨」之前，您都可以在「訂單查詢」中修改地址。如果訂單已出貨，請「聯繫客服」。' },
+      { q: '可以指定到貨時間嗎？', a: '目前我們提供「不指定」、「上午」、「下午」三個時段，您可以在結帳時選擇，但無法指定精確時間點喔。' }
+    ]
+  },
+  product: {
+    title: '商品相關問題',
+    items: [
+      { q: '收到的商品有瑕疵怎麼辦？', a: '非常抱歉！請立即拍照並「聯繫客服」，我們會立刻為您安排換貨或退款事宜。' },
+      { q: '我可以客製化哪些配料？', a: '我們提供多種麵體、湯頭、配料與辣度選擇，所有可客製化的項目都在商品頁面上有詳細說明喔！' },
+      { q: '為什麼我的優惠券不能使用？', a: '請確認優惠券是否符合使用規則（如低消金額、適用商品），以及是否在有效期限內。若仍有問題，歡迎「聯繫客服」喵。' }
+    ]
+  }
 };
 </script>
 
@@ -235,7 +257,7 @@ const faqData = {
       <div class="chat-header">
         <h3>{{ headerText }}</h3>
         <div>
-           <button @click="toggleChat" class="close-btn" aria-label="關閉視窗">×</button>
+           <button @click="toggleChat" class="close-btn" aria-label="關閉視窗">▽</button>
         </div>
       </div>
       
@@ -292,8 +314,7 @@ const faqData = {
         </div>
       </div>
       
-      <div class="chat-input">
-          <button @click="triggerFileUpload" class="upload-btn" title="傳送圖片">📎</button>
+      <div class="chat-input">          
           <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none" accept="image/*" />
           <input 
               v-model="newMessage" 
@@ -301,6 +322,7 @@ const faqData = {
               placeholder="輸入訊息..."
               :disabled="!isConnected"
           >
+          <button @click="triggerFileUpload" class="upload-btn" title="傳送圖片">✚</button>
           <button @click="sendMessage" :disabled="!isConnected || !newMessage.trim()">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
           </button>
@@ -550,9 +572,12 @@ const faqData = {
 .connection-status { padding: 5px 15px; text-align: center; font-size: 12px; background: var(--dark-gray); color: rgb(60, 57, 57); font-weight: 500; flex-shrink: 0; }
 .connection-status.connected { background: #efcbec }
 .chat-image {
-  max-width: 100%;
+  max-width: 100%; /* 限制圖片最大寬度為其容器寬度 */
+  max-height: 250px; /* 【建議】可以再加一個最大高度，避免長條圖撐爆畫面 */
   border-radius: 10px;
   cursor: pointer;
+  display: block; /* 避免圖片下方可能出現的多餘空白 */
+  object-fit: cover; /* 確保圖片在指定尺寸內被妥善裁剪 */
 }
 .upload-btn {
   background: none;
