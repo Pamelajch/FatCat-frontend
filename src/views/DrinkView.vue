@@ -21,34 +21,46 @@ const particles = ref(Array.from({ length: 80 }, () => {
   }
 }))
 
-const DRINK_CATEGORY_ID = 99
+const DRINK_CATEGORY_ID = 10
 
-const drinkSorts = [
-  { sortId: '', name: '全部' },
-  { sortId: 1, name: '幻覺系' },
-  { sortId: 2, name: '力量系' },
-  { sortId: 3, name: '治癒系' },
-  { sortId: 4, name: '時間系' },
-  { sortId: 5, name: '靈魂系' },
-]
-
+const drinkSorts = ref([{ sortId: '', name: '全部' }])
 const selectedSort = ref('')
-const products = ref([
-  { productsId: 201, name: '星光精華', categoryId: DRINK_CATEGORY_ID, sortId: 1, imageUrl: '/magic.png', description: '閃爍微光的神秘液體' },
-  { productsId: 202, name: '夢境露滴', categoryId: DRINK_CATEGORY_ID, sortId: 1, imageUrl: '/magic.png', description: '散發淡紫色迷霧的濃縮露' },
-  { productsId: 203, name: '龍焰汁', categoryId: DRINK_CATEGORY_ID, sortId: 2, imageUrl: '/magic.png', description: '熱辣噴發，據說能暫時提高攻擊力' },
-  { productsId: 204, name: '猛虎液', categoryId: DRINK_CATEGORY_ID, sortId: 2, imageUrl: '/magic.png', description: '讓你如猛虎出柙，活力暴增' },
-  { productsId: 205, name: '綠意茶', categoryId: DRINK_CATEGORY_ID, sortId: 3, imageUrl: '/magic.png', description: '充滿生命力的草本飲' },
-  { productsId: 206, name: '柔光蜜露', categoryId: DRINK_CATEGORY_ID, sortId: 3, imageUrl: '/magic.png', description: '甜甜的療癒飲品，據說能穩定心神' },
-  { productsId: 207, name: '時光沙', categoryId: DRINK_CATEGORY_ID, sortId: 4, imageUrl: '/magic.png', description: '喝了會覺得時間放慢一點點' },
-  { productsId: 208, name: '回憶之泉', categoryId: DRINK_CATEGORY_ID, sortId: 4, imageUrl: '/magic.png', description: '讓你回憶起最溫柔的瞬間' },
-  { productsId: 209, name: '幽冥花茶', categoryId: DRINK_CATEGORY_ID, sortId: 5, imageUrl: '/magic.png', description: '泡製靈魂的花朵，略帶苦味' },
-  { productsId: 210, name: '月影之酒', categoryId: DRINK_CATEGORY_ID, sortId: 5, imageUrl: '/magic.png', description: '濃郁如夜色，深沉如靈魂的低語' }
-])
+const products = ref([])
+
+const fetchDrinks = async () => {
+  try {
+    const res = await fetch(`https://localhost:7017/api/Products/filter?categoryId=${DRINK_CATEGORY_ID}`)
+    const data = await res.json()
+
+    data.forEach(p => {
+      if (!p.imageUrl.startsWith('http')) {
+        p.imageUrl = `https://localhost:7017/ProductImages/${encodeURIComponent(p.imageUrl)}`
+      }
+    })
+
+    products.value = data
+  } catch (err) {
+    console.error('飲料資料取得失敗', err)
+  }
+}
+
+const fetchDrinkSorts = async () => {
+  try {
+    const res = await fetch('https://localhost:7017/api/Sorts/byCategory/10')
+    const data = await res.json()
+    drinkSorts.value.push(...data)
+  } catch (err) {
+    console.error('取得飲料小分類失敗', err)
+  }
+}
 
 const filteredProducts = computed(() => {
   if (!selectedSort.value) return products.value
-  return products.value.filter(p => p.sortId === Number(selectedSort.value))
+
+  const selectedSortObj = drinkSorts.value.find(s => s.sortId == selectedSort.value)
+  if (!selectedSortObj) return products.value
+
+  return products.value.filter(p => p.sortName === selectedSortObj.name)
 })
 
 const cup = ref([])
@@ -86,6 +98,8 @@ let messageIndex = 0
 let timer = null
 
 onMounted(() => {
+  fetchDrinks()
+  fetchDrinkSorts()
   timer = setInterval(() => {
     messageIndex = (messageIndex + 1) % messages.length
     currentMessage.value = messages[messageIndex]
