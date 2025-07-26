@@ -3,10 +3,10 @@
 // 區塊 1：Setup & 引入
 // 作用：從 Vue 和其他外部套件中，引入這個元件需要用到的所有工具和子元件。
 // ========================================================================
-import { ref, onMounted, computed,watch } from 'vue'; // ref:建立響應式變數, onMounted:生命週期鉤子, computed:建立計算屬性
+import { ref, onMounted, computed,watch } from 'vue'; 
 import api from '@/services/jjapi.js';          // 引入我們封裝好的 axios 實例，用於 API 請求
-import HelpfulnessVoting from './HelpfulnessVoting.vue'; // 引入「有幫助」投票的子元件
-import ReportModal from './ReportModal.vue';       // 引入「檢舉」彈出視窗的子元件
+import HelpfulnessVoting from './HelpfulnessVoting.vue'; 
+import ReportModal from './ReportModal.vue';       
 import { useAuthStore } from '@/stores/auth';      // 引入 Pinia store 來取得使用者登入狀態
 
 // ========================================================================

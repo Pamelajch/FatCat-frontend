@@ -3,8 +3,10 @@
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import * as signalR from '@microsoft/signalr';
 import { useAdminAuthStore } from '@/stores/adminauth';
+import api from '@/services/jjapi.js';
 
 // --- 響應式狀態定義 ---
+const BACKEND_URL = 'https://localhost:7017';
 const adminAuthStore = useAdminAuthStore();
 const connection = ref(null);
 const isConnected = ref(false);
@@ -14,12 +16,62 @@ const userMessages = ref(new Map());
 const currentUserId = ref(null);
 const newMessage = ref('');
 const messagesContainer = ref(null); 
+const fileInput = ref(null);//圖檔
 
 // --- Computed Properties ---
 const currentMessages = computed(() => {
   return userMessages.value.get(currentUserId.value) || [];
 });
 const adminName = computed(() => adminAuthStore.admin?.name || '未登入');
+
+const triggerFileUpload = () => {
+  fileInput.value.click();
+}; //圖檔
+
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file || !currentUserId.value) return;
+
+  // 簡單的前端驗證
+  if (!file.type.startsWith('image/')) {
+    alert('只能上傳圖片檔案！');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    // 步驟一：將檔案上傳到我們的新 API
+    const response = await api.post('/chat/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    const imageUrl = response.data.url;
+
+    // 步驟二：透過 SignalR 發送圖片 URL
+    const messagePayload = {
+      type: 'image',
+      message: imageUrl,
+    };
+    await connection.value.invoke('SendMessageToUser', currentUserId.value, messagePayload);
+
+    // 立刻在自己的畫面上顯示出來
+    const localMessage = {
+      ...messagePayload,
+      type: 'admin-image', // 用一個特殊的 type 來區分是自己發的圖片
+      timestamp: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false }),
+    };
+    userMessages.value.get(currentUserId.value).push(localMessage);
+    scrollToBottom();
+
+  } catch (err) {
+    console.error('檔案上傳或訊息發送失敗:', err);
+    alert('檔案上傳失敗！');
+  } finally {
+    // 清空 file input 的值，這樣才能重複上傳同一個檔案
+    event.target.value = '';
+  }
+};
 
 // --- SignalR 連線邏輯 ---
 const initConnection = async () => {
@@ -140,14 +192,20 @@ const sendMessage = async () => {
   if (!newMessage.value.trim() || !currentUserId.value) return;
 
   try {
-    await connection.value.invoke('SendMessageToUser', currentUserId.value, newMessage.value);
-    
-    const messageData = {
-        message: newMessage.value,
-        timestamp: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false }),
-        type: 'admin'
+    // 將純文字也打包成物件再發送
+    const messagePayload = {
+      type: 'text',
+      message: newMessage.value,
     };
-    userMessages.value.get(currentUserId.value).push(messageData);
+    await connection.value.invoke('SendMessageToUser', currentUserId.value, messagePayload);
+    
+    // 在本地顯示
+    const localMessage = {
+      message: newMessage.value,
+      timestamp: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      type: 'admin' // 維持原樣
+    };
+    userMessages.value.get(currentUserId.value).push(localMessage);
     
     newMessage.value = '';
     scrollToBottom();
@@ -217,17 +275,24 @@ const scrollToBottom = () => {
           </div>
           <div class="chat-messages" ref="messagesContainer">
             <div 
-              v-for="(msg, index) in currentMessages" 
-              :key="index" 
-              class="message" 
-              :class="`${msg.type}-message`">
-              <div class="message-content">
-                <p>{{ msg.message }}</p>
-                <div class="timestamp">{{ msg.timestamp }}</div>
+                v-for="(msg, index) in currentMessages" 
+                :key="index" 
+                class="message" 
+                :class="`${msg.type}-message`">
+                <div class="message-content">
+                  <p v-if="msg.type === 'text' || msg.type === 'admin' || msg.type === 'user'">{{ msg.message }}</p>
+                  <a v-else-if="msg.type.includes('image')" :href="`${BACKEND_URL}${msg.message}`" target="_blank">
+                    <img :src="`${BACKEND_URL}${msg.message}`" class="chat-image" alt="聊天圖片" />
+                  </a>
+
+                  <div class="timestamp">{{ msg.timestamp }}</div>
+                </div>
               </div>
             </div>
-          </div>
           <div class="chat-input">
+            <button @click="triggerFileUpload" class="upload-btn" title="傳送圖片">📎</button>
+            <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none" accept="image/*" />
+
             <input 
               type="text"
               v-model="newMessage"
@@ -348,5 +413,18 @@ const scrollToBottom = () => {
   font-weight: bold;
   color:  #6c757d; 
   font-size: 16px;
+}
+.chat-image {
+  max-width: 100%;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.upload-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  margin-right: 10px;
+  color: #6c757d;
 }
 </style>
