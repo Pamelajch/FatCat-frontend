@@ -1,8 +1,10 @@
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 
 const showMapModal = ref(false)
 const mapLoading = ref(false)
+const authStore = useAuthStore()
 
 const props = defineProps({
     address: { type: Object, default: null },
@@ -40,7 +42,7 @@ const errors = reactive({
 
 const isEdit = computed(() => props.address !== null)
 
-// 計算屬性：判斷是否為超商地址
+// 計算屬性：判斷是否為超商地址 --------------------------------------------------------------------------------------------
 const isStoreAddress = computed(() => form.addressType === '1')
 
 // 7-11 電子地圖
@@ -182,6 +184,26 @@ const closeMapModal = () => {
   if (mapDiv) mapDiv.innerHTML = ''
 }
 
+// 自動帶入使用者資料的checkbox --------------------------------------------------------------------------------------------
+const autoFillUserInfo = ref(false)
+
+// 自動帶入使用者資料的函數
+const fillUserInfo = () => {
+    if(authStore.user){
+        form.recipientName = authStore.user.name || ''
+        form.phoneNumber = authStore.user.phone || ''
+    }
+}
+// 監聽"是否勾選同會員資料填入"的變化
+watch(autoFillUserInfo,(newValue)=>{
+    if(newValue){
+        fillUserInfo()
+    }else{
+        form.recipientName = ''
+        form.phoneNumber = ''
+    }
+})
+
 // 監聽地址資料變化，用於編輯模式
 watch(() => props.address, (newAddress) => {
     if (newAddress) {
@@ -243,16 +265,45 @@ const handleSubmit = () => {
 <template>
     <div class="address-form-container">
         <form @submit.prevent="handleSubmit" class="address-form">
+            <!-- 自動帶入使用者資料 -->
+             <div class="form-group">
+                <div class="form-check">
+                    <input 
+                      type="checkbox" 
+                      id="autoFillUserInfo" 
+                      v-model="autoFillUserInfo" 
+                      class="form-check-input" />
+                      <label for="autoFillUserInfo" class="form-check-label">
+                        <i class="bi bi-person-check me-1"></i>
+                        同會員資料填入
+                      </label>
+                </div>
+             </div>
+
             <!-- 收件人姓名 -->
             <div class="form-group">
                 <label for="recipientName" class="form-label">收件人姓名 *</label>
-                <input id="recipientName" v-model="form.recipientName" type="text" class="form-control" :class="{ 'is-invalid': errors.recipientName }" placeholder="請輸入收件人姓名" required />
+                <input 
+                    id="recipientName" 
+                    v-model="form.recipientName" 
+                    type="text" 
+                    class="form-control" 
+                    :class="{ 'is-invalid': errors.recipientName }" 
+                    placeholder="請輸入收件人姓名" 
+                    required />
                 <div v-if="errors.recipientName" class="invalid-feedback">{{ errors.recipientName }}</div>
             </div>
             <!-- 電話號碼 -->
             <div class="form-group">
                 <label for="phoneNumber" class="form-label">電話號碼 *</label>
-                <input id="phoneNumber" v-model="form.phoneNumber" type="tel" class="form-control" :class="{ 'is-invalid': errors.phoneNumber }" placeholder="請輸入電話號碼" required />
+                <input 
+                    id="phoneNumber" 
+                    v-model="form.phoneNumber" 
+                    type="tel" 
+                    class="form-control" 
+                    :class="{ 'is-invalid': errors.phoneNumber }" 
+                    placeholder="請輸入電話號碼" 
+                    required />
                 <div v-if="errors.phoneNumber" class="invalid-feedback">{{ errors.phoneNumber }}</div>
             </div>
             <!-- 地址類型 -->
@@ -624,4 +675,27 @@ const handleSubmit = () => {
     .btn { width: 100%;
      }
 }
+.form-check {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #28a745;
+}
+
+.form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.form-check-label {
+    font-weight: 500;
+    color: #495057;
+    cursor: pointer;
+}
+
+.form-check-label i {
+    color: #28a745;
+}
+
 </style>

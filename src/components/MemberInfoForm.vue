@@ -16,7 +16,7 @@
     <li class="list-group-item">Email:
       <div>
         <input type="email" class="form-control" v-model="email" readonly />
-      </div>
+      </div>  
     </li>
   </ul>
 </template>

@@ -48,14 +48,15 @@ function handleCheckout() {
     <!-- 表單內容區 -->
     <div class="container">
       <div class="row">
-        <div class="col-12 col-md-4">
+        <!-- 改為直接將 shippingForm 置左, paymentInfo 置右 , MemberInfoForm 刪除by jj-->
+        <!-- <div class="col-12 col-md-6">
           <MemberInfoForm />
-        </div>
-        <div class="col-12 col-md-4">
+        </div> -->
+        <div class="col-12 col-md-6">
           <!-- 加上 ref 綁定 -->
           <ShippingForm ref="shippingFormRef" />
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6">
           <PaymentInfo />
         </div>
 

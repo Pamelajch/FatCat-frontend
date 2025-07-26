@@ -1,7 +1,7 @@
 <template>
   <ul class="list-group">
     <li class="list-group-item">
-      <h3>選擇送貨地址</h3>
+      <h3>選擇送貨方式、地址及收件人</h3>
     </li>
 
     <!-- 載入狀態 -->
@@ -21,93 +21,142 @@
         <div class="text-center text-muted">
           <i class="bi bi-geo-alt" style="font-size: 2rem;"></i>
           <p class="mt-2 mb-0">尚未新增任何地址</p>
-          <router-link to="/user" class="btn btn-outline-primary btn-sm mt-2">
-            前往地址管理
-          </router-link>
+          <button class="btn btn-outline-primary btn-sm mt-2" @click="showAddAddressModal">
+            <i class="bi bi-plus-lg me-1"></i>
+            新增地址
+          </button>
         </div>
       </li>
 
-      <!-- 地址選項 -->
-      <li 
-        v-for="address in addressList" 
-        :key="address.addressId"
-        class="list-group-item address-option"
-        :class="{ 'selected': selectedAddressId === address.addressId }"
-      >
-        <div class="form-check">
-          <input
-            class="form-check-input"
-            type="radio"
-            name="selectedAddress"
-            :id="'address-' + address.addressId"
-            :value="address.addressId"
+      <!-- 下拉式選單 -->
+      <li class="list-group-item" v-else>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label for="addressSelect" class="form-label mb-0">選擇收件地址 <span class="gray">(收件人-運送方式-地址/門市)</span></label>
+            <button class="btn btn-outline-primary btn-sm" @click="showAddAddressModal">
+              <i class="bi bi-plus-lg me-1"></i>
+              新增其他地址
+            </button>
+          </div>
+          <select 
+            class="form-select" 
+            id="addressSelect" 
             v-model="selectedAddressId"
-          />
-          <label class="form-check-label w-100" :for="'address-' + address.addressId">
-            <div class="address-content">
-              <div class="address-header">
-                <span v-if="address.isDefault" class="badge bg-success me-2">預設</span>
+            :class="{'is-invalid': errors.addressId}"
+          >
+            <option value="" disabled>請選擇地址</option>
+            <option
+              v-for="address in addressList"
+              :key="address.addressId"
+              :value="address.addressId" 
+            >
+              {{ formatAddressOption(address) }}
+            </option>
+          </select>
+          <div class="invalid-feedback" v-if="errors.addressId">
+            請選擇地址及收件人
+          </div>
+        </div>
+
+        <!-- 顯示選中的地址詳細資訊 -->
+        <div v-if="selectedAddress" class="selected-address-info">
+          <div class="card">
+            <div class="card-body">
+              <div class="address-header mb-2">
+                <span v-if="selectedAddress.isDefault" class="badge bg-success me-2">預設</span>
                 <span class="address-type-badge">
-                  {{ address.addressType === 1 ? '宅配' : '超商取貨' }}
+                  {{ selectedAddress.addressType === 1 ? '超商取貨' : '宅配' }}
                 </span>
               </div>
-              <div class="recipient-info">
-                <strong>{{ address.recipientName }}</strong>
-                <span class="text-muted ms-2">{{ address.phoneNumber }}</span>
+              <div class="recipient-info mb-2">
+                <strong>{{ selectedAddress.recipientName }}</strong>
+                <span class="text-muted ms-2">{{ selectedAddress.phoneNumber }}</span>
               </div>
               <div class="address-detail">
-                <span v-if="address.addressType === 1">
-                  {{ address.city }}{{ address.district }}{{ address.addressDetail }}
+                <span v-if="selectedAddress.addressType === 1">
+                  {{ selectedAddress.storeName || '未知的分店名稱' }}
+                  <br>
+                  {{ selectedAddress.addressDetail }}
                 </span>
                 <span v-else>
-                  {{ address.storeName }}
+                  {{ selectedAddress.city }}{{ selectedAddress.district }}{{ selectedAddress.addressDetail }}
                 </span>
               </div>
             </div>
-          </label>
+          </div>
         </div>
       </li>
     </template>
 
-    <!-- 同會員資料填入選項 -->
-    <li class="list-group-item" v-if="addressList.length > 0">
-      <div class="form-check">
-        <input 
-          class="form-check-input" 
-          type="checkbox" 
-          id="sameAsMember" 
-          v-model="sameAsMember" 
-        />
-        <label class="form-check-label" for="sameAsMember">
-          同會員資料填入
-        </label>
-      </div>
-    </li>
-
     <!-- 錯誤訊息 -->
     <li class="list-group-item" v-if="errors.addressId">
-      <span class="text-danger">請選擇送貨地址</span>
+      <span class="text-danger">請選擇送貨地址及收件人</span>
     </li>
   </ul>
+   <!-- 新增地址 Modal -->
+  <div v-if="showAddressModal" class="modal-backdrop" @click="closeAddressModal">
+    <div class="modal-content" @click.stop>
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-plus-lg me-2"></i>
+          新增地址
+        </h5>
+        <button 
+          type="button" 
+          class="btn-close"
+          @click="closeAddressModal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <AddressForm
+          :address="null"
+          :is-submitting="isSubmitting"
+          @submit="handleAddressSubmit"
+          @cancel="closeAddressModal"
+        />
+      </div>
+    </div>
+  </div>
 </template>
 
+
+
 <script setup>
-import { ref, onMounted, watch, defineExpose } from 'vue'
+import { ref, onMounted, watch, defineExpose, computed } from 'vue'
 import api from '@/services/jjapi.js'
 import { useCheckoutStore } from '@/stores/checkout'
+import AddressForm from './AddressForm.vue'
+import Swal from 'sweetalert2'
 
 const checkout = useCheckoutStore()
 
 // 狀態管理
 const addressList = ref([])
 const selectedAddressId = ref('')
-const sameAsMember = ref(false)
 const isLoading = ref(false)
+const showAddressModal = ref(false)
+const isSubmitting = ref(false)
 
 // 錯誤處理
 const errors = ref({
   addressId: false
 })
+
+// 計算屬性: 選中的地址
+const selectedAddress = computed(() => {
+  return addressList.value.find(a => a.addressId === selectedAddressId.value)
+})
+
+// 格式化地址選項顯示
+function formatAddressOption(address) {
+  const type = address.addressType === 1 ? '超商取貨' : '宅配' 
+  const defaultText = address.isDefault ? ' (預設)' : ''
+  if(address.addressType === 1) {
+    return `${address.recipientName} - ${type}${defaultText} - ${address.storeName || '未知的分店名稱'}`
+  } else {
+    return `${address.recipientName} - ${type}${defaultText} - ${address.city}${address.district}${address.addressDetail}`
+  }
+}
 
 // 載入地址列表
 const loadAddresses = async () => {
@@ -146,23 +195,55 @@ watch(selectedAddressId, (id) => {
     
     // 組合完整地址
     if (addr.addressType === 1) {
-      checkout.recipientAddress = (addr.city || '') + (addr.district || '') + (addr.addressDetail || '')
-      checkout.storeName = ''
+      // 超商取貨
+      checkout.recipientAddress = addr.addressDetail 
+      checkout.storeName = addr.storeName || '未知的分店名稱' // 超商名稱
     } else {
-      checkout.recipientAddress = ''
-      checkout.storeName = addr.storeName || ''
+      checkout.recipientAddress = (addr.city || '') + (addr.district || '') + (addr.addressDetail || '') // 宅配地址(城市+區域+詳細地址)
+      checkout.storeName = '' || '未知的分店名稱'// 超商名稱為空
     }
   }
 })
 
-// 同會員資料填入功能
-watch(sameAsMember, (val) => {
-  checkout.sameAsMember = val
-  if (val) {
-    // 如果勾選同會員資料，可以從會員資料填入
-    // 這裡可以根據需求實作
+// 顯示新增地址的 Modal
+const showAddAddressModal = () => {
+  showAddressModal.value = true
+}
+
+// 關閉新增地址的 Modal
+const closeAddressModal = () => {
+  showAddressModal.value = false
+}
+
+// 處理新增地址提交
+const handleAddressSubmit = async (formData) => {
+  isSubmitting.value = true
+  try{
+    const res = await api.post('/address',formData)
+    if(res.data && res.data.success){
+      Swal.fire({
+        icon:'success',
+        title:'新增成功',
+        text:'地址新增成功',
+        confirmButtonText:'確定'
+      })
+
+      // 重新載入地址列表
+      await loadAddresses()
+      closeAddressModal()
+    }
+  }catch(error){
+    console.error('新增地址失敗:',error)
+    Swal.fire({
+      icon:'error',
+      title:'新增失敗',
+      text:error.response?.data?.message || '新增地址失敗，請稍後再試',
+      confirmButtonText:'確定'
+    })
+  }finally{
+    isSubmitting.value = false
   }
-})
+}
 
 // 驗證方法
 function validateShippingInfo() {
@@ -188,22 +269,8 @@ defineExpose({ validateShippingInfo })
 </script>
 
 <style scoped>
-.address-option {
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.address-option:hover {
-  background-color: #f8f9fa;
-}
-
-.address-option.selected {
-  background-color: #e3f2fd;
-  border-color: #2196f3;
-}
-
-.address-content {
-  margin-left: 0.5rem;
+.selected-address-info {
+  margin-top: 1rem;
 }
 
 .address-header {
@@ -228,13 +295,86 @@ defineExpose({ validateShippingInfo })
   font-size: 0.9rem;
 }
 
-.form-check-input:checked {
-  background-color: #92559c;
-  border-color: #92559c;
-}
-
-.form-check-input:focus {
+.form-select:focus {
   border-color: #92559c;
   box-shadow: 0 0 0 0.25rem rgba(146, 85, 156, 0.25);
+}
+
+.form-select.is-invalid {
+  border-color: #dc3545;
+}
+
+.form-select.is-invalid:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+.gray {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+/* Modal 樣式 */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+align-items: center;
+  padding: 1.5rem 1.5rem 0 1.5rem;
+  border-bottom: none;
+}
+
+.modal-title {
+  color: #686868;
+  font-weight: 600;
+  margin: 0;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0;
+  width: auto;
+  height: auto;
+}
+
+.btn-close:hover {
+  color: #dc3545;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .modal-content {
+    max-width: 95vw;
+    margin: 0.5rem;
+  }
 }
 </style>
