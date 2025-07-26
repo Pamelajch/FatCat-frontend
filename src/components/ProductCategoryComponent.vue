@@ -7,7 +7,7 @@ const fetchCategories = async () => {
   try {
     const res = await fetch('https://localhost:7017/api/ProductCategories')
     const data = await res.json()
-    categories.value = data.filter(cat => cat.productCategoriesId !== 9) // 過濾特殊款泡麵
+    categories.value = data.filter(cat => cat.productCategoriesId !== 9 && cat.productCategoriesId !== 10) // 過濾特殊款泡麵跟飲料
   } catch (error) {
     console.error('無法取得分類資料:', error)
   }
