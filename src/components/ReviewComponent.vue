@@ -16,6 +16,8 @@ const showReportModal = ref(false);
 const reportingReviewId = ref(null);
 const showImageModal = ref(false);
 const selectedImage = ref(null);
+const currentPage = ref(1); // 當前頁碼，預設為第 1 頁
+const itemsPerPage = 5;   // 每頁顯示 5 筆資料
 
 // ========================================================================
 // 區塊 4：計算屬性
@@ -24,6 +26,17 @@ const averageRating = computed(() => {
   if (!reviews.value || reviews.value.length === 0) return 0;
   const total = reviews.value.reduce((sum, review) => sum + review.rating, 0);
   return (total / reviews.value.length).toFixed(1);
+});
+
+// 分頁相關的計算屬性
+const totalPages = computed(() => {
+  return Math.ceil(reviews.value.length / itemsPerPage);
+});
+
+const paginatedReviews = computed(() => {
+  const startIndex = (currentPage.value - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  return reviews.value.slice(startIndex, endIndex);
 });
 
 // ========================================================================
@@ -104,8 +117,8 @@ onMounted(() => {
     <div v-if="error" class="alert alert-warning">{{ error }}</div>
     <div v-if="isLoading" class="text-center py-4"><div class="spinner-border"></div></div>
 
-    <div v-if="!isLoading && reviews.length > 0" class="review-list">
-      <div v-for="review in reviews" :key="review.reviewId" class="review-card card mb-3">
+    <div v-if="!isLoading && reviews.length > 0" class="review-list">      
+      <div v-for="review in paginatedReviews" :key="review.reviewId" class="review-card card mb-3">          
         <div class="card-body">
             <div class="review-header d-flex align-items-start mb-2">
               <div class="flex-grow-1">
@@ -142,10 +155,33 @@ onMounted(() => {
 
             <div v-if="!review.status" class="hidden-review-warning mt-3">
               此評論已隱藏！被檢舉原因：{{ review.hiddenReason || '管理員未提供特定原因' }}，有問題請洽客服。
-            </div>
-
+            </div>            
         </div>
       </div>
+      <nav v-if="totalPages > 1" class="d-flex justify-content-center mt-4"> 
+        <ul class="pagination">
+          <li class="page-item" :class="{ disabled: currentPage === 1 }">
+            <a class="page-link" href="#" @click.prevent="currentPage--">
+              <span>&laquo;</span>
+            </a>
+          </li>
+          <li 
+            v-for="pageNumber in totalPages" 
+            :key="pageNumber" 
+            class="page-item" 
+            :class="{ active: currentPage === pageNumber }"
+          >
+            <a class="page-link" href="#" @click.prevent="currentPage = pageNumber">
+              {{ pageNumber }}
+            </a>
+          </li>
+          <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+            <a class="page-link" href="#" @click.prevent="currentPage++">
+              <span>&raquo;</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
     </div>
     
     <div v-if="!isLoading && reviews.length === 0" class="text-center text-muted py-4">
@@ -199,22 +235,12 @@ onMounted(() => {
   height: 80px; 
   object-fit: cover; 
   cursor: pointer;
-  /* 我們稍微保留一點點 transition，讓點擊時有更平滑的視覺效果 */
   transition: opacity 0.2s ease;
-  border-radius: 4px; /* 加個小圓角更好看 */
+  border-radius: 4px; 
 }
 
 .attachments .attachment-thumbnail:hover {
-  /* 移除 transform: scale(1.1) */
-  /* 改成用透明度變化來提示可點擊 */
-  opacity: 0.8;
-}
-
-/* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
-
-
-/* vvvvvvvvvv 【樣式修改點 2】 vvvvvvvvvvvv */
-/* 新增 Teleport Modal 相關樣式 */
+  opacity: 0.8;}
 
 /* 背景遮罩層 */
 .image-modal-overlay {
@@ -260,5 +286,11 @@ onMounted(() => {
 
 .image-modal-close:hover {
   transform: scale(1.2); /* 滑鼠移過去稍微放大 */
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #92559c; /* 你的主題紫色 */
+  border-color: #92559c;
+  color: white; /* 讓頁碼數字變白色 */
 }
 </style>

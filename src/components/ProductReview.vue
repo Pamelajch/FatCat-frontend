@@ -3,7 +3,7 @@
 // 區塊 1：Setup & 引入
 // 作用：從 Vue 和其他外部套件中，引入這個元件需要用到的所有工具和子元件。
 // ========================================================================
-import { ref, onMounted, computed } from 'vue'; // ref:建立響應式變數, onMounted:生命週期鉤子, computed:建立計算屬性
+import { ref, onMounted, computed,watch } from 'vue'; // ref:建立響應式變數, onMounted:生命週期鉤子, computed:建立計算屬性
 import api from '@/services/jjapi.js';          // 引入我們封裝好的 axios 實例，用於 API 請求
 import HelpfulnessVoting from './HelpfulnessVoting.vue'; // 引入「有幫助」投票的子元件
 import ReportModal from './ReportModal.vue';       // 引入「檢舉」彈出視窗的子元件
@@ -21,6 +21,7 @@ const props = defineProps({
   }
 });
 
+
 // ========================================================================
 // 區塊 3：響應式狀態定義
 // 作用：定義所有會隨時間或使用者互動而改變的變數。
@@ -35,7 +36,8 @@ const authStore = useAuthStore();    // 建立 Auth store 的實例，方便在 
 const currentSort = ref('default');  // 【排序功能】儲存使用者當前選擇的排序方式
 const showImageModal = ref(false);// 【圖片 Modal 功能】新增控制圖片 Modal 的狀態
 const selectedImage = ref(null);
-
+const currentPage = ref(1); // 當前頁碼，預設為第 1 頁
+const itemsPerPage = 5;   // 每頁顯示 5 筆資料
 // ========================================================================
 // 區塊 4：計算屬性 (Computed Properties)
 // 作用：基於響應式狀態，衍生出新的數據。它有快取機制，只有在依賴的數據變化時才會重新計算，效能極佳。
@@ -46,6 +48,19 @@ const averageRating = computed(() => {
   if (!reviews.value || reviews.value.length === 0) return 0;
   const total = reviews.value.reduce((sum, review) => sum + review.rating, 0);
   return (total / reviews.value.length).toFixed(1);
+});
+
+// 分頁相關的計算屬性
+const totalPages = computed(() => {
+  // 改為根據「排序後」的陣列長度來計算總頁數
+  return Math.ceil(sortedReviews.value.length / itemsPerPage); 
+});
+
+const paginatedReviews = computed(() => {
+  const startIndex = (currentPage.value - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  // 改為對「排序後」的陣列進行切割
+  return sortedReviews.value.slice(startIndex, endIndex); 
 });
 
 // 【排序功能】根據 currentSort 的值，回傳一個排序好的新陣列
@@ -69,6 +84,12 @@ const sortedReviews = computed(() => {
       // 'default' 或其他情況，直接回傳原始陣列
       return reviews.value;
   }
+});
+
+// 監聽排序選項的變化
+watch(currentSort, () => {
+  // 當使用者切換排序方式時，自動跳回第一頁
+  currentPage.value = 1;
 });
 
 // ========================================================================
@@ -163,7 +184,7 @@ onMounted(() => {
 
     <div v-if="!isLoading && reviews.length > 0" class="review-list">
       
-      <div v-for="review in sortedReviews" :key="review.reviewId" class="review-card card mb-3">
+      <div v-for="review in paginatedReviews" :key="review.reviewId" class="review-card card mb-3">
         <div class="card-body">
           <div class="review-header d-flex align-items-start mb-2">
             <div class="d-flex align-items-center">
@@ -209,6 +230,30 @@ onMounted(() => {
           </div>
         </div>
       </div>
+      <nav v-if="totalPages > 1" class="d-flex justify-content-center mt-4"> 
+        <ul class="pagination">
+          <li class="page-item" :class="{ disabled: currentPage === 1 }">
+            <a class="page-link" href="#" @click.prevent="currentPage--">
+              <span>&laquo;</span>
+            </a>
+          </li>
+          <li 
+            v-for="pageNumber in totalPages" 
+            :key="pageNumber" 
+            class="page-item" 
+            :class="{ active: currentPage === pageNumber }"
+          >
+            <a class="page-link" href="#" @click.prevent="currentPage = pageNumber">
+              {{ pageNumber }}
+            </a>
+          </li>
+          <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+            <a class="page-link" href="#" @click.prevent="currentPage++">
+              <span>&raquo;</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
     </div>
     
     <div v-if="!isLoading && reviews.length === 0" class="text-center text-muted py-4">
@@ -311,5 +356,12 @@ onMounted(() => {
 
 .image-modal-close:hover {
   transform: scale(1.2);
+}
+
+/* 頁碼的按鈕樣式 */
+.pagination .page-item.active .page-link {
+  background-color: #92559c; 
+  border-color: #92559c;
+  color: white; 
 }
 </style>

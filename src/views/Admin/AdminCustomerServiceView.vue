@@ -199,7 +199,7 @@ const scrollToBottom = () => {
             <div class="user-info">
               <div class="user-avatar">{{ user.userId.charAt(user.userId.length - 1) }}</div>
               <div>
-                <div>{{ user.userId }}</div>
+                <div>會員編號：{{user.userId }}</div>
                 <div class="user-status"></div>
               </div>
             </div>
@@ -212,7 +212,7 @@ const scrollToBottom = () => {
           <div class="chat-header">
             <div class="user-info">
                <div class="user-avatar">{{ currentUserId.charAt(currentUserId.length - 1) }}</div>
-               <div style="font-weight: bold;">{{ currentUserId }}</div>
+               <div style="font-weight: bold;">會員編號：{{ currentUserId }}</div>
             </div>
           </div>
           <div class="chat-messages" ref="messagesContainer">
