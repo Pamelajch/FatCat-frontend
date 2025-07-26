@@ -1,90 +1,11 @@
-<template>
-  <div class="chat-page-container">
-    <div class="admin-container">
-      <div class="sidebar">
-        <div class="sidebar-header">
-          <h2>客服管理系統</h2>
-        </div>
-        <div class="admin-info">
-          <label>管理員ID：</label>
-          <input type="text" v-model="adminId" class="admin-id-input" placeholder="請輸入管理員ID">
-        </div>
-        <div class="connection-status" :class="{ 'connected': isConnected }">
-          {{ connectionStatusText }}
-        </div>
-        <div class="stats">
-          線上用戶：<span>{{ onlineUsers.length }}</span>
-        </div>
-        <div class="user-list">
-          <div 
-            v-if="onlineUsers.length === 0" 
-            class="empty-state" 
-            style="padding: 20px; text-align: center; color: #6c757d;">
-            目前沒有用戶在線
-          </div>
-          <div
-            v-for="user in onlineUsers"
-            :key="user.userId"
-            class="user-item"
-            :class="{ 'active': currentUserId === user.userId }"
-            @click="selectUser(user.userId)"
-          >
-            <div class="user-info">
-              <div class="user-avatar">{{ user.userId.charAt(user.userId.length - 1) }}</div>
-              <div>
-                <div>{{ user.userId }}</div>
-                <div class="user-status"></div>
-              </div>
-            </div>
-            <div v-if="user.unreadCount > 0" class="unread-count">{{ user.unreadCount }}</div>
-          </div>
-        </div>
-      </div>
-      <div class="chat-area">
-        <template v-if="currentUserId">
-          <div class="chat-header">
-            <div class="user-info">
-               <div class="user-avatar">{{ currentUserId.charAt(currentUserId.length - 1) }}</div>
-               <div style="font-weight: bold;">{{ currentUserId }}</div>
-            </div>
-          </div>
-          <div class="chat-messages" ref="messagesContainer">
-            <div 
-              v-for="(msg, index) in currentMessages" 
-              :key="index" 
-              class="message" 
-              :class="`${msg.type}-message`">
-              <div class="message-content">
-                <p>{{ msg.message }}</p>
-                <div class="timestamp">{{ msg.timestamp }}</div>
-              </div>
-            </div>
-          </div>
-          <div class="chat-input">
-            <input 
-              type="text"
-              v-model="newMessage"
-              @keypress.enter="sendMessage"
-              placeholder="輸入回覆訊息..."
-            />
-            <button @click="sendMessage" :disabled="!newMessage.trim()">發送</button>
-          </div>
-        </template>
-        <div v-else class="empty-state">
-          請從左側選擇一個用戶開始對話
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
 // 3. 你原本所有的 import 和程式邏輯都原封不動地保留
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import * as signalR from '@microsoft/signalr';
+import { useAdminAuthStore } from '@/stores/adminauth';
 
 // --- 響應式狀態定義 ---
-const adminId = ref('admin_001');
+const adminAuthStore = useAdminAuthStore();
 const connection = ref(null);
 const isConnected = ref(false);
 const connectionStatusText = ref('連線中...');
@@ -98,6 +19,7 @@ const messagesContainer = ref(null);
 const currentMessages = computed(() => {
   return userMessages.value.get(currentUserId.value) || [];
 });
+const adminName = computed(() => adminAuthStore.admin?.name || '未登入');
 
 // --- SignalR 連線邏輯 ---
 const initConnection = async () => {
@@ -243,6 +165,88 @@ const scrollToBottom = () => {
 };
 </script>
 
+<template>
+  <div class="chat-page-container">
+    <div class="admin-container">
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h2>客服管理系統</h2>
+        </div>
+        <div class="admin-info">
+          <label>管理員：</label>
+          <span class="admin-name-display">{{ adminName }}</span>
+        </div>
+        <div class="connection-status" :class="{ 'connected': isConnected }">
+          {{ connectionStatusText }}
+        </div>
+        <div class="stats">
+          線上用戶：<span>{{ onlineUsers.length }}</span>
+        </div>
+        <div class="user-list">
+          <div 
+            v-if="onlineUsers.length === 0" 
+            class="empty-state" 
+            style="padding: 20px; text-align: center; color: #6c757d;">
+            目前沒有用戶在線
+          </div>
+          <div
+            v-for="user in onlineUsers"
+            :key="user.userId"
+            class="user-item"
+            :class="{ 'active': currentUserId === user.userId }"
+            @click="selectUser(user.userId)"
+          >
+            <div class="user-info">
+              <div class="user-avatar">{{ user.userId.charAt(user.userId.length - 1) }}</div>
+              <div>
+                <div>{{ user.userId }}</div>
+                <div class="user-status"></div>
+              </div>
+            </div>
+            <div v-if="user.unreadCount > 0" class="unread-count">{{ user.unreadCount }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-area">
+        <template v-if="currentUserId">
+          <div class="chat-header">
+            <div class="user-info">
+               <div class="user-avatar">{{ currentUserId.charAt(currentUserId.length - 1) }}</div>
+               <div style="font-weight: bold;">{{ currentUserId }}</div>
+            </div>
+          </div>
+          <div class="chat-messages" ref="messagesContainer">
+            <div 
+              v-for="(msg, index) in currentMessages" 
+              :key="index" 
+              class="message" 
+              :class="`${msg.type}-message`">
+              <div class="message-content">
+                <p>{{ msg.message }}</p>
+                <div class="timestamp">{{ msg.timestamp }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-input">
+            <input 
+              type="text"
+              v-model="newMessage"
+              @keypress.enter="sendMessage"
+              placeholder="輸入回覆訊息..."
+            />
+            <button @click="sendMessage" :disabled="!newMessage.trim()">發送</button>
+          </div>
+        </template>
+        <div v-else class="empty-state">
+          請從左側選擇一個用戶開始對話
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+
+
 <style scoped>
 /* 最外層容器的樣式 */
 .chat-page-container {
@@ -340,4 +344,9 @@ const scrollToBottom = () => {
 .message.system-message { justify-content: center; margin: 20px 0; }
 .system-message .message-content { background: #e9ecef; color: #6c757d; font-style: italic; font-size: 15px; text-align: center; box-shadow: none; }
 .system-message .timestamp { display: none; }
+.admin-name-display {
+  font-weight: bold;
+  color:  #6c757d; 
+  font-size: 16px;
+}
 </style>
