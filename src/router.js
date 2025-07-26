@@ -28,10 +28,11 @@ import CouponDetailView from '@/views/Admin/CouponDetailView.vue'
 import OrderDetailView from "./views/Admin/OrderDetailView.vue"
 import StreamViewer from "./views/StreamViewer.vue"
 import DrinkView from "./views/DrinkView.vue"
+import IntroView from "./views/IntroView.vue"
 
 const routes = [
-    //http://localhost:5173/ => http://localhost:5173/home
-    { path: "/", redirect: "/home" },
+    //http://localhost:5173/ => http://localhost:5173/
+    { path: "/", component: IntroView, name: "intro" ,meta: { hideHeaderFooter: true }},
     //首頁
     //http://localhost:5173/home
     { path: "/home", component: HomeView, name: "home" },
