@@ -15,7 +15,7 @@
       <ul class="list-group">
         <li class="list-group-item"><h3>送貨資料</h3></li>
         <li class="list-group-item">送貨方式：
-          <div>{{ selectedShipping?.name || '未選擇' }}</div>
+          <div>{{ addressType === 1 ? '超商取貨' : '宅配' }}</div>
         </li>
         
         <!-- 顯示收件人資訊 -->
@@ -26,18 +26,16 @@
           <div>{{ checkout.recipientPhone || '未填寫' }}</div>
         </li>
         
-        <!-- 根據地址類型顯示不同資訊 -->
+        <!-- 根據地址類型顯示不同資訊 => addressType === 1 是超商取貨, 其他則是宅配,參考shippingForm,vue 第81行 by jj) -->
+        <!-- 如果是超商取貨 -->
         <li class="list-group-item" v-if="checkout.addressType === 1 && checkout.recipientAddress">
+          取貨門市：
+          <div>{{ checkout.storeName }}({{ checkout.recipientAddress }})</div>
+        </li>
+        <!-- 如果是宅配 -->
+        <li class="list-group-item" v-else-if="checkout.recipientAddress">
           收件地址：
           <div>{{ checkout.recipientAddress }}</div>
-        </li>
-        <li class="list-group-item" v-else-if="checkout.addressType === 2 && checkout.storeName">
-          取貨門市：
-          <div>{{ checkout.storeName }}</div>
-        </li>
-        <li class="list-group-item" v-else>
-          收件地址：
-          <div class="text-muted">未選擇地址</div>
         </li>
       </ul>
     </div>

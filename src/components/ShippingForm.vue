@@ -1,3 +1,167 @@
+<script setup>
+import { ref, onMounted, watch, defineExpose, computed } from 'vue'
+import api from '@/services/jjapi.js'
+import { useCheckoutStore } from '@/stores/checkout'
+import { useAuthStore } from '@/stores/auth'
+import AddressForm from './AddressForm.vue'
+import Swal from 'sweetalert2'
+
+const checkout = useCheckoutStore()
+const authStore = useAuthStore()
+
+// 狀態管理
+const addressList = ref([])
+const selectedAddressId = ref('')
+const isLoading = ref(false)
+const showAddressModal = ref(false)
+const isSubmitting = ref(false)
+
+// 錯誤處理
+const errors = ref({
+  addressId: false
+})
+
+// 計算屬性: 選中的地址
+const selectedAddress = computed(() => {
+  return addressList.value.find(a => a.addressId === selectedAddressId.value)
+})
+
+// 格式化地址選項顯示
+function formatAddressOption(address) {
+  const type = address.addressType === 1 ? '超商取貨' : '宅配' 
+  const defaultText = address.isDefault ? ' (預設)' : ''
+  if(address.addressType === 1) {
+    return `${address.recipientName} - ${type}${defaultText} - ${address.storeName || '未知的分店名稱'}`
+  } else {
+    return `${address.recipientName} - ${type}${defaultText} - ${address.city}${address.district}${address.addressDetail}`
+  }
+}
+
+// 載入地址列表
+const loadAddresses = async () => {
+  isLoading.value = true
+  try {
+    const res = await api.get('/address')
+    if (res.data && res.data.success) {
+      addressList.value = res.data.data
+      
+      // 預設選擇預設地址
+      const defaultAddr = addressList.value.find(a => a.isDefault)
+      if (defaultAddr) {
+        selectedAddressId.value = defaultAddr.addressId
+      } else if (addressList.value.length > 0) {
+        // 如果沒有預設地址，選擇第一個
+        selectedAddressId.value = addressList.value[0].addressId
+      }
+    }
+  } catch (error) {
+    console.error('載入地址失敗:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 當選擇地址時，同步到 checkout store
+watch(selectedAddressId, (id) => {
+  errors.value.addressId = false
+  
+  const addr = addressList.value.find(a => a.addressId === id)
+  if (addr) {
+    checkout.recipientName = addr.recipientName
+    checkout.recipientPhone = addr.phoneNumber
+    checkout.shippingAddressId = addr.addressId
+    checkout.addressType = addr.addressType
+
+    // 同步個人資料 (從地址資料擷取) 
+    checkout.name = addr.recipientName
+    checkout.phone = addr.phoneNumber
+    // Email 直接套用使用者的email
+    checkout.email = authStore.user?.email || ''
+    
+    // 組合完整地址
+    // 超商取貨 addr.addressType === 1
+    if (addr.addressType === 1) {
+      checkout.recipientAddress = addr.addressDetail 
+      checkout.storeName = addr.storeName || '未知的分店名稱' // 超商名稱
+    } else {
+      // 宅配 addr.addressType != 1
+      checkout.recipientAddress = (addr.city || '') + (addr.district || '') + (addr.addressDetail || '') // 宅配地址(城市+區域+詳細地址)
+      checkout.storeName = '' // 超商名稱為空
+    }
+  }
+})
+
+// 顯示新增地址的 Modal
+const showAddAddressModal = () => {
+  showAddressModal.value = true
+}
+
+// 關閉新增地址的 Modal
+const closeAddressModal = () => {
+  showAddressModal.value = false
+}
+
+// 處理新增地址提交
+const handleAddressSubmit = async (formData) => {
+  isSubmitting.value = true
+  try{
+    const res = await api.post('/address',formData)
+    if(res.data && res.data.success){
+      Swal.fire({
+        icon:'success',
+        title:'新增成功',
+        text:'地址新增成功',
+        confirmButtonText:'確定'
+      })
+
+      // 重新載入地址列表
+      await loadAddresses()
+      closeAddressModal()
+    }
+  }catch(error){
+    console.error('新增地址失敗:',error)
+    Swal.fire({
+      icon:'error',
+      title:'新增失敗',
+      text:error.response?.data?.message || '新增地址失敗，請稍後再試',
+      confirmButtonText:'確定'
+    })
+  }finally{
+    isSubmitting.value = false
+  }
+}
+
+// 驗證方法
+function validateShippingInfo() {
+  let isValid = true
+  
+  // 重置錯誤
+  errors.value.addressId = false
+  
+  if (!selectedAddressId.value) {
+    errors.value.addressId = true
+    isValid = false
+  }
+
+  // 確保個人資料已同步
+  if(selectedAddress.value)
+  {
+    checkout.name = selectedAddress.value.recipientName
+    checkout.phone = selectedAddress.value.phoneNumber
+    checkout.email = authStore.user?.email || ''
+  }
+  
+  return isValid
+}
+
+// 初始化
+onMounted(() => {
+  loadAddresses()
+})
+
+defineExpose({ validateShippingInfo })
+</script>
+
 <template>
   <ul class="list-group">
     <li class="list-group-item">
@@ -118,155 +282,6 @@
     </div>
   </div>
 </template>
-
-
-
-<script setup>
-import { ref, onMounted, watch, defineExpose, computed } from 'vue'
-import api from '@/services/jjapi.js'
-import { useCheckoutStore } from '@/stores/checkout'
-import AddressForm from './AddressForm.vue'
-import Swal from 'sweetalert2'
-
-const checkout = useCheckoutStore()
-
-// 狀態管理
-const addressList = ref([])
-const selectedAddressId = ref('')
-const isLoading = ref(false)
-const showAddressModal = ref(false)
-const isSubmitting = ref(false)
-
-// 錯誤處理
-const errors = ref({
-  addressId: false
-})
-
-// 計算屬性: 選中的地址
-const selectedAddress = computed(() => {
-  return addressList.value.find(a => a.addressId === selectedAddressId.value)
-})
-
-// 格式化地址選項顯示
-function formatAddressOption(address) {
-  const type = address.addressType === 1 ? '超商取貨' : '宅配' 
-  const defaultText = address.isDefault ? ' (預設)' : ''
-  if(address.addressType === 1) {
-    return `${address.recipientName} - ${type}${defaultText} - ${address.storeName || '未知的分店名稱'}`
-  } else {
-    return `${address.recipientName} - ${type}${defaultText} - ${address.city}${address.district}${address.addressDetail}`
-  }
-}
-
-// 載入地址列表
-const loadAddresses = async () => {
-  isLoading.value = true
-  try {
-    const res = await api.get('/address')
-    if (res.data && res.data.success) {
-      addressList.value = res.data.data
-      
-      // 預設選擇預設地址
-      const defaultAddr = addressList.value.find(a => a.isDefault)
-      if (defaultAddr) {
-        selectedAddressId.value = defaultAddr.addressId
-      } else if (addressList.value.length > 0) {
-        // 如果沒有預設地址，選擇第一個
-        selectedAddressId.value = addressList.value[0].addressId
-      }
-    }
-  } catch (error) {
-    console.error('載入地址失敗:', error)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// 當選擇地址時，同步到 checkout store
-watch(selectedAddressId, (id) => {
-  errors.value.addressId = false
-  
-  const addr = addressList.value.find(a => a.addressId === id)
-  if (addr) {
-    checkout.recipientName = addr.recipientName
-    checkout.recipientPhone = addr.phoneNumber
-    checkout.shippingAddressId = addr.addressId
-    checkout.addressType = addr.addressType
-    
-    // 組合完整地址
-    if (addr.addressType === 1) {
-      // 超商取貨
-      checkout.recipientAddress = addr.addressDetail 
-      checkout.storeName = addr.storeName || '未知的分店名稱' // 超商名稱
-    } else {
-      checkout.recipientAddress = (addr.city || '') + (addr.district || '') + (addr.addressDetail || '') // 宅配地址(城市+區域+詳細地址)
-      checkout.storeName = '' || '未知的分店名稱'// 超商名稱為空
-    }
-  }
-})
-
-// 顯示新增地址的 Modal
-const showAddAddressModal = () => {
-  showAddressModal.value = true
-}
-
-// 關閉新增地址的 Modal
-const closeAddressModal = () => {
-  showAddressModal.value = false
-}
-
-// 處理新增地址提交
-const handleAddressSubmit = async (formData) => {
-  isSubmitting.value = true
-  try{
-    const res = await api.post('/address',formData)
-    if(res.data && res.data.success){
-      Swal.fire({
-        icon:'success',
-        title:'新增成功',
-        text:'地址新增成功',
-        confirmButtonText:'確定'
-      })
-
-      // 重新載入地址列表
-      await loadAddresses()
-      closeAddressModal()
-    }
-  }catch(error){
-    console.error('新增地址失敗:',error)
-    Swal.fire({
-      icon:'error',
-      title:'新增失敗',
-      text:error.response?.data?.message || '新增地址失敗，請稍後再試',
-      confirmButtonText:'確定'
-    })
-  }finally{
-    isSubmitting.value = false
-  }
-}
-
-// 驗證方法
-function validateShippingInfo() {
-  let isValid = true
-  
-  // 重置錯誤
-  errors.value.addressId = false
-  
-  if (!selectedAddressId.value) {
-    errors.value.addressId = true
-    isValid = false
-  }
-  
-  return isValid
-}
-
-// 初始化
-onMounted(() => {
-  loadAddresses()
-})
-
-defineExpose({ validateShippingInfo })
-</script>
 
 <style scoped>
 .selected-address-info {
