@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
 import { useCartStore } from '@/stores/cart'
 import PostReviewForm from './PostReviewForm.vue'
 
@@ -10,22 +11,61 @@ const props = defineProps({
 })
 
 const cartStore = useCartStore()
-
-// ✅ 優先使用 props.items，如果沒有就用購物車內的資料
-const showItems = computed(() => {
-  const rawItems = props.items || cartStore.items
-  return rawItems.map(item => ({
-    ...item,
-    subtotal: item.price * item.quantity
-  }))
-})
-
-
-// 🔄 狀態與事件
+const showItems = ref([])
 const loading = ref(false)
 const error = ref(null)
 const showReviewForm = ref(false)
 const selectedItem = ref(null)
+
+onMounted(async () => {
+  if (props.items && props.items.length > 0) {
+    showItems.value = props.items.map(item => ({
+      ...item,
+      subtotal: item.price * item.quantity
+    }))
+    return
+  }
+
+  try {
+    loading.value = true
+
+    const [orderDetailsRes, cartRes, productRes, imageRes] = await Promise.all([
+      axios.get('/api/OrderDetails', { params: { orderId: props.orderId } }),
+      axios.get('/api/ShoppingCartItems'),
+      axios.get('/api/Products'),
+      axios.get('/api/ProductImages')
+    ])
+
+    const orderDetails = orderDetailsRes.data
+    const cartItems = cartRes.data
+    const products = productRes.data
+    const productImages = imageRes.data
+
+    showItems.value = orderDetails.map(od => {
+      const cartItem = cartItems.find(ci => ci.itemId === od.itemId)
+      const product = products.find(p => p.productsId === cartItem?.productsId)
+
+      const mainImage = productImages.find(img =>
+        img.productId === product?.productsId && img.isMain === 1
+      )
+
+      return {
+        productId: product?.productsId || 0,
+        name: product?.name || od.productName,
+        image: mainImage?.imageUrl ? `/ProductImages/${mainImage.imageUrl}` : '/ProductImages/default.png',
+        price: od.unitprice,
+        quantity: od.quantity,
+        subtotal: od.unitprice * od.quantity,
+        hasBeenReviewed: false
+      }
+    })
+  } catch (err) {
+    console.error(err)
+    error.value = '載入失敗'
+  } finally {
+    loading.value = false
+  }
+})
 
 const handleReviewClick = (item) => {
   selectedItem.value = item
@@ -39,20 +79,26 @@ const closeReviewForm = () => {
 
 const handleReviewSubmitted = () => {
   closeReviewForm()
-  // ✅ 可以根據需要將 item 標記為 hasBeenReviewed = true
   if (selectedItem.value) {
     selectedItem.value.hasBeenReviewed = true
   }
 }
 
-// ✅ 計算總金額
 const total = computed(() => {
   return showItems.value.reduce((sum, item) => {
-    const subtotal = item.subtotal || (item.price * item.quantity)
-    return sum + subtotal
+    return sum + (item.subtotal || item.price * item.quantity)
   }, 0).toFixed(2)
 })
 </script>
+
+
+<style scoped>
+.list-group-item {
+  border-radius: 12px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 8px;
+}
+</style>
 
 <template>
   <div v-if="loading">載入中...</div>
