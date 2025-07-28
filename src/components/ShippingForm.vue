@@ -77,7 +77,7 @@ const shippingOptions = ref([])
 const selectedShippingId = ref('')
 const recipientName = ref('')
 const recipientPhone = ref('')
-const recipientAddress = ref('')
+const recipientAddress = ref('')  
 const storeName = ref('')
 const sameAsMember = ref(false)
 
