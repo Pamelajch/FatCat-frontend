@@ -9,13 +9,9 @@ export const useCheckoutStore = defineStore('checkout', () => {
     const email = ref('')
 
     // 送貨資料
-    const shippingId = ref(null)
-    const recipientName = ref('')
-    const recipientPhone = ref('')
     const recipientAddress = ref('') // 新增：完整收件地址
     const shippingAddressId = ref(null) // 新增：選擇的地址ID
     const addressType = ref(null) // 新增：地址類型 (1=宅配, 2=超商)
-    const sameAsMember = ref(false)
 
     // 新增：宅配地址
     const address = ref('')

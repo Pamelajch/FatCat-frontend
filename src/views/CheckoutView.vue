@@ -1,22 +1,19 @@
 <script setup>
 import { useCartStore } from '@/stores/cart'
 import { useOrderStore } from '@/stores/order'
-import { useCheckoutStore } from '@/stores/checkout'
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '@/services/jjapi.js' 
 
 import CartItemList from '@/components/CartItemList.vue'
 // import MemberInfoForm from '@/components/MemberInfoForm.vue'  移除memberInform by jj
 import ShippingForm from '@/components/ShippingForm.vue'
 import PaymentInfo from '@/components/PaymentInfo.vue'
-import { onMounted, ref } from 'vue'
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCheckoutStore } from '@/stores/checkout'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
-const cartStore = useCartStore()
 const checkoutStore = useCheckoutStore()
 const orderStore = useOrderStore()
 
@@ -52,15 +49,15 @@ async function handleCheckout() {
       userId: checkoutStore.userId,
       orderdate: new Date().toISOString(),
       location: checkoutStore.address || checkoutStore.storeName || '未填寫地址',
-      couponId: checkoutStore.couponId ?? null,
+      couponId: checkoutStore.couponId || null,
       totalAmount: cartStore.total,
       payableAmount: checkoutStore.total,
       orderStatusId: 1,
-      shippingId: checkoutStore.shippingId,
-      shippingStatusId: checkoutStore.shippingStatusId,
-      supportpaymentMethodId: checkoutStore.paymentMethodId ?? null
+      shippingId: checkoutStore.shippingId || 1,
+      shippingStatusId: checkoutStore.shippingStatusId || 1,
+      supportpaymentMethodId: checkoutStore.paymentMethodId || null
     }
-    const orderRes = await axios.post('/api/Orders', orderPayload)
+    const orderRes = await api.post('/Orders', orderPayload)
     const orderId = orderRes.data.orderId
     if (!orderId) throw new Error('未取得 orderId')
 
@@ -71,7 +68,7 @@ async function handleCheckout() {
       quantity: i.quantity,
       unitprice: i.price
     }))
-    const cartRes = await axios.post('/api/ShoppingCartItems/batch', cartPayload)
+    const cartRes = await api.post('/ShoppingCartItems/batch', cartPayload)
     const itemIds = cartRes.data
     if (!Array.isArray(itemIds)) throw new Error('未取得 itemIds')
 
@@ -83,7 +80,7 @@ async function handleCheckout() {
       Quantity: item.quantity,
       Unitprice: item.price
     }))
-    await axios.post('/api/OrderDetails/batch', orderDetails)
+    await api.post('/OrderDetails/batch', orderDetails)
 
     alert('✅ 訂單已送出！')
 
