@@ -1,11 +1,18 @@
 <script setup>
 import { useCartStore } from '@/stores/cart'
-import { onMounted, onUnmounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { onMounted, onUnmounted, ref } from 'vue'
 import * as bootstrap from 'bootstrap'
+import LoginForm from './LoginForm.vue'
+// 添加登入路由守衛 by jj
 
 const cartStore = useCartStore()
+const authStore = useAuthStore()
 
 let offcanvasInstance = null
+
+// 登入模態框狀態
+const showLoginModal = ref(false)
 
 // 這段可選，確保 offcanvas 正確初始化（只初始化一次）
 onMounted(() => {
@@ -14,7 +21,6 @@ onMounted(() => {
     offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(el)
   }
 
-  
   // ✅ 載入購物車商品圖片
   cartStore.loadImagesForCartItems()
 })
@@ -38,6 +44,33 @@ function closeOffcanvas() {
   document.body.style.overflow = ''
 }
 
+// 處理結帳按鈕點擊
+function handleCheckoutClick() {
+  // 檢查用戶是否已登入
+  if (!authStore.isAuthenticated) {
+    // 未登入，顯示登入模態框
+    showLoginModal.value = true
+    return
+  }
+  
+  // 已登入，關閉 offcanvas 並導向購物車頁面
+  closeOffcanvas()
+  window.location.href = '/cart'
+}
+
+// 處理登入成功
+function handleLoginSuccess() {
+  // 登入成功後，關閉登入模態框並導向購物車頁面
+  showLoginModal.value = false
+  closeOffcanvas()
+  window.location.href = '/cart'
+}
+
+// 關閉登入模態框
+function closeLoginModal() {
+  showLoginModal.value = false
+}
+
 const onQtyInput = debounce((event, item) => {
   let value = parseInt(event.target.value)
 
@@ -50,7 +83,6 @@ const onQtyInput = debounce((event, item) => {
   cartStore.setQty(item, value)
 }, 300)
 
-
 function debounce(fn, delay = 300) {
   let timeout
   return (...args) => {
@@ -58,8 +90,6 @@ function debounce(fn, delay = 300) {
     timeout = setTimeout(() => fn(...args), delay)
   }
 }
-
-
 </script>
 
 <template>
@@ -87,22 +117,23 @@ function debounce(fn, delay = 300) {
               <h6 class="mb-1">{{ item.name }}</h6>
               <div>單價：${{ item.price }}</div>
               <div class="d-flex align-items-center mt-1">
-              <button class="btn btn-outline-secondary btn-sm" @click="cartStore.decreaseQty(item)">-</button>
-              
-              <input
-                type="number"
-                class="form-control form-control-sm mx-2"
-                style="width: 60px;"
-                :value="item.quantity"
-                @input="onQtyInput($event, item)"
-                min="1"
-              />
+                <button class="btn btn-outline-secondary btn-sm" @click="cartStore.decreaseQty(item)">-</button>
+                
+                <input
+                  type="number"
+                  class="form-control form-control-sm mx-2"
+                  style="width: 60px;"
+                  :value="item.quantity"
+                  @input="onQtyInput($event, item)"
+                  min="1"
+                />
 
-              
-              <button class="btn btn-outline-secondary btn-sm" @click="cartStore.increaseQty(item)">+</button>
+                <button class="btn btn-outline-secondary btn-sm" @click="cartStore.increaseQty(item)">+</button>
+              </div>
             </div>
-            </div>
-            <button class="btn btn-sm btn-danger" @click="cartStore.removeItem(item.id)"><i class="fa-solid fa-trash-can"></i>移除</button>
+            <button class="btn btn-sm btn-danger" @click="cartStore.removeItem(item.id)">
+              <i class="fa-solid fa-trash-can"></i>移除
+            </button>
           </div>
         </div>
 
@@ -110,13 +141,37 @@ function debounce(fn, delay = 300) {
           總金額：<span class="text-danger">${{ cartStore.total }}</span>
         </div>
 
-        <router-link to="/cart" class="btn custom-purple-btn w-100" @click="closeOffcanvas">立刻結帳</router-link>
+        <!-- 修改結帳按鈕，添加路由守衛 -->
+        <button class="btn custom-purple-btn w-100" @click="handleCheckoutClick">立刻結帳</button>
       </template>
 
       <template v-else>
         <div class="text-center">購物車內尚無商品</div>
         <router-link to="/" class="btn custom-purple-outline-btn mt-3 w-100" @click="closeOffcanvas">前往購物</router-link>
       </template>
+    </div>
+  </div>
+
+  <!-- 登入模態框 -->
+  <div v-if="showLoginModal" class="login-modal-overlay" @click="closeLoginModal">
+    <div class="login-modal-content" @click.stop>
+      <!-- 關閉按鈕 -->
+      <button type="button" class="btn-close modal-close-btn" @click="closeLoginModal" aria-label="Close">
+        <i class="bi bi-x-lg"></i>
+      </button>
+
+      <!-- 模態框標題 -->
+      <div class="modal-header">
+        <h4 class="modal-title">請先登入</h4>
+        <p class="modal-subtitle">登入後即可繼續結帳流程</p>
+      </div>
+
+      <!-- 直接使用現有的 LoginForm 組件 -->
+      <LoginForm 
+        :is-modal="true" 
+        :redirect-path="'/cart'"
+        @login-success="handleLoginSuccess" 
+      />
     </div>
   </div>
 </template>
@@ -147,5 +202,95 @@ function debounce(fn, delay = 300) {
 }
 .btn-space {
   margin-right: 10px; /* 可以依需求微調距離 */
+}
+
+/* 模態框樣式 */
+.login-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(5px);
+}
+
+.login-modal-content {
+  background: white;
+  border-radius: 15px;
+  padding: 2rem;
+  max-width: 450px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #666;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.modal-close-btn:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.modal-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-top: 1rem;
+}
+
+.modal-title {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.modal-subtitle {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* 響應式調整 */
+@media (max-width: 576px) {
+  .login-modal-content {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .modal-title {
+    font-size: 1.25rem;
+  }
 }
 </style>

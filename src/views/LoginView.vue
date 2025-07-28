@@ -61,7 +61,7 @@ onMounted(() => {
       </div>
 
       <!-- 登入表單組件 -->
-      <LoginForm></LoginForm>
+      <LoginForm :is-modal="false" redirect-path="/"></LoginForm>
 
       <!-- 註冊連結 ----->
       <div class="text-center mt-4">

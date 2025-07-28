@@ -64,12 +64,17 @@ const isAdminPage = computed(() => {
 
     <!--內容畫面 -->
     <div v-else>
+      <!-- header -->
       <HeaderComponent v-if="!shouldhideHeaderFooter" />
       <main :class="['main-content', { 'with-header': !shouldhideHeaderFooter}]">
+        <!-- 各種 component -->
         <RouterView />
+        <!-- 右下角貓貓客服 -->
         <CustomerService v-if="!isAdminPage" />
+        <!-- 直播logo -->
         <StreamLogo v-if="!isAdminPage" />
       </main>
+      <!-- Footer -->
       <FooterComponent v-if="!shouldhideHeaderFooter" />
     </div>
   </div>
