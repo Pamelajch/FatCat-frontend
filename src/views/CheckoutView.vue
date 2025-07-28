@@ -7,9 +7,13 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 import CartItemList from '@/components/CartItemList.vue'
-import MemberInfoForm from '@/components/MemberInfoForm.vue'
+// import MemberInfoForm from '@/components/MemberInfoForm.vue'  移除memberInform by jj
 import ShippingForm from '@/components/ShippingForm.vue'
 import PaymentInfo from '@/components/PaymentInfo.vue'
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useCheckoutStore } from '@/stores/checkout'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -18,10 +22,24 @@ const orderStore = useOrderStore()
 
 const shippingFormRef = ref()
 const isSubmitting = ref(false)
+const checkout = useCheckoutStore()
+const authStore = useAuthStore()
+const cartStore = useCartStore()
+
+// 初始化結帳資料
+onMounted(()=>{
+  // 設定預設運費 = 60
+  checkout.shippingFee = 60
+  // 設定商品總金額
+  checkout.productTotal = cartStore.total
+})
 
 async function handleCheckout() {
   const isValid = shippingFormRef.value?.validateShippingInfo?.()
   if (!isValid) return
+
+  // 1.請記得寫呼叫checkout.js api 1 寫入資料表 order by jj 
+  // 2.呼叫 api 2 寫入資料表 orderDetails by jj 
 
   isSubmitting.value = true
 
@@ -109,9 +127,10 @@ async function handleCheckout() {
 
     <div class="container">
       <div class="row">
-        <div class="col-md-4"><MemberInfoForm /></div>
-        <div class="col-md-4"><ShippingForm ref="shippingFormRef" /></div>
-        <div class="col-md-4"><PaymentInfo /></div>
+        <!-- 改為直接將 shippingForm 置左, paymentInfo 置右 , MemberInfoForm 刪除by jj-->
+        <!-- <div class="col-md-6"><MemberInfoForm /></div> 註解掉 by jj -->
+        <div class="col-md-6"><ShippingForm ref="shippingFormRef" /></div>
+        <div class="col-md-6"><PaymentInfo /></div>
         <div class="mt-3 text-end">
           <router-link to="/cart">
             <button class="btn custom-purple-outline-btn btn-space">購物車確認</button>

@@ -26,10 +26,16 @@ class AddressService {
     // 新增地址
     async createAddress(addressData) {
         try {
+            console.log('發送地址資料:', addressData)
             const response = await api.post('/address', addressData)
+            console.log('API 回應:', response.data)
             return response.data
         } catch (error) {
             console.error('新增地址失敗:', error)
+            // 如果是400錯誤, 則顯示詳細的錯誤訊息
+            if (error.response && error.response.status === 400) {
+                console.error('400 錯誤詳情:', error.response.data)
+            }
             throw error
         }
     }

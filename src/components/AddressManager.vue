@@ -1,137 +1,3 @@
-<template>
-    <div class="address-manager">
-        <!-- 標題和新增按鈕 -->
-        <div class="address-header">
-            <h5 class="address-title">
-                <i class="bi bi-geo-alt-fill me-2"></i>
-                地址管理
-            </h5>
-            <button 
-                class="btn btn-primary btn-sm"
-                @click="showAddForm"
-                :disabled="addressStore.isLoading"
-            >
-                <i class="bi bi-plus-lg me-1"></i>
-                新增地址
-            </button>
-        </div>
-
-        <!-- 載入狀態 -->
-        <div v-if="addressStore.isLoading" class="loading-container">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">載入中...</span>
-            </div>
-            <p class="mt-2 text-muted">載入地址資料中...</p>
-        </div>
-
-        <!-- 地址列表 -->
-        <div v-else-if="addressStore.addresses.length > 0" class="address-list">
-            <!-- 預設地址 -->
-            <div v-if="addressStore.defaultAddress" class="address-item default-address">
-                <div class="address-content">
-                    <div class="address-header-info">
-                        <span class="badge bg-success me-2">預設</span>
-                        <span class="address-type-badge">{{ addressStore.defaultAddress.addressTypeText }}</span>
-                    </div>
-                    <h6 class="recipient-name">{{ addressStore.defaultAddress.recipientName }}</h6>
-                    <p class="phone-number">{{ addressStore.defaultAddress.phoneNumber }}</p>
-                    <p class="full-address">{{ addressStore.defaultAddress.fullAddress }}</p>
-                </div>
-                <div class="address-actions">
-                    <button 
-                        class="btn btn-outline-primary btn-sm"
-                        @click="editAddress(addressStore.defaultAddress)"
-                        title="編輯地址"
-                    >
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <button 
-                        class="btn btn-outline-danger btn-sm"
-                        @click="deleteAddress(addressStore.defaultAddress.addressId)"
-                        title="刪除地址"
-                    >
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- 其他地址 -->
-            <div 
-                v-for="address in addressStore.nonDefaultAddresses" 
-                :key="address.addressId"
-                class="address-item"
-            >
-                <div class="address-content">
-                    <div class="address-header-info">
-                        <span class="address-type-badge">{{ address.addressTypeText }}</span>
-                    </div>
-                    <h6 class="recipient-name">{{ address.recipientName }}</h6>
-                    <p class="phone-number">{{ address.phoneNumber }}</p>
-                    <p class="full-address">{{ address.fullAddress }}</p>
-                </div>
-                <div class="address-actions">
-                    <button 
-                        class="btn btn-outline-success btn-sm"
-                        @click="setDefaultAddress(address.addressId)"
-                        title="設為預設地址"
-                    >
-                        <i class="bi bi-star"></i>
-                    </button>
-                    <button 
-                        class="btn btn-outline-primary btn-sm"
-                        @click="editAddress(address)"
-                        title="編輯地址"
-                    >
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <button 
-                        class="btn btn-outline-danger btn-sm"
-                        @click="deleteAddress(address.addressId)"
-                        title="刪除地址"
-                    >
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 空狀態 -->
-        <div v-else class="empty-state">
-            <i class="bi bi-geo-alt text-muted" style="font-size: 3rem;"></i>
-            <h6 class="mt-3 text-muted">尚未新增任何地址</h6>
-            <p class="text-muted">點擊上方「新增地址」按鈕來新增您的第一個地址</p>
-        </div>
-
-        <!-- 地址表單 Modal -->
-        <div 
-            v-if="showModal" 
-            class="modal-backdrop"
-            @click="closeModal"
-        >
-            <div class="modal-content" @click.stop>
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        {{ editingAddress ? '編輯地址' : '新增地址' }}
-                    </h5>
-                    <button 
-                        type="button" 
-                        class="btn-close"
-                        @click="closeModal"
-                    ></button>
-                </div>
-                <div class="modal-body">
-                    <AddressForm
-                        :address="editingAddress"
-                        :is-submitting="isSubmitting"
-                        @submit="handleFormSubmit"
-                        @cancel="closeModal"
-                    />
-                </div>
-            </div>
-        </div>
-    </div>
-</template>
-
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAddressStore } from '@/stores/address'
@@ -274,6 +140,139 @@ const setDefaultAddress = async (addressId) => {
 }
 </script>
 
+<template>
+    <div class="address-manager">
+        <!-- 標題和新增按鈕 -->
+        <div class="address-header">
+            <h5 class="address-title">
+                <i class="bi bi-geo-alt-fill me-2"></i>
+                地址管理(AddressManager)
+            </h5>
+            <button 
+                class="btn btn-primary btn-sm"
+                @click="showAddForm"
+                :disabled="addressStore.isLoading"
+            >
+                <i class="bi bi-plus-lg me-1"></i>
+                新增地址(AddressForm)
+            </button>
+        </div>
+
+        <!-- 載入狀態 -->
+        <div v-if="addressStore.isLoading" class="loading-container">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">載入中...</span>
+            </div>
+            <p class="mt-2 text-muted">載入地址資料中...</p>
+        </div>
+
+        <!-- 地址列表 -->
+        <div v-else-if="addressStore.addresses.length > 0" class="address-list">
+            <!-- 預設地址 -->
+            <div v-if="addressStore.defaultAddress" class="address-item default-address">
+                <div class="address-content">
+                    <div class="address-header-info">
+                        <span class="badge bg-success me-2">預設</span>
+                        <span class="address-type-badge">{{ addressStore.defaultAddress.addressTypeText }}</span>
+                    </div>
+                    <h6 class="recipient-name">{{ addressStore.defaultAddress.recipientName }}</h6>
+                    <p class="phone-number">{{ addressStore.defaultAddress.phoneNumber }}</p>
+                    <p class="full-address">{{ addressStore.defaultAddress.fullAddress }}</p>
+                </div>
+                <div class="address-actions">
+                    <button 
+                        class="btn btn-outline-primary btn-sm"
+                        @click="editAddress(addressStore.defaultAddress)"
+                        title="編輯地址"
+                    >
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button 
+                        class="btn btn-outline-danger btn-sm"
+                        @click="deleteAddress(addressStore.defaultAddress.addressId)"
+                        title="刪除地址"
+                    >
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 其他地址 -->
+            <div 
+                v-for="address in addressStore.nonDefaultAddresses" 
+                :key="address.addressId"
+                class="address-item"
+            >
+                <div class="address-content">
+                    <div class="address-header-info">
+                        <span class="address-type-badge">{{ address.addressTypeText }}</span>
+                    </div>
+                    <h6 class="recipient-name">{{ address.recipientName }}</h6>
+                    <p class="phone-number">{{ address.phoneNumber }}</p>
+                    <p class="full-address">{{ address.fullAddress }}</p>
+                </div>
+                <div class="address-actions">
+                    <button 
+                        class="btn btn-outline-success btn-sm"
+                        @click="setDefaultAddress(address.addressId)"
+                        title="設為預設地址"
+                    >
+                        <i class="bi bi-star"></i>
+                    </button>
+                    <button 
+                        class="btn btn-outline-primary btn-sm"
+                        @click="editAddress(address)"
+                        title="編輯地址"
+                    >
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button 
+                        class="btn btn-outline-danger btn-sm"
+                        @click="deleteAddress(address.addressId)"
+                        title="刪除地址"
+                    >
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 空狀態 -->
+        <div v-else class="empty-state">
+            <i class="bi bi-geo-alt text-muted" style="font-size: 3rem;"></i>
+            <h6 class="mt-3 text-muted">尚未新增任何地址</h6>
+            <p class="text-muted">點擊上方「新增地址」按鈕來新增您的第一個地址</p>
+        </div>
+
+        <!-- 地址表單 Modal 新增/編輯地址共用的表單 -->
+        <div 
+            v-if="showModal" 
+            class="modal-backdrop"
+            @click="closeModal"
+        >
+            <div class="modal-content" @click.stop>
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        {{ editingAddress ? '編輯地址(AddressForm)' : '新增地址(AddressForm)' }}
+                    </h5>
+                    <button 
+                        type="button" 
+                        class="btn-close"
+                        @click="closeModal"
+                    ></button>
+                </div>
+                <div class="modal-body">
+                    <AddressForm
+                        :address="editingAddress"
+                        :is-submitting="isSubmitting"
+                        @submit="handleFormSubmit"
+                        @cancel="closeModal"
+                    />
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
 <style scoped>
 .address-manager {
     background: white;

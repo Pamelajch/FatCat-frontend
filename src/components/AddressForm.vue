@@ -1,7 +1,10 @@
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 
 const showMapModal = ref(false)
+const mapLoading = ref(false)
+const authStore = useAuthStore()
 
 const props = defineProps({
     address: { type: Object, default: null },
@@ -39,63 +42,167 @@ const errors = reactive({
 
 const isEdit = computed(() => props.address !== null)
 
-// 綠界超商地圖
+// 計算屬性：判斷是否為超商地址 --------------------------------------------------------------------------------------------
+const isStoreAddress = computed(() => form.addressType === '1')
+
+// 7-11 電子地圖
 const openMapModal = () => {
   showMapModal.value = true
-  if (!document.getElementById('emap-sdk')) {
-    const script = document.createElement('script')
-    script.id = 'emap-sdk'
-    script.src = 'https://emap.pcsc.com.tw/EMapSDK/SDKLoader.js'
-    script.onload = openEcpayMap
-    document.body.appendChild(script)
-  } else {
-    openEcpayMap()
+  mapLoading.value = true
+  
+  console.log('開始載入 7-11 電子地圖...')
+  
+  // 建立表單並提交到 7-11 電子地圖
+  const mapForm = document.createElement('form') // 改名避免衝突
+  mapForm.id = 'mapForm'
+  mapForm.method = 'POST'
+  mapForm.action = 'https://emap.presco.com.tw/c2cemap.ashx'
+  mapForm.target = 'cvsmap'
+  
+  // 7-11 電子地圖參數
+  const params = {
+    'URL': `${window.location.origin}/api/AddressEcpay/map-callback`, // 回調 URL
+    'PostMode': '1',
+    'MerchantID': 'TEST123' // 測試用，可填任意值
   }
-}
-
-window.GetSelectedStoreCallback = function(data) {
-  form.storeId = data.StoreID
-  form.storeName = data.StoreName
-  form.addressDetail = data.StoreAddress
-  // 拆 city/district
-  const addr = data.StoreAddress
-  if (addr.includes('台北市')) {
-    form.city = '台北市'
-    form.district = addr.replace('台北市', '').substring(0, 3)
-  } else if (addr.includes('新北市')) {
-    form.city = '新北市'
-    form.district = addr.replace('新北市', '').substring(0, 3)
-  } else if (addr.includes('桃園市')) {
-    form.city = '桃園市'
-    form.district = addr.replace('桃園市', '').substring(0, 3)
-  } else if (addr.includes('台中市')) {
-    form.city = '台中市'
-    form.district = addr.replace('台中市', '').substring(0, 3)
-  } else if (addr.includes('台南市')) {
-    form.city = '台南市'
-    form.district = addr.replace('台南市', '').substring(0, 3)
-  } else if (addr.includes('高雄市')) {
-    form.city = '高雄市'
-    form.district = addr.replace('高雄市', '').substring(0, 3)
-  }
-  showMapModal.value = false
-  // 清空地圖內容
-  const mapDiv = document.getElementById('map_container')
-  if (mapDiv) mapDiv.innerHTML = ''
-}
-
-function openEcpayMap() {
-  window.EMapSDK.open({
-    type: "UNIMARTC2C", // 7-11 交貨便
-    getStore: "GetSelectedStoreCallback"
+  
+  // 加入表單欄位
+  Object.keys(params).forEach(key => {
+    const input = document.createElement('input')
+    input.type = 'hidden'
+    input.name = key
+    input.value = params[key]
+    mapForm.appendChild(input)
   })
+  
+  // 提交表單
+  document.body.appendChild(mapForm)
+  mapForm.submit()
+  document.body.removeChild(mapForm)
+  
+  // 監聽來自 iframe 的訊息
+  const messageHandler = (event) => {
+    if (event.data && event.data.type === 'store_selected') {
+      const storeInfo = event.data.storeInfo
+      console.log('收到門市選擇:', storeInfo)
+      
+      // 更新表單資料 - 使用正確的 form 變數
+      form.storeId = storeInfo.storeId
+      form.storeName = storeInfo.storeName
+      form.addressDetail = storeInfo.storeAddress
+      form.storeType = 0 // 7-Eleven 的 StoreType 是 0
+      form.storeBranch = '' // 7-11 沒有分店名，設為空字串
+      
+      // 解析地址
+      const addr = storeInfo.storeAddress
+
+        if (addr.includes('台北市')) {
+          form.city = '台北市'
+          form.district = addr.replace('台北市', '').substring(0, 3)
+        } else if (addr.includes('新北市')) {
+          form.city = '新北市'
+          form.district = addr.replace('新北市', '').substring(0, 3)
+        } else if (addr.includes('桃園市')) {
+          form.city = '桃園市'
+          form.district = addr.replace('桃園市', '').substring(0, 3)
+        } else if (addr.includes('台中市')) {
+          form.city = '台中市'
+          form.district = addr.replace('台中市', '').substring(0, 3)
+        } else if (addr.includes('台南市')) {
+          form.city = '台南市'
+          form.district = addr.replace('台南市', '').substring(0, 3)
+        } else if (addr.includes('高雄市')) {
+          form.city = '高雄市'
+          form.district = addr.replace('高雄市', '').substring(0, 3)
+        } else if (addr.includes('基隆市')) {
+          form.city = '基隆市'
+          form.district = addr.replace('基隆市', '').substring(0, 3)
+        } else if (addr.includes('新竹市')) {
+          form.city = '新竹市'
+          form.district = addr.replace('新竹市', '').substring(0, 3)
+        } else if (addr.includes('嘉義市')) {
+          form.city = '嘉義市'
+          form.district = addr.replace('嘉義市', '').substring(0, 3)
+        } else if (addr.includes('新竹縣')) {
+          form.city = '新竹縣'
+          form.district = addr.replace('新竹縣', '').substring(0, 3)
+        } else if (addr.includes('苗栗縣')) {
+          form.city = '苗栗縣'
+          form.district = addr.replace('苗栗縣', '').substring(0, 3)
+        } else if (addr.includes('彰化縣')) {
+          form.city = '彰化縣'
+          form.district = addr.replace('彰化縣', '').substring(0, 3)
+        } else if (addr.includes('南投縣')) {
+          form.city = '南投縣'
+          form.district = addr.replace('南投縣', '').substring(0, 3)
+        } else if (addr.includes('雲林縣')) {
+          form.city = '雲林縣'
+          form.district = addr.replace('雲林縣', '').substring(0, 3)
+        } else if (addr.includes('嘉義縣')) {
+          form.city = '嘉義縣'
+          form.district = addr.replace('嘉義縣', '').substring(0, 3)
+        } else if (addr.includes('屏東縣')) {
+          form.city = '屏東縣'
+          form.district = addr.replace('屏東縣', '').substring(0, 3)
+        } else if (addr.includes('宜蘭縣')) {
+          form.city = '宜蘭縣'
+          form.district = addr.replace('宜蘭縣', '').substring(0, 3)
+        } else if (addr.includes('花蓮縣')) {
+          form.city = '花蓮縣'
+          form.district = addr.replace('花蓮縣', '').substring(0, 3)
+        } else if (addr.includes('台東縣')) {
+          form.city = '台東縣'
+          form.district = addr.replace('台東縣', '').substring(0, 3)
+        } else if (addr.includes('澎湖縣')) {
+          form.city = '澎湖縣'
+          form.district = addr.replace('澎湖縣', '').substring(0, 3)
+        } else if (addr.includes('金門縣')) {
+          form.city = '金門縣'
+          form.district = addr.replace('金門縣', '').substring(0, 3)
+        } else if (addr.includes('連江縣')) {
+          form.city = '連江縣'
+          form.district = addr.replace('連江縣', '').substring(0, 3)
+        }
+
+      
+      showMapModal.value = false
+      mapLoading.value = false
+      window.removeEventListener('message', messageHandler)
+    }
+  }
+  
+  window.addEventListener('message', messageHandler)
+  
+  // 關閉載入狀態
+  mapLoading.value = false
 }
 
 const closeMapModal = () => {
   showMapModal.value = false
+  mapLoading.value = false
   const mapDiv = document.getElementById('map_container')
   if (mapDiv) mapDiv.innerHTML = ''
 }
+
+// 自動帶入使用者資料的checkbox --------------------------------------------------------------------------------------------
+const autoFillUserInfo = ref(false)
+
+// 自動帶入使用者資料的函數
+const fillUserInfo = () => {
+    if(authStore.user){
+        form.recipientName = authStore.user.name || ''
+        form.phoneNumber = authStore.user.phone || ''
+    }
+}
+// 監聽"是否勾選同會員資料填入"的變化
+watch(autoFillUserInfo,(newValue)=>{
+    if(newValue){
+        fillUserInfo()
+    }else{
+        form.recipientName = ''
+        form.phoneNumber = ''
+    }
+})
 
 // 監聽地址資料變化，用於編輯模式
 watch(() => props.address, (newAddress) => {
@@ -121,15 +228,18 @@ const validateForm = () => {
     if (!form.phoneNumber.trim()) { errors.phoneNumber = '電話號碼為必填欄位'; isValid = false }
     else if (!/^[0-9+\-\s()]+$/.test(form.phoneNumber)) { errors.phoneNumber = '請輸入有效的電話號碼'; isValid = false }
     if (!form.addressType) { errors.addressType = '請選擇地址類型'; isValid = false }
-    if (form.addressType === '1' && !form.storeName.trim()) { errors.storeName = '請先選擇門市'; isValid = false }
+    if (isStoreAddress.value && !form.storeName.trim()) { errors.storeName = '請先選擇門市'; isValid = false }
     if (!form.city.trim()) { errors.city = '城市為必填欄位'; isValid = false }
     if (!form.district.trim()) { errors.district = '區域為必填欄位'; isValid = false }
     if (!form.addressDetail.trim()) { errors.addressDetail = '詳細地址為必填欄位'; isValid = false }
     return isValid
 }
 
+// 先準備好提交資料
 const handleSubmit = () => {
     if (!validateForm()) return
+
+    // 準備提交資料
     const submitData = {
         recipientName: form.recipientName.trim(),
         phoneNumber: form.phoneNumber.trim(),
@@ -139,11 +249,15 @@ const handleSubmit = () => {
         addressDetail: form.addressDetail.trim(),
         isDefault: form.isDefault
     }
-    if (form.addressType === '1') {
-        submitData.storeType = parseInt(form.storeType)
+    // 如果是超商地址，加入超商相關欄位S
+    if (isStoreAddress.value) {
+       // 確保 storeType 有值，如果沒有則設為 0 (7-11)
+        submitData.storeType = form.storeType !== null ? parseInt(form.storeType) : 0
         submitData.storeName = form.storeName.trim()
-        submitData.storeBranch = form.storeBranch.trim()
+        // 如果 storeBranch 為空, 設為空字串
+        submitData.storeBranch = form.storeBranch? form.storeBranch.trim() : ''
     }
+    console.log('提交資料:', submitData) // 測試
     emit('submit', submitData)
 }
 </script>
@@ -151,16 +265,45 @@ const handleSubmit = () => {
 <template>
     <div class="address-form-container">
         <form @submit.prevent="handleSubmit" class="address-form">
+            <!-- 自動帶入使用者資料 -->
+             <div class="form-group">
+                <div class="form-check">
+                    <input 
+                      type="checkbox" 
+                      id="autoFillUserInfo" 
+                      v-model="autoFillUserInfo" 
+                      class="form-check-input" />
+                      <label for="autoFillUserInfo" class="form-check-label">
+                        <i class="bi bi-person-check me-1"></i>
+                        同會員資料填入
+                      </label>
+                </div>
+             </div>
+
             <!-- 收件人姓名 -->
             <div class="form-group">
                 <label for="recipientName" class="form-label">收件人姓名 *</label>
-                <input id="recipientName" v-model="form.recipientName" type="text" class="form-control" :class="{ 'is-invalid': errors.recipientName }" placeholder="請輸入收件人姓名" required />
+                <input 
+                    id="recipientName" 
+                    v-model="form.recipientName" 
+                    type="text" 
+                    class="form-control" 
+                    :class="{ 'is-invalid': errors.recipientName }" 
+                    placeholder="請輸入收件人姓名" 
+                    required />
                 <div v-if="errors.recipientName" class="invalid-feedback">{{ errors.recipientName }}</div>
             </div>
             <!-- 電話號碼 -->
             <div class="form-group">
                 <label for="phoneNumber" class="form-label">電話號碼 *</label>
-                <input id="phoneNumber" v-model="form.phoneNumber" type="tel" class="form-control" :class="{ 'is-invalid': errors.phoneNumber }" placeholder="請輸入電話號碼" required />
+                <input 
+                    id="phoneNumber" 
+                    v-model="form.phoneNumber" 
+                    type="tel" 
+                    class="form-control" 
+                    :class="{ 'is-invalid': errors.phoneNumber }" 
+                    placeholder="請輸入電話號碼" 
+                    required />
                 <div v-if="errors.phoneNumber" class="invalid-feedback">{{ errors.phoneNumber }}</div>
             </div>
             <!-- 地址類型 -->
@@ -174,12 +317,18 @@ const handleSubmit = () => {
                 <div v-if="errors.addressType" class="invalid-feedback">{{ errors.addressType }}</div>
             </div>
             <!-- 超商相關欄位 -->
-            <div v-if="form.addressType === '1'" class="store-fields">
+            <div v-if="isStoreAddress" class="store-fields">
                 <button @click.prevent="openMapModal" class="btn btn-outline-primary">選擇 7-11 門市</button>
                 <div v-if="showMapModal" class="modal-backdrop">
                     <div class="modal-content" style="width: 90vw; height: 90vh;">
                         <button class="btn btn-danger" @click="closeMapModal" style="float:right;">關閉</button>
-                        <div id="map_container"></div>
+                        <div v-if="mapLoading" class="loading-container">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">載入中...</span>
+                            </div>
+                            <p class="mt-2">正在載入地圖...</p>
+                        </div>
+                        <iframe name="cvsmap" style="width: 100%; height: 100%; border: none;"></iframe>
                     </div>
                 </div>
                 <div v-if="form.storeName" class="form-group">
@@ -194,19 +343,49 @@ const handleSubmit = () => {
             <!-- 城市 -->
             <div class="form-group">
                 <label for="city" class="form-label">城市 *</label>
-                <input id="city" v-model="form.city" type="text" class="form-control" :class="{ 'is-invalid': errors.city }" placeholder="請輸入城市" required />
+                <input 
+                    id="city" 
+                    v-model="form.city" 
+                    type="text" 
+                    class="form-control" 
+                    :class="{ 'is-invalid': errors.city }" 
+                    :placeholder="isStoreAddress ? '請先選擇門市' : '請輸入城市'" 
+                    :readonly="isStoreAddress"
+                    :disabled="isStoreAddress"
+                    required 
+                />
                 <div v-if="errors.city" class="invalid-feedback">{{ errors.city }}</div>
             </div>
             <!-- 區域 -->
             <div class="form-group">
                 <label for="district" class="form-label">區域 *</label>
-                <input id="district" v-model="form.district" type="text" class="form-control" :class="{ 'is-invalid': errors.district }" placeholder="請輸入區域" required />
+                <input 
+                    id="district" 
+                    v-model="form.district" 
+                    type="text" 
+                    class="form-control" 
+                    :class="{ 'is-invalid': errors.district }" 
+                    :placeholder="isStoreAddress ? '請先選擇門市' : '請輸入區域'" 
+                    :readonly="isStoreAddress"
+                    :disabled="isStoreAddress"
+                    required 
+                />
                 <div v-if="errors.district" class="invalid-feedback">{{ errors.district }}</div>
             </div>
             <!-- 詳細地址 -->
             <div class="form-group">
                 <label for="addressDetail" class="form-label">詳細地址 *</label>
-                <textarea id="addressDetail" v-model="form.addressDetail" class="form-control" :class="{ 'is-invalid': errors.addressDetail }" placeholder="請輸入詳細地址" rows="3" required></textarea>
+                <textarea 
+                    id="addressDetail" 
+                    v-model="form.addressDetail" 
+                    class="form-control" 
+                    :class="{ 'is-invalid': errors.addressDetail }" 
+                    :placeholder="isStoreAddress ? '請先選擇門市' : '請輸入詳細地址'" 
+                    :readonly="isStoreAddress"
+                    :disabled="isStoreAddress"
+                    rows="3" 
+                    required
+                ></textarea>
                 <div v-if="errors.addressDetail" class="invalid-feedback">{{ errors.addressDetail }}</div>
             </div>
             <!-- 預設地址 -->
@@ -341,6 +520,14 @@ const handleSubmit = () => {
      padding: 1rem;
      position: relative;
  }
+.loading-container {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     justify-content: center;
+     height: 100%;
+     color: #6c757d;
+ }
 @media (max-width: 768px) {
     .address-form { padding: 1.5rem;
      }
@@ -349,4 +536,166 @@ const handleSubmit = () => {
     .btn { width: 100%;
      }
 }
+
+.address-form-container { 
+    max-width: 600px; 
+    margin: 0 auto; 
+}
+.address-form { 
+    background: white; 
+    padding: 2rem; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); 
+}
+.form-group { 
+    margin-bottom: 1.5rem; 
+}
+.form-label { 
+    font-weight: 600; 
+    color: #686868; 
+    margin-bottom: 0.5rem; 
+    display: block; 
+}
+.form-control, .form-select { 
+    border: 1px solid #d3a2da; 
+    border-radius: 8px; 
+    padding: 0.75rem; 
+    font-size: 0.9rem; 
+    transition: all 0.3s ease; 
+}
+.form-control:focus, .form-select:focus { 
+    border-color: #92559c; 
+    box-shadow: 0 0 0 0.2rem rgba(146, 85, 156, 0.25); 
+    outline: none; 
+}
+.form-control.is-invalid, .form-select.is-invalid, .btn.is-invalid { 
+    border-color: #dc3545; 
+}
+.form-control:disabled, .form-control[readonly] {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+.form-control:disabled:focus, .form-control[readonly]:focus {
+    border-color: #d3a2da;
+    box-shadow: none;
+}
+.invalid-feedback { display: block; 
+    color: #dc3545; 
+    font-size: 0.85rem;
+     margin-top: 0.25rem;
+ }
+.store-fields { background: #f8f9fa;
+     padding: 1rem;
+     border-radius: 8px;
+     margin-bottom: 1rem;
+     border-left: 4px solid #92559c;
+ }
+.form-check { margin-top: 1rem;
+ }
+.form-check-input:checked { background-color: #92559c;
+     border-color: #92559c;
+ }
+.form-actions { display: flex;
+     gap: 1rem;
+     justify-content: flex-end;
+     margin-top: 2rem;
+     padding-top: 1rem;
+     border-top: 1px solid #eee;
+ }
+.btn { padding: 0.75rem 1.5rem;
+     border-radius: 8px;
+     font-weight: 500;
+     transition: all 0.3s ease;
+ }
+.btn-primary { background: linear-gradient(135deg, #92559c 0%, #d3a2da 100%);
+     border: none;
+     color: white;
+ }
+.btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #d3a2da 0%, #ffa600 100%);
+     transform: translateY(-2px);
+ }
+.btn-outline-primary { border: 2px solid #92559c;
+     color: #92559c;
+     background: white;
+ }
+.btn-outline-primary:hover:not(:disabled) { background: #92559c;
+     color: white;
+ }
+.btn-secondary { background: #6c757d;
+     border: none;
+     color: white;
+ }
+.btn-secondary:hover:not(:disabled) { background: #5a6268;
+ }
+.btn:disabled { opacity: 0.6;
+     cursor: not-allowed;
+ }
+.form-text { font-size: 0.85rem;
+     color: #6c757d;
+     margin-top: 0.25rem;
+ }
+.alert { border-radius: 8px;
+     padding: 1rem; 
+ }
+.alert-success { background-color: #d4edda;
+     border-color: #c3e6cb;
+     color: #155724;
+ }
+.modal-backdrop { position: fixed;
+     top: 0;
+     left: 0;
+     right: 0;
+     bottom: 0;
+     background: rgba(0,0,0,0.5);
+     z-index: 9999;
+     display: flex;
+     align-items: center; 
+     justify-content: center;
+ }
+.modal-content { background: #fff;
+     border-radius: 8px;
+     padding: 1rem;
+     position: relative;
+ }
+.loading-container {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     justify-content: center;
+     height: 100%;
+     color: #6c757d;
+ }
+@media (max-width: 768px) {
+    .address-form { padding: 1.5rem;
+     }
+    .form-actions { flex-direction: column;
+     }
+    .btn { width: 100%;
+     }
+}
+.form-check {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #28a745;
+}
+
+.form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.form-check-label {
+    font-weight: 500;
+    color: #495057;
+    cursor: pointer;
+}
+
+.form-check-label i {
+    color: #28a745;
+}
+
 </style>

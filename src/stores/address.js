@@ -53,7 +53,10 @@ export const useAddressStore = defineStore('address', {
             this.error = null
 
             try {
+                console.log('Store 接收到的地址資料:', addressData)
                 const response = await addressService.createAddress(addressData)
+                console.log('store 收到的回應:', response)
+
                 if (response.success) {
                     // 重新載入地址列表
                     await this.fetchAddresses()
@@ -64,6 +67,12 @@ export const useAddressStore = defineStore('address', {
             } catch (error) {
                 this.error = error.message
                 console.error('新增地址失敗:', error)
+
+                // 如果是400錯誤, 則顯示詳細的錯誤訊息
+                if (error.response && error.response.status === 400) {
+                    console.error('400 錯誤詳情:', error.response.data)
+                    this.error = error.response.data.message || error.message
+                }
                 throw error
             } finally {
                 this.isLoading = false

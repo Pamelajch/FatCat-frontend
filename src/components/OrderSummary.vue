@@ -15,21 +15,28 @@
       <ul class="list-group">
         <li class="list-group-item"><h3>送貨資料</h3></li>
         <li class="list-group-item">送貨方式：
-          <div>{{ selectedShipping?.name || '未選擇' }}</div>
+          <div>{{ addressType === 1 ? '超商取貨' : '宅配' }}</div>
         </li>
-        <!-- 顯示宅配地址 -->
-        <li class="list-group-item" v-if="selectedShipping?.shippingTypeId === 1">
-          收件地址：
-          <div>{{ checkout.recipientAddress || '未填寫' }}</div>
+        
+        <!-- 顯示收件人資訊 -->
+        <li class="list-group-item">收件人姓名：
+          <div>{{ checkout.recipientName || '未填寫' }}</div>
         </li>
-
-        <!-- 顯示超商門市名稱 -->
-        <li class="list-group-item" v-else-if="selectedShipping?.shippingTypeId === 2">
+        <li class="list-group-item">收件人電話：
+          <div>{{ checkout.recipientPhone || '未填寫' }}</div>
+        </li>
+        
+        <!-- 根據地址類型顯示不同資訊 => addressType === 1 是超商取貨, 其他則是宅配,參考shippingForm,vue 第81行 by jj) -->
+        <!-- 如果是超商取貨 -->
+        <li class="list-group-item" v-if="checkout.addressType === 1 && checkout.recipientAddress">
           取貨門市：
-          <div>{{ checkout.storeName || '未選擇' }}</div>
+          <div>{{ checkout.storeName }}({{ checkout.recipientAddress }})</div>
         </li>
-        <li class="list-group-item">收件人姓名：<div>{{ checkout.recipientName }}</div></li>
-        <li class="list-group-item">收件人電話：<div>{{ checkout.recipientPhone }}</div></li>
+        <!-- 如果是宅配 -->
+        <li class="list-group-item" v-else-if="checkout.recipientAddress">
+          收件地址：
+          <div>{{ checkout.recipientAddress }}</div>
+        </li>
       </ul>
     </div>
 
@@ -80,7 +87,7 @@ onMounted(async () => {
     couponOptions.value = couponRes.data
     shippingOptions.value = shippingRes.data
 
-    checkout.productTotal = productTotal.value  // ✅ 新增這行
+    checkout.productTotal = productTotal.value
 
     recalculateTotal()
   } catch (error) {
@@ -95,4 +102,9 @@ const selectedCoupon = computed(() =>
 const selectedShipping = computed(() =>
   shippingOptions.value.find(s => s.shippingId === checkout.shippingId)
 )
+
+// 重新計算總金額
+const recalculateTotal = () => {
+  checkout.total = productTotal.value + checkout.shippingFee - checkout.discount
+}
 </script>
