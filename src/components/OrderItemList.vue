@@ -60,7 +60,8 @@ onMounted(async () => {
         unitprice: cartItem?.unitprice || 0,
         quantity: cartItem?.quantity || 0,
         subtotal: (cartItem?.unitprice || 0) * (cartItem?.quantity || 0),
-        image: mainImage ? `/images/products/${mainImage.imageUrl}` : '/images/products/default.jpg'
+        image: mainImage ? `https://localhost:7017/ProductImages/${mainImage.imageUrl}`
+                          : 'https://localhost:7017/ProductImages/default.jpg'
       }
     })
 
