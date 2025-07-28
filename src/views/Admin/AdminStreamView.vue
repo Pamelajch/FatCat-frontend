@@ -14,7 +14,7 @@ const error = ref(null);
 const loading = ref(false);
 const streamStore = useStreamStore();
 const connection = ref(null);
-const productIdToFeature = ref('');
+const productNameToFeature = ref(''); 
 const currentFeaturedProduct = ref(null);
 
 // --- 功能區塊：API 呼叫 ---
@@ -84,9 +84,9 @@ const setupSignalRConnection = () => {
     });
   });
   connection.value.on("ReceiveClearProduct", () => {
-    currentFeaturedProduct.value = null;
-    productIdToFeature.value = '';
-  });
+  currentFeaturedProduct.value = null;
+  productNameToFeature.value = ''; 
+});
   connection.value.on("FeatureProductFailed", (errorMessage) => {
     Swal.fire('操作失敗', errorMessage, 'error');
   });
@@ -104,12 +104,12 @@ const setupSignalRConnection = () => {
 };
 
 const featureProduct = () => {
-  if (!productIdToFeature.value.trim()) {
-    Swal.fire('請輸入商品 ID', '', 'warning');
+  if (!productNameToFeature.value.trim()) { 
+    Swal.fire('請輸入商品名稱', '', 'warning'); 
     return;
   }
   if (connection.value?.state === 'Connected') {
-    connection.value.invoke("FeatureProduct", productIdToFeature.value.trim());
+    connection.value.invoke("FeatureProduct", productNameToFeature.value.trim()); 
   } else {
     Swal.fire('連線中斷', '與伺服器的連線已中斷，請刷新頁面重試。', 'error');
   }
@@ -199,9 +199,9 @@ onUnmounted(() => {
               <div class="card-header fs-5 fw-bold"><i class="fas fa-bullhorn me-2"></i>主打商品控制</div>
               <div class="card-body">
                 <div class="mb-3">
-                  <label for="productIdInput" class="form-label">輸入商品 ID</label>
+                  <label for="productIdInput" class="form-label">輸入商品名稱</label>
                   <div class="input-group">
-                    <input type="text" id="productIdInput" class="form-control" v-model="productIdToFeature" placeholder="例如：73">
+                    <input type="text" id="productNameInput" class="form-control" v-model="productNameToFeature" placeholder="例如：烏龍麵">
                     <button class="btn btn-success" @click="featureProduct">上架商品</button>
                   </div>
                 </div>
