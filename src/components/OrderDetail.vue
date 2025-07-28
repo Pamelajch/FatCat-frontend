@@ -40,7 +40,7 @@ const matchedCoupon = computed(() =>
 const discountAmount = computed(() => {
   if (!order.value) return 0
   return (order.value.totalAmount || 0) - (order.value.payableAmount || 0)
-})
+}) 
 
 // 彙整顯示的商品資訊（合併 product、image、cart）
 const detailedItems = computed(() => {
