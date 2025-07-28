@@ -92,6 +92,7 @@ async function handleCheckout() {
     alert('✅ 訂單已送出！')
 
     // 不清空購物車，等完成頁按按鈕時才清空
+    cartStore.clearCart()
     router.push('/checkoutfinish')
   } catch (err) {
     console.error('❌ 訂單送出失敗', err.response?.data || err)

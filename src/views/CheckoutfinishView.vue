@@ -6,16 +6,15 @@ import { useRouter } from 'vue-router'
 //import OrderItemList from '@/components/OrderItemList.vue'
 import OrderSummary from '@/components/OrderSummary.vue'
 import CartItemList from '@/components/CartItemList.vue'
+import OrderItemList from '@/components/OrderItemList.vue' // ✅ 改用這個
 const cartStore = useCartStore()
 const orderStore = useOrderStore()
 const router = useRouter()
 
 onMounted(() => {
-  if (cartStore.items.length > 0) {
-    orderStore.setOrderItems(cartStore.items)
-    // ❌ 不要馬上清空購物車
-  }
+  
 })
+
 
 const goToMyOrders = () => {
   cartStore.clearCart() // ✅ 在點按鈕時清空購物車
@@ -49,7 +48,7 @@ const goToMyOrders = () => {
             aria-labelledby="panelsStayOpen-headingOne"
           >
             <div class="accordion-body">
-              <CartItemList />
+              <OrderItemList :items="orderStore.latestOrderItems" />
             </div>
           </div>
         </div>
