@@ -21,7 +21,6 @@ import ForgotPasswordView from "./views/ForgotPasswordView.vue"
 import SpecialNoodleView from "./views/SpecialNoodleView.vue"
 import OneSpecialNoodleView from "./views/OneSpecialNoodleView.vue"
 import AdminChat from "./views/Admin/AdminChat.vue"
-import JjtestView from "./views/jjtestView.vue"
 import CouponAddView from '@/views/Admin/CouponAddView.vue'
 import CouponDetailView from '@/views/Admin/CouponDetailView.vue'
 import OrderDetailView from "./views/Admin/OrderDetailView.vue"
@@ -31,7 +30,7 @@ import IntroView from "./views/IntroView.vue"
 
 const routes = [
     //http://localhost:5173/ => http://localhost:5173/
-    { path: "/", component: IntroView, name: "intro" ,meta: { hideHeaderFooter: true }},
+    { path: "/", component: IntroView, name: "intro", meta: { hideHeaderFooter: true } },
     //首頁
     //http://localhost:5173/home
     { path: "/home", component: HomeView, name: "home" },
@@ -48,7 +47,7 @@ const routes = [
     //http://localhost:5173/OneSpecialNoodle
     { path: "/OneSpecialNoodle", component: OneSpecialNoodleView, name: "onespecialnoodle" },
     //http://localhost:5173/Drink
-    { path:"/Drink", component:DrinkView, name:"drink"},
+    { path: "/Drink", component: DrinkView, name: "drink" },
     //購物車 --梓瑋
     //http://localhost:5173/cart
     { path: "/cart", component: CartView, name: "cart" },
@@ -125,9 +124,6 @@ const routes = [
             title: 'LINE 登入處理中...'
         }
     },
-    //通知 --佳馨
-    //http://localhost:5173/jjtest
-    { path: "/jjtest", component: JjtestView, name: "jjtest" },
     //===================================================================
     // --- rr 管理者後台路由區塊 ---//http://localhost:5180/admin/login
     //===================================================================
@@ -154,7 +150,7 @@ const routes = [
             { path: 'members', name: 'AdminMembers', component: () => import('./views/Admin/AdminMemberView.vue') },
             { path: 'orders', name: 'AdminOrders', component: () => import('./views/Admin/AdminOrderView.vue') },
             { path: 'shipping', name: 'AdminShipping', component: () => import('./views/Admin/AdminShippingView.vue') },
-            { path: 'productcreate', name:'AdminProductCreate', component: () => import('./views/Admin/AdminProductCreateView.vue')},
+            { path: 'productcreate', name: 'AdminProductCreate', component: () => import('./views/Admin/AdminProductCreateView.vue') },
             { path: 'products', name: 'AdminProducts', component: () => import('./views/Admin/AdminProductListView.vue') },
             { path: 'productedit/:id', name: 'AdminProductEdit', component: () => import('./views/Admin/AdminProductEditView.vue') },
             { path: 'coupons', name: 'AdminCoupons', component: () => import('./views/Admin/AdminCouponView.vue') },
