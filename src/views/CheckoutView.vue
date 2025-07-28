@@ -91,7 +91,7 @@ async function handleCheckout() {
     alert('訂單送出失敗，請查看 Console 錯誤')
     console.table(err.response?.data?.errors)
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false 
   }
 }
 </script>
