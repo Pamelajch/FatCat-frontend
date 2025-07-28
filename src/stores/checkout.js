@@ -1,9 +1,7 @@
 // stores/checkout.js
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { useAuthStore } from './auth'
 
-const authStore = useAuthStore()
 export const useCheckoutStore = defineStore('checkout', () => {
     const userId = ref('') // 這裡要抓已經登入的userId
     const name = ref('')

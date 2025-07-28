@@ -35,8 +35,12 @@ async function handleCheckout() {
   const isValid = shippingFormRef.value?.validateShippingInfo?.()
   if (!isValid) return
 
-  // 1.請記得寫呼叫checkout.js api 1 寫入資料表 order by jj 
-  // 2.呼叫 api 2 寫入資料表 orderDetails by jj 
+  // 檢查使用者是否登入
+  if(!authStore.isAuthenticated){
+    alert('請先登入')
+    router.push('/login')
+    return
+  }
 
   isSubmitting.value = true
 
@@ -46,7 +50,7 @@ async function handleCheckout() {
 
     // Step 1: 新增訂單
     const orderPayload = {
-      userId: checkoutStore.userId,
+      userId: authStore.user.userId, // 使用登入使用者的 userId
       orderdate: new Date().toISOString(),
       location: checkoutStore.address || checkoutStore.storeName || '未填寫地址',
       couponId: checkoutStore.couponId || null,
@@ -57,6 +61,9 @@ async function handleCheckout() {
       shippingStatusId: checkoutStore.shippingStatusId || 1,
       supportpaymentMethodId: checkoutStore.paymentMethodId || null
     }
+
+    console.log('訂單資料:', orderPayload) // 除錯用
+    
     const orderRes = await api.post('/Orders', orderPayload)
     const orderId = orderRes.data.orderId
     if (!orderId) throw new Error('未取得 orderId')
