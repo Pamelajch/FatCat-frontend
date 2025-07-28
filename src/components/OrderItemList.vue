@@ -98,7 +98,7 @@ onMounted(async () => {
         unitprice: cartItem?.unitprice || 0,
         quantity: cartItem?.quantity || 0,
         subtotal: (cartItem?.unitprice || 0) * (cartItem?.quantity || 0),
-        image: mainImage ? `/images/products/${mainImage.imageUrl}` : '/images/products/default.jpg',
+        image: mainImage ? `https://localhost:7017/ProductImages/${mainImage.imageUrl}` : 'https://localhost:7017/ProductImages/default.jpg',
         productId: product?.productsId, // rr新增：評論表單需要的 productId
         hasBeenReviewed: false // rr新增 預設都是「未評價」
       }
