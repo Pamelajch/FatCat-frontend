@@ -16,7 +16,7 @@ const userMessages = ref(new Map());
 const currentUserId = ref(null);
 const newMessage = ref('');
 const messagesContainer = ref(null); 
-const fileInput = ref(null);//圖檔
+const fileInput = ref(null);//圖檔~
 
 // --- Computed Properties ---
 const currentMessages = computed(() => {
