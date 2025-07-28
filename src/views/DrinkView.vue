@@ -85,6 +85,29 @@ const removeFromCup = (index) => {
   cup.value.splice(index, 1)
 }
 
+// 隨機抽取3個材料加入杯中
+const randomPick = () => {
+  // 清空現有材料
+  cup.value = []
+
+  // 若沒有材料可選就直接跳出
+  if (filteredProducts.value.length === 0) return
+
+  // 從產品中隨機抽最多3個不重複的
+  const count = Math.min(3, filteredProducts.value.length)
+  const picked = [...filteredProducts.value]
+    .sort(() => 0.5 - Math.random())
+    .slice(0, count)
+
+  // 放入杯子中
+  cup.value = picked
+}
+
+// 清空杯子
+const clearCup = () => {
+  cup.value = []
+}
+
 // 貓貓預言師輪播
 const messages = [
   '你確定這樣好喝嗎？',
@@ -175,6 +198,13 @@ const runAway = () => {
           </option>
         </select>
       </div>
+    </div>
+
+    <!-- 中間：操作按鈕 -->
+    <div class="action-buttons">
+      <button class="magic-btn" @click="randomPick">🔮 隨機抽</button>
+      <button class="magic-btn">🛒 加入購物車</button>
+      <button class="magic-btn" @click="clearCup">🧼 清空特調</button>
     </div>
 
     <!-- 最下方：可拖曳材料清單 -->
@@ -349,6 +379,30 @@ const runAway = () => {
   font-size: 20px;
   cursor: pointer;
   margin-left: auto;
+}
+
+.action-buttons {
+  margin: 1.5rem 0;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.magic-btn {
+  background-color: #a27bff;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 0 10px #a27bff88;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.magic-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 14px #d0b3ff;
 }
 
 /* 篩選區包裝容器：置中用 */
