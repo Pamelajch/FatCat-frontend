@@ -374,7 +374,7 @@ const runAway = () => {
   animation: floatCard 6s ease-in-out infinite;
 }
 
-/* 下拉選單樣式美化 */
+/* 下拉選單樣式 */
 .filter-card select {
   background: rgba(255, 255, 255, 0.15);
   color: black;
