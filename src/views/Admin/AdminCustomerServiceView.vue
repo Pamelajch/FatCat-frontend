@@ -1,90 +1,13 @@
-<template>
-  <div class="chat-page-container">
-    <div class="admin-container">
-      <div class="sidebar">
-        <div class="sidebar-header">
-          <h2>客服管理系統</h2>
-        </div>
-        <div class="admin-info">
-          <label>管理員ID：</label>
-          <input type="text" v-model="adminId" class="admin-id-input" placeholder="請輸入管理員ID">
-        </div>
-        <div class="connection-status" :class="{ 'connected': isConnected }">
-          {{ connectionStatusText }}
-        </div>
-        <div class="stats">
-          線上用戶：<span>{{ onlineUsers.length }}</span>
-        </div>
-        <div class="user-list">
-          <div 
-            v-if="onlineUsers.length === 0" 
-            class="empty-state" 
-            style="padding: 20px; text-align: center; color: #6c757d;">
-            目前沒有用戶在線
-          </div>
-          <div
-            v-for="user in onlineUsers"
-            :key="user.userId"
-            class="user-item"
-            :class="{ 'active': currentUserId === user.userId }"
-            @click="selectUser(user.userId)"
-          >
-            <div class="user-info">
-              <div class="user-avatar">{{ user.userId.charAt(user.userId.length - 1) }}</div>
-              <div>
-                <div>{{ user.userId }}</div>
-                <div class="user-status"></div>
-              </div>
-            </div>
-            <div v-if="user.unreadCount > 0" class="unread-count">{{ user.unreadCount }}</div>
-          </div>
-        </div>
-      </div>
-      <div class="chat-area">
-        <template v-if="currentUserId">
-          <div class="chat-header">
-            <div class="user-info">
-               <div class="user-avatar">{{ currentUserId.charAt(currentUserId.length - 1) }}</div>
-               <div style="font-weight: bold;">{{ currentUserId }}</div>
-            </div>
-          </div>
-          <div class="chat-messages" ref="messagesContainer">
-            <div 
-              v-for="(msg, index) in currentMessages" 
-              :key="index" 
-              class="message" 
-              :class="`${msg.type}-message`">
-              <div class="message-content">
-                <p>{{ msg.message }}</p>
-                <div class="timestamp">{{ msg.timestamp }}</div>
-              </div>
-            </div>
-          </div>
-          <div class="chat-input">
-            <input 
-              type="text"
-              v-model="newMessage"
-              @keypress.enter="sendMessage"
-              placeholder="輸入回覆訊息..."
-            />
-            <button @click="sendMessage" :disabled="!newMessage.trim()">發送</button>
-          </div>
-        </template>
-        <div v-else class="empty-state">
-          請從左側選擇一個用戶開始對話
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
 // 3. 你原本所有的 import 和程式邏輯都原封不動地保留
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import * as signalR from '@microsoft/signalr';
+import { useAdminAuthStore } from '@/stores/adminauth';
+import api from '@/services/jjapi.js';
 
 // --- 響應式狀態定義 ---
-const adminId = ref('admin_001');
+const BACKEND_URL = 'https://localhost:7017';
+const adminAuthStore = useAdminAuthStore();
 const connection = ref(null);
 const isConnected = ref(false);
 const connectionStatusText = ref('連線中...');
@@ -93,11 +16,62 @@ const userMessages = ref(new Map());
 const currentUserId = ref(null);
 const newMessage = ref('');
 const messagesContainer = ref(null); 
+const fileInput = ref(null);//圖檔~
 
 // --- Computed Properties ---
 const currentMessages = computed(() => {
   return userMessages.value.get(currentUserId.value) || [];
 });
+const adminName = computed(() => adminAuthStore.admin?.name || '未登入');
+
+const triggerFileUpload = () => {
+  fileInput.value.click();
+}; //圖檔
+
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file || !currentUserId.value) return;
+
+  // 簡單的前端驗證
+  if (!file.type.startsWith('image/')) {
+    alert('只能上傳圖片檔案！');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    // 步驟一：將檔案上傳到我們的新 API
+    const response = await api.post('/chat/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    const imageUrl = response.data.url;
+
+    // 步驟二：透過 SignalR 發送圖片 URL
+    const messagePayload = {
+      type: 'image',
+      message: imageUrl,
+    };
+    await connection.value.invoke('SendMessageToUser', currentUserId.value, messagePayload);
+
+    // 立刻在自己的畫面上顯示出來
+    const localMessage = {
+      ...messagePayload,
+      type: 'admin-image', // 用一個特殊的 type 來區分是自己發的圖片
+      timestamp: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false }),
+    };
+    userMessages.value.get(currentUserId.value).push(localMessage);
+    scrollToBottom();
+
+  } catch (err) {
+    console.error('檔案上傳或訊息發送失敗:', err);
+    alert('檔案上傳失敗！');
+  } finally {
+    // 清空 file input 的值，這樣才能重複上傳同一個檔案
+    event.target.value = '';
+  }
+};
 
 // --- SignalR 連線邏輯 ---
 const initConnection = async () => {
@@ -147,7 +121,7 @@ const initConnection = async () => {
     if (userMessages.value.has(userId)) {
         userMessages.value.get(userId).push({
             type: 'system',
-            message: '使用者已離開對話。',
+            message: '會員已離開對話。',
             timestamp: new Date().toLocaleTimeString('zh-TW', {
                 hour: '2-digit',
                 minute: '2-digit'
@@ -218,14 +192,20 @@ const sendMessage = async () => {
   if (!newMessage.value.trim() || !currentUserId.value) return;
 
   try {
-    await connection.value.invoke('SendMessageToUser', currentUserId.value, newMessage.value);
-    
-    const messageData = {
-        message: newMessage.value,
-        timestamp: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false }),
-        type: 'admin'
+    // 將純文字也打包成物件再發送
+    const messagePayload = {
+      type: 'text',
+      message: newMessage.value,
     };
-    userMessages.value.get(currentUserId.value).push(messageData);
+    await connection.value.invoke('SendMessageToUser', currentUserId.value, messagePayload);
+    
+    // 在本地顯示
+    const localMessage = {
+      message: newMessage.value,
+      timestamp: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      type: 'admin' // 維持原樣
+    };
+    userMessages.value.get(currentUserId.value).push(localMessage);
     
     newMessage.value = '';
     scrollToBottom();
@@ -242,6 +222,100 @@ const scrollToBottom = () => {
   });
 };
 </script>
+
+<template>
+  <div class="chat-page-container">
+    <div class="admin-container">
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h2>客服管理系統</h2>
+        </div>
+        <div class="admin-info">
+          <label>管理員：</label>
+          <span class="admin-name-display">{{ adminName }}</span>
+        </div>
+        <div class="connection-status" :class="{ 'connected': isConnected }">
+          {{ connectionStatusText }}
+        </div>
+        <div class="stats">
+          線上用戶：<span>{{ onlineUsers.length }}</span>
+        </div>
+        <div class="user-list">
+          <div 
+            v-if="onlineUsers.length === 0" 
+            class="empty-state" 
+            style="padding: 20px; text-align: center; color: #6c757d;">
+            目前沒有用戶在線
+          </div>
+          <div
+            v-for="user in onlineUsers"
+            :key="user.userId"
+            class="user-item"
+            :class="{ 'active': currentUserId === user.userId }"
+            @click="selectUser(user.userId)"
+          >
+            <div class="user-info">
+              <div class="user-avatar">{{ user.userId.charAt(user.userId.length - 1) }}</div>
+              <div>
+                <div>會員編號：{{user.userId }}</div>
+                <div class="user-status"></div>
+              </div>
+            </div>
+            <div v-if="user.unreadCount > 0" class="unread-count">{{ user.unreadCount }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-area">
+        <template v-if="currentUserId">
+          <div class="chat-header">
+            <div class="user-info">
+               <div class="user-avatar">{{ currentUserId.charAt(currentUserId.length - 1) }}</div>
+               <div style="font-weight: bold;">會員編號：{{ currentUserId }}</div>
+            </div>
+          </div>
+          <div class="chat-messages" ref="messagesContainer">
+            <div 
+                v-for="(msg, index) in currentMessages" 
+                  :key="index" 
+                  class="message" 
+                  :class="{
+                    'admin-message': msg.type.includes('admin'),
+                    'user-message': msg.type.includes('user'),
+                    'system-message': msg.type === 'system'
+                  }">
+                <div class="message-content">
+                  <a v-if="msg.type.includes('image')" :href="`${BACKEND_URL}${msg.message}`" target="_blank">
+                      <img :src="`${BACKEND_URL}${msg.message}`" class="chat-image" alt="聊天圖片" />
+                  </a>
+
+                  <p v-else>{{ msg.message }}</p>
+
+                  <div class="timestamp">{{ msg.timestamp }}</div>
+                </div>
+              </div>
+            </div>
+          <div class="chat-input">
+            <button @click="triggerFileUpload" class="upload-btn" title="傳送圖片">✚</button>
+            <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none" accept="image/*" />
+
+            <input 
+              type="text"
+              v-model="newMessage"
+              @keypress.enter="sendMessage"
+              placeholder="輸入回覆訊息..."
+            />
+            <button @click="sendMessage" :disabled="!newMessage.trim()">發送</button>
+          </div>
+        </template>
+        <div v-else class="empty-state">
+          請從左側選擇一個用戶開始對話
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+
 
 <style scoped>
 /* 最外層容器的樣式 */
@@ -340,4 +414,25 @@ const scrollToBottom = () => {
 .message.system-message { justify-content: center; margin: 20px 0; }
 .system-message .message-content { background: #e9ecef; color: #6c757d; font-style: italic; font-size: 15px; text-align: center; box-shadow: none; }
 .system-message .timestamp { display: none; }
+.admin-name-display {
+  font-weight: bold;
+  color:  #6c757d; 
+  font-size: 16px;
+}
+.chat-image {
+  max-width: 100%; /* 限制圖片最大寬度為其容器寬度 */
+  max-height: 250px; /* 【建議】可以再加一個最大高度，避免長條圖撐爆畫面 */
+  border-radius: 10px;
+  cursor: pointer;
+  display: block; /* 避免圖片下方可能出現的多餘空白 */
+  object-fit: cover; /* 確保圖片在指定尺寸內被妥善裁剪 */
+}
+.upload-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  margin-right: 10px;
+  color: #6c757d;
+}
 </style>

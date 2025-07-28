@@ -2,10 +2,9 @@
 // --- 區塊作用：引入所有需要的工具 ---
 import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue';
 import * as signalR from '@microsoft/signalr';
-
+import api from '@/services/jjapi.js';
 
 // --- 區塊作用：1. 核心狀態定義 (State) ---
-// 這裡集中管理所有會變動的狀態資料
 const isOpen = ref(false);
 const isConnected = ref(false);
 const hasNewMessage = ref(false);
@@ -15,12 +14,10 @@ const newMessage = ref('');
 const userId = ref(new URLSearchParams(window.location.search).get('userId') || `user_${Date.now().toString().slice(-6)}`);
 const messagesContainer = ref(null);
 let connection = null;
-
+const fileInput = ref(null);
+const BACKEND_URL = 'https://localhost:7017'; // 加上後端網址常數
 
 // --- 區塊作用：2. 計算屬性 (Computed) ---
-// 根據現有狀態，動態計算出新的值
-
-// 動態計算聊天視窗標題
 const headerText = computed(() => {
   if (currentView.value === 'live_chat') {
     return '與肥貓客服對話中';
@@ -28,14 +25,9 @@ const headerText = computed(() => {
   return '肥貓客服';
 });
 
-// 計算當前 FAQ 主題，方便模板使用
 const currentFaqTopic = computed(() => currentView.value.replace('faq_', ''));
 
-
 // --- 區塊作用：3. 狀態監聽與持久化 (Watchers & Persistence) ---
-// 使用 watch 監控特定狀態的變化，並執行對應的副作用 (如此處的儲存)
-
-// 【功能】監控 messages 陣列和 isOpen 狀態，只要有變化就自動存到 sessionStorage
 watch([messages, isOpen], ([newMessages, newIsOpen]) => {
   if (currentView.value === 'live_chat') {
     sessionStorage.setItem('chatMessages', JSON.stringify(newMessages));
@@ -43,36 +35,33 @@ watch([messages, isOpen], ([newMessages, newIsOpen]) => {
   sessionStorage.setItem('chatIsOpen', newIsOpen);
 }, { deep: true });
 
-
 // --- 區塊作用：4. SignalR 核心方法 (SignalR Core Methods) ---
-// 封裝所有與 SignalR 伺服器互動的邏輯
-
-// 初始化 SignalR 連線
 const initConnection = async () => {
-  if (connection) return; // 防止重複連線
+  if (connection) return;
 
   connection = new signalR.HubConnectionBuilder()
-    .withUrl('https://localhost:7017/chatHub', {
+    .withUrl(`${BACKEND_URL}/chatHub`, {
       accessTokenFactory: () => localStorage.getItem('token')
     })
     .configureLogging(signalR.LogLevel.Information)
     .build();
 
-  // 監聽來自伺服器的 'ReceiveMessage' 事件
   connection.on('ReceiveMessage', (messageData) => {
+    // 後端傳來的 UTC 時間
     const receivedTime = new Date(messageData.timestamp);
     messages.value.push({
       id: Date.now(),
-      message: messageData.message,
+      // 【修正】直接使用後端傳來的 message 物件內容
+      message: messageData.message, 
+      type: messageData.type,
+      // 轉為本地時間字串
       timestamp: receivedTime.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false }),
-      type: messageData.type
     });
     
     if (!isOpen.value) { hasNewMessage.value = true; }
     scrollToBottom();
   });
 
-  // 處理各種連線狀態
   connection.onclose(() => { isConnected.value = false; });
   connection.onreconnecting(() => { isConnected.value = false; });
   connection.onreconnected(async () => { 
@@ -80,7 +69,6 @@ const initConnection = async () => {
     if (connection) await connection.invoke('JoinAsUser');
   });
 
-  // 嘗試啟動連線
   try {
     await connection.start();
     isConnected.value = true;
@@ -91,18 +79,28 @@ const initConnection = async () => {
   }
 };
 
-// 使用者發送訊息
+// --- 區塊作用：5. UI 畫面控制與互動方法 ---
+
+// (使用者發送文字訊息)
 const sendMessage = async () => {
   if (!newMessage.value.trim() || !isConnected.value) return;
-  const messageData = {
-    id: Date.now(),
-    message: newMessage.value,
-    timestamp: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false }),
-    type: 'user'
-  };
-  messages.value.push(messageData);
+  
   try {
-    await connection.invoke('SendMessageToAdmin', newMessage.value);
+    const messagePayload = {
+      type: 'text',
+      message: newMessage.value,
+    };
+    
+    await connection.invoke('SendMessageToAdmin', messagePayload);
+    
+    const localMessage = {
+      id: Date.now(),
+      message: newMessage.value,
+      timestamp: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      type: 'user'
+    };
+    messages.value.push(localMessage);
+    
     newMessage.value = '';
     scrollToBottom();
   } catch (err) {
@@ -110,9 +108,54 @@ const sendMessage = async () => {
   }
 };
 
+// (使用者選擇圖片)
+const triggerFileUpload = () => {
+  fileInput.value.click();
+};
 
-// --- 區塊作用：5. UI 畫面控制方法 (UI View Control) ---
-// 這些函式只負責改變介面的顯示狀態
+// (使用者上傳圖片)
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    alert('只能上傳圖片檔案！');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const response = await api.post('/chat/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    const imageUrl = response.data.url;
+
+    const messagePayload = {
+      type: 'image',
+      message: imageUrl,
+    };
+    
+    await connection.invoke('SendMessageToAdmin', messagePayload);
+
+    const localMessage = {
+      id: Date.now(),
+      message: imageUrl,
+      type: 'user-image', 
+      timestamp: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false }),
+    };
+    messages.value.push(localMessage);
+    scrollToBottom();
+
+  } catch (err) {
+    console.error('檔案上傳或訊息發送失敗:', err);
+    alert('檔案上傳失敗！');
+  } finally {
+    event.target.value = '';
+  }
+};
+
 
 const showFaq = (topic) => { currentView.value = `faq_${topic}`; };
 const showMainMenu = () => { currentView.value = 'main_menu'; };
@@ -151,18 +194,11 @@ const scrollToBottom = () => {
   });
 };
 
-
 // --- 區塊作用：6. Vue 生命週期鉤子 (Lifecycle Hooks) ---
-// 在元件生命週期的特定時間點自動執行的程式碼
-
 onMounted(() => {
-  // 【功能】刷新後恢復對話狀態
   const savedState = sessionStorage.getItem('chatState');
   const savedIsOpen = sessionStorage.getItem('chatIsOpen') === 'true';
-
-  // 恢復視窗開關狀態
   isOpen.value = savedIsOpen;
-
   if (savedState === 'live_chat') {
     messages.value = JSON.parse(sessionStorage.getItem('chatMessages')) || [];
     currentView.value = 'live_chat';
@@ -171,27 +207,37 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  // 【功能】離開頁面時，中斷連線
   if (connection) {
     connection.stop();
   }
 });
-
 
 // --- 區塊作用：7. FAQ 靜態資料 ---
 // 將固定的文字內容放在這裡，方便管理
 const faqData = {
   account: {
     title: '帳號相關問題',
-    items: [ { q: '如何修改我的密碼？', a: '請點擊頭像進入會員中心，選擇「修改密碼」即可進行變更喵。' }, { q: '收不到手機驗證碼怎麼辦？', a: '請確認手機號碼是否正確，或稍後再試。如果問題持續，請直接「聯繫客服」讓我們為您處理。' }, { q: '忘記帳號了怎麼辦？', a: '您可以嘗試使用註冊時的 Email 作為帳號登入，或點擊登入頁面的「忘記密碼」功能喵。' } ]
+    items: [
+      { q: '如何修改我的密碼？', a: '請點擊頭像進入會員中心，選擇「修改密碼」即可進行變更喵。' },
+      { q: '收不到手機驗證碼怎麼辦？', a: '請確認手機號碼是否正確，或稍後再試。如果問題持續，請直接「聯繫客服」讓我們為您處理。' },
+      { q: '忘記帳號了怎麼辦？', a: '您可以嘗試使用註冊時的 Email 作為帳號登入，或點擊登入頁面的「忘記密碼」功能喵。' }
+    ]
   },
   delivery: {
     title: '商品配送問題',
-    items: [ { q: '下單後多久會出貨？', a: '客製化泡麵需要精心製作，我們會在您下單後的 3-5 個工作天內為您出貨喵。' }, { q: '如何修改配送地址？', a: '在訂單狀態變為「已出貨」之前，您都可以在「訂單查詢」中修改地址。如果訂單已出貨，請「聯繫客服」。' }, { q: '可以指定到貨時間嗎？', a: '目前我們提供「不指定」、「上午」、「下午」三個時段，您可以在結帳時選擇，但無法指定精確時間點喔。' } ]
+    items: [
+      { q: '下單後多久會出貨？', a: '客製化泡麵需要精心製作，我們會在您下單後的 3-5 個工作天內為您出貨喵。' },
+      { q: '如何修改配送地址？', a: '在訂單狀態變為「已出貨」之前，您都可以在「訂單查詢」中修改地址。如果訂單已出貨，請「聯繫客服」。' },
+      { q: '可以指定到貨時間嗎？', a: '目前我們提供「不指定」、「上午」、「下午」三個時段，您可以在結帳時選擇，但無法指定精確時間點喔。' }
+    ]
   },
   product: {
     title: '商品相關問題',
-    items: [ { q: '收到的商品有瑕疵怎麼辦？', a: '非常抱歉！請立即拍照並「聯繫客服」，我們會立刻為您安排換貨或退款事宜。' }, { q: '我可以客製化哪些配料？', a: '我們提供多種麵體、湯頭、配料與辣度選擇，所有可客製化的項目都在商品頁面上有詳細說明喔！' }, { q: '為什麼我的優惠券不能使用？', a: '請確認優惠券是否符合使用規則（如低消金額、適用商品），以及是否在有效期限內。若仍有問題，歡迎「聯繫客服」喵。' } ]
+    items: [
+      { q: '收到的商品有瑕疵怎麼辦？', a: '非常抱歉！請立即拍照並「聯繫客服」，我們會立刻為您安排換貨或退款事宜。' },
+      { q: '我可以客製化哪些配料？', a: '我們提供多種麵體、湯頭、配料與辣度選擇，所有可客製化的項目都在商品頁面上有詳細說明喔！' },
+      { q: '為什麼我的優惠券不能使用？', a: '請確認優惠券是否符合使用規則（如低消金額、適用商品），以及是否在有效期限內。若仍有問題，歡迎「聯繫客服」喵。' }
+    ]
   }
 };
 </script>
@@ -211,7 +257,7 @@ const faqData = {
       <div class="chat-header">
         <h3>{{ headerText }}</h3>
         <div>
-           <button @click="toggleChat" class="close-btn" aria-label="關閉視窗">×</button>
+           <button @click="toggleChat" class="close-btn" aria-label="關閉視窗">▽</button>
         </div>
       </div>
       
@@ -242,47 +288,58 @@ const faqData = {
         </div>
       </div>
       
-      <div v-else-if="currentView === 'live_chat'" class="live-chat-view">
-        <div class="chat-messages" ref="messagesContainer">
-          <div 
-            v-for="(message, index) in messages" 
-            :key="index"
-            class="message"
-            :class="{ 'admin-message': message.type === 'admin', 'user-message': message.type === 'user' }"
-          >
-            <div class="message-content">
-              <p>{{ message.message }}</p>
-              <span class="timestamp">{{ message.timestamp }}</span>
-            </div>
-          </div>
+      <div v-else-if="currentView.startsWith('faq_')" class="faq-view">
         </div>
-        
-        <div class="chat-input">
-          <input 
-            v-model="newMessage" 
-            @keyup.enter="sendMessage"
-            placeholder="輸入訊息..."
-            :disabled="!isConnected"
-          >
-          <button @click="sendMessage" :disabled="!isConnected || !newMessage.trim()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-          </button>
-        </div>
+      
+    <div v-else-if="currentView === 'live_chat'" class="live-chat-view">
+      <div class="chat-messages" ref="messagesContainer">
+        <div 
+          v-for="message in messages" 
+          :key="message.id"
+          class="message"
+          :class="{ 
+            'admin-message': message.type.includes('admin'), 
+            'user-message': message.type.includes('user') 
+          }"
+        >
+          <div class="message-content">
+              <a v-if="message.type.includes('image')" :href="`https://localhost:7017${message.message}`" target="_blank">
+                  <img :src="`https://localhost:7017${message.message}`" class="chat-image" alt="聊天圖片" />
+              </a>
 
-        <div class="chat-footer">
-            <button v-if="isConnected" @click="leaveLiveChat" class="leave-btn-footer">
-              離開對話
-            </button>
-        </div>
-        
-        <div class="connection-status" :class="{ 'connected': isConnected }">
-          {{ isConnected ? '已連線真人客服' : '連線中...' }}
+              <p v-else>{{ message.message }}</p>
+
+              <span class="timestamp">{{ message.timestamp }}</span>
+          </div>
         </div>
       </div>
       
-    </div>
+      <div class="chat-input">          
+          <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none" accept="image/*" />
+          <input 
+              v-model="newMessage" 
+              @keyup.enter="sendMessage"
+              placeholder="輸入訊息..."
+              :disabled="!isConnected"
+          >
+          <button @click="triggerFileUpload" class="upload-btn" title="傳送圖片">✚</button>
+          <button @click="sendMessage" :disabled="!isConnected || !newMessage.trim()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+      </div>
+
+      <div class="chat-footer">
+          <button v-if="isConnected" @click="leaveLiveChat" class="leave-btn-footer">
+              離開對話
+          </button>
+      </div>
+      
+      <div class="connection-status" :class="{ 'connected': isConnected }">
+          {{ isConnected ? '已連線真人客服' : '連線中...' }}
+      </div>
   </div>
-</template>
+    </div> </div> 
+  </template>
 
 <style scoped>
 /* --- 配色定義 --- */
@@ -514,4 +571,23 @@ const faqData = {
 }
 .connection-status { padding: 5px 15px; text-align: center; font-size: 12px; background: var(--dark-gray); color: rgb(60, 57, 57); font-weight: 500; flex-shrink: 0; }
 .connection-status.connected { background: #efcbec }
+.chat-image {
+  max-width: 100%; /* 限制圖片最大寬度為其容器寬度 */
+  max-height: 250px; /* 【建議】可以再加一個最大高度，避免長條圖撐爆畫面 */
+  border-radius: 10px;
+  cursor: pointer;
+  display: block; /* 避免圖片下方可能出現的多餘空白 */
+  object-fit: cover; /* 確保圖片在指定尺寸內被妥善裁剪 */
+}
+.upload-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  margin-right: 10px;
+  color: #6c757d;
+}
+
+
+
 </style>

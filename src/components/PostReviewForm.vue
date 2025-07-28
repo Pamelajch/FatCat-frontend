@@ -39,7 +39,6 @@ const submitReview = async () => {
             'Content-Type': 'multipart/form-data'
         }
     });
-    alert('感謝您的評論！');
     emit('review-submitted');
   } catch (err) {
     // 提供更友善的錯誤提示

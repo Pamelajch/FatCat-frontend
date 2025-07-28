@@ -80,11 +80,9 @@ const submitComplaint = async () => {
         await api.post('/complaints', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
-        alert('您的申訴已成功提交！');
         emit('complaint-submitted'); // 通知父層「提交成功了」，父層可以做些事，例如刷新訂單列表
         emit('close'); // 通知父層「可以關閉我了」
     } catch (err) {
-        alert('提交失敗，請稍後再試。');
         console.error("提交申訴失敗:", err);
     } finally {
         isSubmitting.value = false;

@@ -1,9 +1,10 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import * as signalR from '@microsoft/signalr';
+import { useAdminAuthStore } from '@/stores/adminauth';
 
 // --- 響應式狀態定義 ---
-const adminId = ref('admin_001');
+const adminAuthStore = useAdminAuthStore();
 const connection = ref(null);
 const isConnected = ref(false);
 const connectionStatusText = ref('連線中...');
@@ -13,10 +14,13 @@ const currentUserId = ref(null);
 const newMessage = ref('');
 const messagesContainer = ref(null);
 
+
 // --- Computed Properties ---
 const currentMessages = computed(() => {
   return userMessages.value.get(currentUserId.value) || [];
 });
+
+const adminName = computed(() => adminAuthStore.admin?.name || '未登入');
 
 // --- SignalR 連線邏輯 ---
 const initConnection = async () => {
@@ -104,7 +108,7 @@ const initConnection = async () => {
   connection.value.onreconnected(async () => {
     isConnected.value = true;
     connectionStatusText.value = '已連線';
-    if (connection.value) await connection.value.invoke('JoinAsAdmin', adminId.value);
+    if (connection.value) await connection.value.invoke('JoinAsAdmin', adminName.value);
   });
 
   // --- 啟動連線 ---
@@ -182,8 +186,8 @@ const scrollToBottom = () => {
       </div>
 
       <div class="admin-info">
-        <label>管理員ID：</label>
-        <input type="text" v-model="adminId" class="admin-id-input" placeholder="請輸入管理員ID">
+        <label>管理員：</label>
+        <span class="admin-name-display">{{ adminName }}</span>
       </div>
 
       <div class="connection-status" :class="{ 'connected': isConnected }">
@@ -305,9 +309,12 @@ body { font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:#f5f5
 .chat-input button:disabled { background:#ccc; cursor:not-allowed; }
 .empty-state { display:flex; align-items:center; justify-content:center; height:100%; color:#6c757d; font-size:18px; }
 .admin-info { background:white; padding:15px 20px; }
-.admin-id-input { width:100%; padding:8px 12px; border:1px solid #ddd; border-radius:4px; font-size:14px; }
 .stats { padding:15px 20px; background:#f8f9fa; border-bottom:1px solid #ddd; font-size:14px; color:#6c757d; }
-
+.admin-name-display {
+  font-weight: bold;
+  color: #007bff; /* 使用主題藍色 */
+  font-size: 16px;
+}
 .message.system-message {
   justify-content: center; /* 讓訊息置中 */
   margin: 20px 0;

@@ -3,27 +3,58 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import axios from 'axios';
 import ChatRoom from '@/components/ChatRoom.vue';
+import { HubConnectionBuilder } from '@microsoft/signalr'; // SignalR
 
 // --- 功能區塊：元件狀態 (Reactive State) ---
-// isLoading 用於顯示「載入中...」的畫面
 const isLoading = ref(true);
-// streamInfo 用於儲存從後端 API 獲取的直播資訊 (有直播時) 或 null (沒直播時)
 const streamInfo = ref(null);
-// error 用於顯示錯誤訊息
 const error = ref(null);
-// player 用於存放 IVS 播放器實例
 let player = null;
+const connection = ref(null);
+const featuredProduct = ref(null);
+
+// --- 【「主打商品」功能新增的函式】 ---
+const setupSignalRConnection = () => {
+  const hubUrl = "https://localhost:7017/chatHub";
+
+  // 【修改處】確保 accessTokenFactory 正確地從 localStorage 獲取 token
+  connection.value = new HubConnectionBuilder()
+    .withUrl(hubUrl, {
+      // 由於路由守衛已確保此頁面為登入狀態，這裡一定能取到 token
+      accessTokenFactory: () => localStorage.getItem('token') 
+    })
+    .withAutomaticReconnect()
+    .build();
+
+  // 監聽來自伺服器的廣播
+  connection.value.on("ReceiveFeaturedProduct", (product) => {
+    console.log("收到主打商品:", product);
+    featuredProduct.value = product;
+  });
+
+  connection.value.on("ReceiveClearProduct", () => {
+    console.log("收到清除商品指令");
+    featuredProduct.value = null;
+  });
+
+  // 開始連線
+  connection.value.start()
+    .then(() => {
+      console.log('✅ SignalR 已連接 (使用者)');
+      connection.value.invoke('JoinAsUser');
+    })
+    .catch(err => {
+      console.error('SignalR 連線失敗: ', err)
+      // 可以選擇性地顯示一個更友善的錯誤提示
+      error.value = "無法連接到即時互動功能。"
+    });
+};
 
 // --- 功能區塊：核心邏輯 (Core Logic) ---
-
-/**
- * @description 初始化頁面，向後端獲取當前直播狀態
- */
 const initializePage = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    // 呼叫後端 API，這個 API 在有直播時回傳直播資訊，沒直播時回傳 null
     const response = await axios.get('/api/streaming/current');
     streamInfo.value = response.data;
   } catch (err) {
@@ -33,25 +64,20 @@ const initializePage = async () => {
     isLoading.value = false;
   }
 
-  // 只有在確定有直播資訊 (streamInfo 不為 null) 且有播放網址時，才去設定播放器
   if (streamInfo.value && streamInfo.value.playbackUrl) {
-    // nextTick 確保 Vue 已經將 <video> 標籤渲染到畫面上
     await nextTick();
     setupPlayer(streamInfo.value.playbackUrl);
+    // 只有在直播存在時才連線 SignalR
+    setupSignalRConnection(); 
   }
 };
 
-/**
- * @description 設定並啟動 IVS 影片播放器
- * @param {string} playbackUrl - 直播播放網址
- */
 const setupPlayer = (playbackUrl) => {
   const IVSPlayer = window.IVSPlayer;
   if (!IVSPlayer || !IVSPlayer.isPlayerSupported) {
     error.value = "您的瀏覽器不支援此直播格式。";
     return;
   }
-
   const { PlayerState, PlayerEventType } = IVSPlayer;
   const videoElement = document.getElementById('video-player');
   if (videoElement) {
@@ -59,63 +85,54 @@ const setupPlayer = (playbackUrl) => {
     player.attachHTMLVideoElement(videoElement);
     player.addEventListener(PlayerState.PLAYING, () => console.log("✅ IVS Player: 狀態 -> 正在播放！"));
     player.addEventListener(PlayerState.ENDED, () => {
-        streamInfo.value = null; // 直播自然結束時，也清空資訊
-        error.value = "直播已結束。";
+      streamInfo.value = null;
+      error.value = "直播已結束。";
     });
     player.addEventListener(PlayerEventType.ERROR, (err) => {
-        console.error("IVS Player Error:", err);
-        // 只有在真的有直播時，才顯示播放錯誤。避免沒有 OBS 推流時的 404 錯誤干擾使用者。
-        if (streamInfo.value) {
-            error.value = `播放時發生錯誤: ${err.message}`;
-        }
+      console.error("IVS Player Error:", err);
+      if (streamInfo.value) {
+        error.value = `播放時發生錯誤: ${err.message}`;
+      }
     });
     player.load(playbackUrl);
     player.play();
   }
 };
 
-/**
- * @description 根據 localStorage 決定使用者顯示名稱的函式
- * @returns {string} - 要顯示的使用者名稱
- */
 const getUserDisplayName = () => {
   try {
-    // 您的截圖顯示 user 的 key 是 'user'
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       const userData = JSON.parse(storedUser);
       if (userData && userData.userId) {
-        // 如果有登入，回傳「肥貓會員:ID」
         return `肥貓會員:${userData.userId}`;
       }
     }
   } catch (e) {
     console.error("解析使用者資訊失敗:", e);
   }
-  // 如果 localStorage 沒資料、解析失敗、或沒有 userId，就回傳「路過的喵」
   return '路過的喵';
 };
 
 // --- 功能區塊：生命週期鉤子 (Lifecycle Hooks) ---
-
-// onMounted: 當元件被掛載到畫面上時執行
 onMounted(() => {
   initializePage();
 });
 
-// onUnmounted: 當元件從畫面上移除時執行
 onUnmounted(() => {
-  // 清理播放器資源，避免記憶體洩漏
   if (player) {
     player.delete();
     player = null;
+  }
+  if (connection.value) {
+    connection.value.stop();
   }
 });
 </script>
 
 <template>
   <div class="stream-page-container">
-    <!-- 功能區塊：狀態顯示 (載入中 / 錯誤) -->
+    
     <div v-if="isLoading" class="status-message">
       <div class="spinner-border text-danger" role="status"></div>
       <p class="mt-3">正在連接直播頻道...</p>
@@ -124,116 +141,250 @@ onUnmounted(() => {
       <h4>發生錯誤</h4>
       <p>{{ error }}</p>
     </div>
-
-    <!-- 功能區塊：沒有直播時的畫面 -->
     <div v-else-if="!streamInfo" class="status-message">
       <h4>目前沒有直播</h4>
       <p>請稍後再來看看，或關注我們的最新消息！</p>
     </div>
 
-    <!-- 功能區塊：直播中的主畫面 -->
     <div v-else class="stream-layout">
-      <!-- 左側：影片播放器區塊 -->
-      <div class="video-container">
-        <h3 class="stream-title">{{ streamInfo.title }}</h3>
-        <div class="player-wrapper">
-          <video id="video-player" playsinline muted controls autoplay></video>
+
+      <div class="stream-content-left">
+        
+        <div class="video-container">
+          <h3 class="stream-title">{{ streamInfo.title }}</h3>
+          <div class="player-wrapper">
+            <video id="video-player" playsinline muted controls autoplay></video>
+          </div>
+        </div>
+
+        <div class="featured-product-container">
+          <transition name="fade" mode="out-in">
+            <div v-if="featuredProduct" :key="featuredProduct.id" class="featured-product-card promo-style">
+              <div class="promo-badge">🔥 現正主打商品!!</div>
+              <img :src="`https://localhost:7017/ProductImages/${featuredProduct.imageUrl}`" class="product-thumb" alt="商品圖片">
+              <p class="product-name">{{ featuredProduct.name }}</p>
+              <a :href="`/OneSpecialNoodle?id=${featuredProduct.id}`" target="_blank" rel="noopener noreferrer" class="btn-details">
+                詳情
+              </a>
+            </div>
+            <div v-else class="featured-product-placeholder">
+              <i class="fas fa-shopping-bag placeholder-icon"></i>
+              <p>主播稍後會推薦商品，敬請期待！</p>
+            </div>
+          </transition>
         </div>
       </div>
 
-      <!-- 右側：聊天室區塊 -->
       <div class="chat-container">
         <div class="chat-header">
           <h5><i class="fas fa-comments me-2"></i>聊天室</h5>
         </div>
-
-        <!--
-          只有在直播資訊中包含聊天室 ARN 時，才會載入 ChatRoom 元件。
-          同時，把動態決定的使用者名稱 :user-name="getUserDisplayName()" 傳遞進去。
-        -->
         <ChatRoom
           v-if="streamInfo.chatRoomArn"
           :room-arn="streamInfo.chatRoomArn"
           :user-name="getUserDisplayName()"
         />
-
         <div v-else class="d-flex justify-content-center align-items-center h-100 text-muted">
           聊天室無法載入
         </div>
       </div>
+
     </div>
   </div>
 </template>
 
+
 <style scoped>
-/* 您的 style 區塊完全不用修改，可以直接沿用 */
+/* ====== 原有樣式 (保留) ====== */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
 
 .stream-page-container {
-  padding: 2rem;
-  background-color: #f4f6f9;
-  min-height: calc(100vh - 80px);
+    padding: 2rem;
+    background-color: #f4f6f9;
+    min-height: calc(100vh - 80px);
 }
 
 .status-message {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 60vh;
-  color: #555;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 60vh;
+    color: #555;
 }
 
 .stream-layout {
-  display: flex;
-  gap: 1.5rem;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.video-container {
-  flex: 3;
+    display: flex;
+    gap: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    align-items: flex-start;
 }
 
 .chat-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    min-width: 300px;
+    align-self: stretch;
 }
 
 .stream-title {
-  margin-bottom: 1rem;
+    margin-bottom: 1rem;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #333;
 }
 
 .player-wrapper {
-  position: relative;
-  padding-top: 56.25%; /* 16:9 Aspect Ratio */
-  background-color: black;
-  border-radius: 8px;
-  overflow: hidden;
+    position: relative;
+    padding-top: 56.25%;
+    background-color: black;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 #video-player {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 
 .chat-header {
-  padding: 1rem;
-  border-bottom: 1px solid #e9ecef;
-  background-color: #fafafa;
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+    background-color: #fafafa;
 }
 
 @media (max-width: 992px) {
-  .stream-layout {
+    .stream-layout {
+        flex-direction: column;
+    }
+}
+
+
+/* ====== 主打商品區塊樣式 ====== */
+.stream-content-left {
+    flex: 3;
+    display: flex;
     flex-direction: column;
-  }
+    gap: 1.5rem;
+}
+
+.featured-product-container {
+    height: 122px; 
+}
+
+/* 預留位置的樣式 */
+.featured-product-placeholder {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    color: #6c757d;
+    border: 2px dashed #ced4da;
+}
+.placeholder-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+/* 主打商品卡片本體 */
+.featured-product-card {
+    display: flex;
+    justify-content: center; /* 水平置中 */
+    align-items: center;    /* 垂直置中 */
+    gap: 1.5rem;            /* 項目之間的間距 */
+    padding: 1rem;
+    height: 100%;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 促銷風格 */
+.promo-style {
+    color: white;
+    background: linear-gradient(135deg, #ff7e5f, #feb47b);
+    border: 2px solid #ff7e5f;
+    box-shadow: 0 5px 20px rgba(254, 180, 123, 0.5);
+    animation: pulse-bg 2s infinite;
+}
+
+@keyframes pulse-bg {
+    0% { box-shadow: 0 5px 20px rgba(254, 180, 123, 0.4); }
+    50% { box-shadow: 0 5px 30px rgba(255, 126, 95, 0.7); }
+    100% { box-shadow: 0 5px 20px rgba(254, 180, 123, 0.4); }
+}
+
+/* 促銷標籤 */
+.promo-badge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: #ff4d4d;
+    color: white;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border-radius: 8px 0 8px 0;
+    z-index: 2;
+}
+
+/* 商品縮圖 */
+.product-thumb {
+    width: 80px;  /* 稍微縮小圖片 */
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+    border: 2px solid white;
+}
+
+/* 商品名稱 */
+.product-name {
+    font-weight: bold;
+    font-size: 1.5rem; /* 加大名稱字體 */
+    margin: 0;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+/* 詳情按鈕 */
+.btn-details {
+    background-color: white;
+    color: #ff7e5f;
+    text-decoration: none;
+    padding: 0.5rem 1.5rem; /* 加大按鈕 */
+    border-radius: 20px;
+    font-weight: bold;
+    transition: all 0.2s;
+    display: inline-block;
+    border: 1px solid white;
+    flex-shrink: 0; /* 避免按鈕被壓縮 */
+}
+
+.btn-details:hover {
+    background-color: #fff5f2;
+    transform: scale(1.05);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
 }
 </style>

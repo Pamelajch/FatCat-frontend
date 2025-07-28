@@ -2,10 +2,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import axios from 'axios'
+import CreateComplaintForm from './CreateComplaintForm.vue' //by rr
+import Swal from 'sweetalert2' //by rr
+
 
 const authStore = useAuthStore()
 const orders = ref([])
 const statuses = ref([])
+const showComplaintModal = ref(false)// rr新增：管理申訴表單 Modal 的狀態
+const selectedOrderIdForComplaint = ref(null)// rr獲取orderid：管理申訴表單 Modal 的狀態
 
 // 目前的 tab 狀態 ID（預設是 1：訂單成立）
 const selectedStatus = ref(1)
@@ -49,10 +54,40 @@ const completedStatusId = computed(() => {
   return status?.orderStatusId || null
 })
 
-// 預留未來實作的申訴處理函式
-const handleAppeal = (order) => {
-  console.log('申訴功能待實作，訂單 ID:', order.orderId)
+// ----RR  申訴處理函式----
+// 點擊「申訴」按鈕時觸發
+const openComplaintModal = (order) => {
+  selectedOrderIdForComplaint.value = order.orderId
+  showComplaintModal.value = true
 }
+
+// 僅用於關閉 Modal (例如點擊取消)
+const closeComplaintModal = () => {
+  showComplaintModal.value = false
+  selectedOrderIdForComplaint.value = null
+}
+
+// 【新增】當申訴成功提交後觸發
+const handleComplaintSuccess = (submittedOrderId) => {
+  // 1. 在訂單列表陣列中找到剛剛申訴的那個訂單
+  const order = orders.value.find(o => o.orderId === submittedOrderId);
+  if (order) {
+    // 2. 在該訂單物件上新增一個標記，告訴模板它已經申訴過了
+    order.hasBeenAppealed = true; 
+  }
+
+  // 3. 關閉 Modal
+  closeComplaintModal();
+
+  // 4. 顯示 SweetAlert 成功提示
+  Swal.fire({
+    icon: 'success',
+    title: '申訴已提交！',
+    text: '我們將盡快為您處理。',
+    confirmButtonText: '好的'
+  });
+}
+//--------RR 申訴結束-------
 
 onMounted(fetchData)
 </script>
@@ -105,14 +140,16 @@ onMounted(fetchData)
                   查看明細
                 </router-link>
 
-                <!-- 顯示申訴按鈕 -->
-                <button
-                  v-if="order.orderStatusId === completedStatusId"
-                  class="btn btn-outline-danger btn-sm"
-                  @click="handleAppeal(order)"
-                >
+                <!-- 顯示申訴按鈕 RRRRRRRRRR-->
+                <template v-if="order.orderStatusId === completedStatusId">
+                <button v-if="order.hasBeenAppealed" class="btn btn-secondary btn-sm" disabled>
+                  已申訴
+                </button>
+
+                <button v-else class="btn btn-outline-danger btn-sm" @click="openComplaintModal(order)">
                   申訴
                 </button>
+              </template>
               </td>
             </tr>
           </tbody>
@@ -123,11 +160,35 @@ onMounted(fetchData)
         <p>目前無此狀態的訂單。</p>
       </div>
     </div>
-  </div>
-</template>
+     <Teleport to="body">
+      <div v-if="showComplaintModal" class="modal-overlay">
+        <CreateComplaintForm 
+          :order-id="selectedOrderIdForComplaint"
+          @close="closeComplaintModal"
+          @complaint-submitted="handleComplaintSuccess(selectedOrderIdForComplaint)"
+        />
+      </div>
+    </Teleport>
+
+  </div> </template>
+
 
 <style scoped>
 .nav-link.active {
   font-weight: bold;
+}
+/* 申訴 Modal 的背景遮罩 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050; /* z-index 確保在最上層 */
+  padding: 20px;
 }
 </style>

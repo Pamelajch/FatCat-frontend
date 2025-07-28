@@ -1,8 +1,10 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useStreamStore } from '@/stores/streamStore';
 import axios from 'axios';
 import ChatRoom from '@/components/ChatRoom.vue';
+import { HubConnectionBuilder } from '@microsoft/signalr';
+import Swal from 'sweetalert2';
 
 // --- 功能區塊：元件狀態 ---
 const activeTab = ref('control');
@@ -11,6 +13,9 @@ const pastStreams = ref([]);
 const error = ref(null);
 const loading = ref(false);
 const streamStore = useStreamStore();
+const connection = ref(null);
+const productIdToFeature = ref('');
+const currentFeaturedProduct = ref(null);
 
 // --- 功能區塊：API 呼叫 ---
 const fetchHistory = async () => {
@@ -28,10 +33,7 @@ const handleStartStream = async () => {
     error.value = '請輸入直播標題！';
     return;
   }
-  
-  // 【★ 功能#1 ★】開始新直播前，清除舊的聊天紀錄
   sessionStorage.removeItem('fatcat_chat_history');
-
   loading.value = true;
   error.value = null;
   try {
@@ -42,7 +44,6 @@ const handleStartStream = async () => {
     loading.value = false;
   }
 };
-
 const handleEndStream = async () => {
   loading.value = true;
   error.value = null;
@@ -56,21 +57,87 @@ const handleEndStream = async () => {
     loading.value = false;
   }
 };
-
 const copyToClipboard = (text) => {
-  navigator.clipboard.writeText(text).then(() => alert('已成功複製！'));
+  navigator.clipboard.writeText(text).then(() => Swal.fire('已成功複製！', '', 'success'));
+};
+
+// --- 【「主打商品」功能的函式】 ---
+const setupSignalRConnection = () => {
+  const hubUrl = "https://localhost:7017/chatHub";
+  connection.value = new HubConnectionBuilder()
+    .withUrl(hubUrl, {
+      accessTokenFactory: () => localStorage.getItem('adminToken')
+    })
+    .withAutomaticReconnect()
+    .build();
+
+  // 監聽廣播，更新本地狀態
+  connection.value.on("ReceiveFeaturedProduct", (product) => {
+    currentFeaturedProduct.value = product; // 這行會更新 UI
+    Swal.fire({
+        icon: 'success',
+        title: '商品上架成功！',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000
+    });
+  });
+  connection.value.on("ReceiveClearProduct", () => {
+    currentFeaturedProduct.value = null;
+    productIdToFeature.value = '';
+  });
+  connection.value.on("FeatureProductFailed", (errorMessage) => {
+    Swal.fire('操作失敗', errorMessage, 'error');
+  });
+
+  // 開始連線
+  connection.value.start()
+    .then(() => {
+      console.log('✅ SignalR 已連接 (管理者)');
+      connection.value.invoke('JoinAsAdmin');
+    })
+    .catch(err => {
+        console.error('SignalR 連線失敗: ', err);
+        Swal.fire('連線失敗', `無法連接到即時互動伺服器: ${err.message}`, 'error');
+    });
+};
+
+const featureProduct = () => {
+  if (!productIdToFeature.value.trim()) {
+    Swal.fire('請輸入商品 ID', '', 'warning');
+    return;
+  }
+  if (connection.value?.state === 'Connected') {
+    connection.value.invoke("FeatureProduct", productIdToFeature.value.trim());
+  } else {
+    Swal.fire('連線中斷', '與伺服器的連線已中斷，請刷新頁面重試。', 'error');
+  }
+};
+
+const clearProduct = () => {
+  if (connection.value?.state === 'Connected') {
+    connection.value.invoke("ClearFeaturedProduct");
+  } else {
+     Swal.fire('連線中斷', '與伺服器的連線已中斷，請刷新頁面重試。', 'error');
+  }
 };
 
 // --- 功能區塊：生命週期鉤子 ---
 onMounted(() => {
   streamStore.checkCurrentStream();
   fetchHistory();
+  setupSignalRConnection();
+});
+onUnmounted(() => {
+  if (connection.value) {
+    connection.value.stop();
+  }
 });
 </script>
 
 <template>
   <div class="container mt-4">
-    <!-- 【★ 核心還原#1 ★】將您遺失的分頁導覽加回來 -->
     <ul class="nav nav-tabs mb-3">
       <li class="nav-item">
         <a class="nav-link" :class="{ active: activeTab === 'control' }" @click.prevent="activeTab = 'control'" href="#">
@@ -85,17 +152,13 @@ onMounted(() => {
     </ul>
 
     <div class="tab-content">
-      <!-- 功能區塊：直播控制台頁面 -->
       <div v-if="activeTab === 'control'" class="tab-pane fade show active">
         <div class="row">
           
-          <!-- 【★ 核心還原#2 ★】將您遺失的左側控制台區塊完整加回來 -->
           <div class="col-lg-7">
             <div class="card">
               <div class="card-body">
                 <div v-if="error" class="alert alert-danger">{{ error }}</div>
-
-                <!-- 情況一：直播進行中 -->
                 <div v-if="streamStore.isLive">
                   <h5 class="card-title">🔴 直播進行中：{{ streamStore.currentStreamTitle }}</h5>
                   <p class="text-muted">以下為串流資訊：</p>
@@ -119,8 +182,6 @@ onMounted(() => {
                     <span v-if="loading" class="spinner-border spinner-border-sm"></span> 結束直播
                   </button>
                 </div>
-
-                <!-- 情況二：沒有直播 -->
                 <div v-else>
                   <h5 class="card-title">準備開始一場新的直播</h5>
                   <div class="mb-3">
@@ -133,17 +194,42 @@ onMounted(() => {
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- 右側：聊天室區塊 -->
+            <div class="card mt-4">
+              <div class="card-header fs-5 fw-bold"><i class="fas fa-bullhorn me-2"></i>主打商品控制</div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label for="productIdInput" class="form-label">輸入商品 ID</label>
+                  <div class="input-group">
+                    <input type="text" id="productIdInput" class="form-control" v-model="productIdToFeature" placeholder="例如：73">
+                    <button class="btn btn-success" @click="featureProduct">上架商品</button>
+                  </div>
+                </div>
+                <hr>
+                <div v-if="currentFeaturedProduct">
+                  <p class="mb-2"><strong>目前主打商品：</strong></p>
+                  <div class="d-flex align-items-center p-2 rounded" style="background-color: #f8f9fa;">
+                    <img :src="`https://localhost:7017/ProductImages/${currentFeaturedProduct.imageUrl}`" style="width: 50px; height: 50px; object-fit: cover;" class="me-3 rounded">
+                    <div class="flex-grow-1">
+                      <div class="fw-bold">{{ currentFeaturedProduct.name }}</div>
+                      <small class="text-muted">ID: {{ currentFeaturedProduct.id }} | 價格: ${{ currentFeaturedProduct.price }}</small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" @click="clearProduct">
+                      <i class="fas fa-times"></i> 下架
+                    </button>
+                  </div>
+                </div>
+                <div v-else class="text-muted text-center">
+                  目前沒有主打商品
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <div class="col-lg-5">
             <div class="card">
               <div class="card-header fs-5 fw-bold"><i class="fas fa-comments me-2"></i>聊天室</div>
               <div class="card-body p-0" style="height: 400px;">
-                <!-- 
-                  【★ 功能#2 ★】確保 ChatRoom 在直播時才顯示，
-                  並明確傳入 roomArn 和固定的管理者名稱 
-                -->
                 <ChatRoom 
                   v-if="streamStore.isLive && streamStore.streamInfo?.chatRoomArn" 
                   :room-arn="streamStore.streamInfo.chatRoomArn"
@@ -155,10 +241,10 @@ onMounted(() => {
               </div>
             </div>
           </div>
+
         </div>
       </div>
 
-      <!-- 【★ 核心還原#3 ★】將您遺失的過往直播紀錄頁面加回來 -->
       <div v-if="activeTab === 'history'" class="tab-pane fade show active">
         <div class="card">
           <div class="card-body" style="max-height: 600px; overflow-y: auto;">
@@ -186,3 +272,4 @@ onMounted(() => {
 .card-header { background-color: #f1f3f5; }
 .nav-link { cursor: pointer; }
 </style>
+
