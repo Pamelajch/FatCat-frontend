@@ -66,6 +66,7 @@ async function handleCheckout() {
     
     const orderRes = await api.post('/Orders', orderPayload)
     const orderId = orderRes.data.orderId
+    router.push(`/checkoutfinish/${orderId}`)
     if (!orderId) throw new Error('未取得 orderId')
 
     // Step 2: 新增購物車項目

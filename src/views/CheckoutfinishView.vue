@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useOrderStore } from '@/stores/order'
 import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 //import OrderItemList from '@/components/OrderItemList.vue'
 import OrderSummary from '@/components/OrderSummary.vue'
 import CartItemList from '@/components/CartItemList.vue'
@@ -10,10 +11,8 @@ import OrderItemList from '@/components/OrderItemList.vue' // ✅ 改用這個
 const cartStore = useCartStore()
 const orderStore = useOrderStore()
 const router = useRouter()
+const route = useRoute()
 
-onMounted(() => {
-  
-})
 
 
 const goToMyOrders = () => {

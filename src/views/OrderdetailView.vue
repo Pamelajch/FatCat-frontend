@@ -62,7 +62,8 @@ onMounted(fetchOrderDetail)
     </div>
 
     <div class="container">
-      <OrderDetail :order="order" />
+      <OrderDetail :order-id="Number(orderId)" />
+
       
       <div class="mt-4">
         <button type="button" class="btn custom-purple-btn float-end">聯絡我們</button>
