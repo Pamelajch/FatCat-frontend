@@ -7,7 +7,7 @@ import PostReviewForm from './PostReviewForm.vue'
 const props = defineProps({
   items: Array,
   isCompleted: Boolean,
-  orderId: Number
+  orderId: Number,
 })
 
 const cartStore = useCartStore()
@@ -16,8 +16,10 @@ const loading = ref(false)
 const error = ref(null)
 const showReviewForm = ref(false)
 const selectedItem = ref(null)
+const isCompleted = ref(false)
 
 onMounted(async () => {
+  // 如果有傳入 items 就直接用，不用重抓
   if (props.items && props.items.length > 0) {
     showItems.value = props.items.map(item => ({
       ...item,
@@ -29,6 +31,14 @@ onMounted(async () => {
   try {
     loading.value = true
 
+    // 先查訂單狀態判斷是否完成
+    const orderRes = await axios.get(`/api/Orders/${props.orderId}`)
+    const statusName = orderRes.data.orderStatus?.name
+    isCompleted.value =
+      orderRes.data.orderStatusId === 3 ||
+      statusName === '已完成（收貨成功）'
+
+    // 平行取得訂單明細、購物車、商品與圖片
     const [orderDetailsRes, cartRes, productRes, imageRes] = await Promise.all([
       axios.get('/api/OrderDetails', { params: { orderId: props.orderId } }),
       axios.get('/api/ShoppingCartItems'),
@@ -41,6 +51,7 @@ onMounted(async () => {
     const products = productRes.data
     const productImages = imageRes.data
 
+    // 對每筆訂單明細組合商品資料
     showItems.value = orderDetails.map(od => {
       const cartItem = cartItems.find(ci => ci.itemId === od.itemId)
       const product = products.find(p => p.productsId === cartItem?.productsId)
