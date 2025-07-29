@@ -98,6 +98,8 @@ async function sendNotification() {
     title.value = ''
     description.value = ''
     receiverIds.value = []
+    // 重新取得通知(讓右上角鈴鐺顯示未讀數量)
+    fetchNotifications()
   } catch (e) {
     message.value = '發送失敗'
   }
