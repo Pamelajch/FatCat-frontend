@@ -2,10 +2,11 @@
 import { ref, onMounted, onUnmounted, computed, inject, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAdminAuthStore } from '@/stores/adminauth';
-import api from '@/services/jjapi';
+import { useNotificationStore } from '@/stores/notification';
 
 const router = useRouter();
 const adminAuthStore = useAdminAuthStore();
+const notificationStore = useNotificationStore();
 const currentTime = ref('');
 let timer = null;
 const isDropdownOpen = ref(false);
@@ -15,8 +16,8 @@ const adminInfo = ref(null);
 const toggleSidebar = inject('toggleSidebar');
 const isSidebarCollapsed = inject('isSidebarCollapsed', ref(false));
 
-// 通知功能區
-const unreadCount = ref(0)
+// 使用 store 的未讀通知數量
+const unreadCount = computed(() => notificationStore.unreadCount);
 
 const welcomeMessage = computed(() => {
   if (adminInfo.value && adminInfo.value.name) {
@@ -51,24 +52,14 @@ async function fetchUnreadCount(){
   const admin = localStorage.getItem('adminUser');
   const adminId = admin? JSON.parse(admin).adminId:null;
   if(!adminId){
-    unreadCount.value = 0;
     console.log('無法從localstorage 取得 adminId，未讀通知數量設為 0')
     return
   }
   if(!adminAuthStore.isAuthenticated){
-    unreadCount.value = 0;
     console.log('未登入，未讀通知數量設為 0');
     return;
   }
-  try{
-    const res = await api.get(`/Notifications/Admin/${adminId}`);
-    // 統計未讀
-    unreadCount.value = res.data.filter(n => !n.isRead).length;
-    console.log('取得管理員未讀通知數量', unreadCount.value);
-  }catch(error){
-    unreadCount.value = 0;
-    console.error('取得管理員未讀通知數量失敗', error);
-  }
+  await notificationStore.fetchAdminNotifications(adminId);
 }
 
 // 點擊通知按鈕跳轉到通知頁面
@@ -97,7 +88,7 @@ watch(()=> adminAuthStore.isAuthenticated, (newVal)=>{
   if(newVal){
     fetchUnreadCount();
   }else{
-    unreadCount.value = 0;
+    notificationStore.clearNotifications();
   }
 });
 </script>

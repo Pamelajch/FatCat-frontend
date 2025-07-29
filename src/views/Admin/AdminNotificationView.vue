@@ -1,9 +1,11 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import api from '@/services/jjapi'
-import { useAdminAuthStore  } from '@/stores/adminauth'
+import { useAdminAuthStore } from '@/stores/adminauth'
+import { useNotificationStore } from '@/stores/notification'
 
 const adminAuthStore = useAdminAuthStore()
+const notificationStore = useNotificationStore()
 
 // 發送通知相關
 const title = ref('')
@@ -15,9 +17,11 @@ const sending = ref(false)
 const message = ref('')
 
 // 查看通知相關
-const notifications = ref([])
-const loading = ref(true)
-const activeTab = ref('view') // 'send' 或 ' view '
+const activeTab = ref('view') // 'send' 或 'view'
+
+// 使用 store 的通知資料
+const notifications = computed(() => notificationStore.notifications)
+const loading = computed(() => notificationStore.loading)
 
 // 通知類型選項
 const notificationTypes = [
@@ -36,45 +40,39 @@ const notificationTypes = [
 async function fetchNotifications() {
   const admin = localStorage.getItem('adminUser')
   const adminId = admin ? JSON.parse(admin).adminId : null
-  if(!adminId)
-  {
+  if(!adminId) {
     message.value = '請先登入'
-    loading.value = false
     return
   }
-  loading.value = true
-  try{
-    const res = await api.get(`/Notifications/Admin/${adminId}`)
-    notifications.value = res.data
-  }catch(e){
-    message.value = '取得通知失敗'
+  
+  await notificationStore.fetchAdminNotifications(adminId)
+  if (notificationStore.error) {
+    message.value = notificationStore.error
   }
-  loading.value = false
 }
+
 // 單一通知標為已讀
 async function markAsRead(notification) {
-  try{
-    await api.post('/Notifications/Read', {
-      receiverId: notification.receiverId
-    })
-    notification.isRead = true
-    notification.readTime = new Date().toISOString()
-  }catch(e){
+  try {
+    await notificationStore.markAsRead(notification)
+    message.value = '已標為已讀'
+  } catch (e) {
     message.value = '標為已讀失敗'
   }
 }
 
 // 全部標為已讀
 async function markAllAsRead() {
-  const unread = notifications.value.filter(n=> !n.isRead)
-  for(const n of unread){
-    await markAsRead(n)
+  try {
+    await notificationStore.markAllAsRead()
+    message.value = '全部已標為已讀'
+  } catch (e) {
+    message.value = '標為已讀失敗'
   }
-  message.value = '全部已標為已讀'
 }
 
 // 常用範例
-function fillTemplate(t, d,type = 6) {
+function fillTemplate(t, d, type = 6) {
   title.value = t
   description.value = d
   notificationType.value = type
@@ -152,7 +150,9 @@ onMounted(()=> {
     <h2><i class="fas fa-bell me-2"></i>通知管理</h2>
 
     <!-- 訊息提示 -->
-    <div v-if="message" class="alert" :class="message.includes('成功') ? 'alert-success' : 'alert-danger'">{{ message }}</div>
+    <div v-if="message" class="alert" :class="message.includes('成功') || message.includes('已讀') ? 'alert-success' : 'alert-danger'">
+      {{ message }}
+    </div>
 
     <!-- 分頁標籤 -->
     <ul class="nav nav-tabs mb-4" id="notificationTabs" role="tablist">
@@ -192,35 +192,37 @@ onMounted(()=> {
       <div v-else class="notification-list">
         <div v-for="notification in notifications" :key="notification.receiverId" 
              class="card mb-3" :class="{ 'border-primary': !notification.isRead }">
-             <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start">
-                <div class="flex-grow-1">
-                  <div class="d-flex align-items-center mb-2">
-                     <h6 class="card-title mb-0 me-2">{{ notification.title }}</h6>
-                      <span class="badge" :class="`bg-${getNotificationTypeColor(notification.notificationType)}`">
-                        {{ getNotificationTypeLabel(notification.notificationType) }}
-                      </span>
-                      <span v-if="!notification.isRead" class="badge bg-danger ms-2">未讀</span>
-                  </div>
-                  <p class="card-text text-muted">{{ notification.description }}</p>
-                  <small class="text-muted">
-                    <i class="fas fa-clock me-1"></i>{{ formatTime(notification.time) }}
-                  </small>
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center mb-2">
+                   <h6 class="card-title mb-0 me-2">{{ notification.title }}</h6>
+                    <span class="badge" :class="`bg-${getNotificationTypeColor(notification.notificationType)}`">
+                      {{ getNotificationTypeLabel(notification.notificationType) }}
+                    </span>
+                    <span v-if="!notification.isRead" class="badge bg-danger ms-2">未讀</span>
                 </div>
-                <div class="ms-3">
-                  <button v-if="!notification.isRead" 
-                          @click="markAsRead(notification)" 
-                          class="btn btn-outline-success btn-sm">
-                    <i class="fas fa-check me-1"></i>標為已讀
-                  </button>
-                  <span v-else class="text-success">
-                    <i class="fas fa-check-circle me-1"></i>已讀
-                  </span>
+                <p class="card-text text-muted">{{ notification.description }}</p>
+                <small class="text-muted">
+                  <i class="fas fa-clock me-1"></i>{{ formatTime(notification.time) }}
+                </small>
               </div>
+              <div class="ms-3">
+                <button v-if="!notification.isRead" 
+                        @click="markAsRead(notification)" 
+                        class="btn btn-outline-success btn-sm">
+                  <i class="fas fa-check me-1"></i>標為已讀
+                </button>
+                <span v-else class="text-success">
+                  <i class="fas fa-check-circle me-1"></i>已讀
+                </span>
               </div>
-             </div>
+            </div>
+          </div>
         </div>
       </div>      
+
+
     </div>
           <!-- 發送通知分頁 -->
       <div v-if="activeTab === 'send'" class="tab-content">
