@@ -33,16 +33,16 @@ onMounted(()=>{
 
 async function handleCheckout() {
   console.log('結帳時 cartItemIds:', cartStore.cartItemIds)
-if (!cartStore.cartItemIds.length || cartStore.cartItemIds.some(id => id === undefined)) {
-  alert('訂單項目ID缺失，請重新整理購物車頁面後再試')
-  router.push('/cart')
-  return
-}
+  if (!cartStore.cartItemIds.length || cartStore.cartItemIds.some(id => id === undefined)) {
+    alert('訂單項目ID缺失，請重新整理購物車頁面後再試')
+    router.push('/cart')
+    return
+  }
+
   const isValid = shippingFormRef.value?.validateShippingInfo?.()
   if (!isValid) return
 
-  // 檢查使用者是否登入
-  if(!authStore.isAuthenticated){
+  if (!authStore.isAuthenticated) {
     alert('請先登入')
     router.push('/login')
     return
@@ -51,12 +51,11 @@ if (!cartStore.cartItemIds.length || cartStore.cartItemIds.some(id => id === und
   isSubmitting.value = true
 
   try {
-    // 備份購物車資料（深拷貝）
     orderStore.setOrderItems(JSON.parse(JSON.stringify(cartStore.items)))
 
     // Step 1: 新增訂單
     const orderPayload = {
-      userId: authStore.user.userId, // 使用登入使用者的 userId
+      userId: authStore.user.userId,
       orderdate: new Date().toISOString(),
       location: checkoutStore.address || checkoutStore.storeName || '未填寫地址',
       couponId: checkoutStore.couponId || null,
@@ -68,45 +67,39 @@ if (!cartStore.cartItemIds.length || cartStore.cartItemIds.some(id => id === und
       supportpaymentMethodId: checkoutStore.paymentMethodId || null
     }
 
-    console.log('訂單資料:', orderPayload) // 除錯用
-    
     const orderRes = await api.post('/Orders', orderPayload)
     const orderId = orderRes.data.orderId
-    router.push(`/checkoutfinish/${orderId}`)
     if (!orderId) throw new Error('未取得 orderId')
 
-    // Step 2: 新增購物車項目
-    // const cartPayload = cartStore.items.map(i => ({
-    //   itemId: 0,
-    //   productsId: i.id,
-    //   quantity: i.quantity,
-    //   unitprice: i.price
-    // }))
-    // const cartRes = await api.post('/ShoppingCartItems/batch', cartPayload)
-    // const itemIds = cartRes.data
-    // if (!Array.isArray(itemIds)) throw new Error('未取得 itemIds')
-
-    // Step 3: 新增訂單詳情
+    // Step 2: 新增訂單詳情
     const orderDetails = cartStore.items.map((item, index) => ({
       OrderId: orderId,
-      ItemId: cartStore.cartItemIds?.[index] ?? -1,  // 找不到就用 -1 或其他代表錯誤的值   
+      ItemId: cartStore.cartItemIds?.[index] ?? -1,
       ProductName: item.name ?? '',
       Quantity: item.quantity,
       Unitprice: item.price
     }))
     await api.post('/OrderDetails/batch', orderDetails)
 
-    alert('✅ 訂單已送出！')
+    // Step 3: 呼叫後端產生綠界付款表單（使用測試環境）
+    const paymentRes = await api.post('/ecpay', {
+        orderId,
+        payableAmount: checkoutStore.total
+      })
 
-    // 不清空購物車，等完成頁按按鈕時才清空
+
+    // Step 4: 寫入 HTML 並跳轉（_self 表示本頁跳轉）
+    const newWindow = window.open('', '_self')
+    newWindow.document.write(paymentRes.data)
+
+    // Step 5: 清空購物車（可延後到付款完成頁再清空）
     cartStore.clearCart()
-    router.push('/checkoutfinish')
   } catch (err) {
     console.error('❌ 訂單送出失敗', err.response?.data || err)
     alert('訂單送出失敗，請查看 Console 錯誤')
     console.table(err.response?.data?.errors)
   } finally {
-    isSubmitting.value = false 
+    isSubmitting.value = false
   }
 }
 </script>
