@@ -303,11 +303,12 @@ const runAway = () => {
 
 /* 上方：貓貓、杯子、已選材料 */
 .top-zone {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 160px auto 180px; /* 左：貓， 中：杯，右：卡片 */
   align-items: flex-end;
-  gap: 3rem;
+  justify-content: center;
   width: 100%;
+  gap: 3rem;
 }
 
 /* 貓貓預言師 */
@@ -400,7 +401,12 @@ const runAway = () => {
 .material-name {
   font-weight: bold;
   color: #a27bff;
+  white-space: nowrap;        /* 不換行 */
+  overflow: hidden;           /* 超出隱藏 */
+  text-overflow: ellipsis;    /* 超出加上「...」 */
+  max-width: 100px;           /* 限定最大寬度，可依需求調整 */
 }
+
 .remove-btn {
   background: none;
   border: none;
@@ -482,8 +488,11 @@ const runAway = () => {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 20px;
+  gap: 8px; /* 原本是 20px，改小 */
+  row-gap: 12px; /* 垂直間距可稍微大一點保持呼吸空間 */
+  padding: 0 10px;
 }
+
 .ingredient-ironbox {
   width: 160px;
   display: flex;
