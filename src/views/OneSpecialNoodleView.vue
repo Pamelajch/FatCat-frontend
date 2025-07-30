@@ -729,6 +729,13 @@ watch(() => route.query.id, async () => {
   margin-top: 2rem;
 }
 
+.recommend-area h3 {
+  font-size: 24px;
+  color: #a43f96;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
 .recommend-list {
   display: flex;
   gap: 1rem;
