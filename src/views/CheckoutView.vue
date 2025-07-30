@@ -32,6 +32,12 @@ onMounted(()=>{
 })
 
 async function handleCheckout() {
+  console.log('結帳時 cartItemIds:', cartStore.cartItemIds)
+if (!cartStore.cartItemIds.length || cartStore.cartItemIds.some(id => id === undefined)) {
+  alert('訂單項目ID缺失，請重新整理購物車頁面後再試')
+  router.push('/cart')
+  return
+}
   const isValid = shippingFormRef.value?.validateShippingInfo?.()
   if (!isValid) return
 
@@ -70,20 +76,20 @@ async function handleCheckout() {
     if (!orderId) throw new Error('未取得 orderId')
 
     // Step 2: 新增購物車項目
-    const cartPayload = cartStore.items.map(i => ({
-      itemId: 0,
-      productsId: i.id,
-      quantity: i.quantity,
-      unitprice: i.price
-    }))
-    const cartRes = await api.post('/ShoppingCartItems/batch', cartPayload)
-    const itemIds = cartRes.data
-    if (!Array.isArray(itemIds)) throw new Error('未取得 itemIds')
+    // const cartPayload = cartStore.items.map(i => ({
+    //   itemId: 0,
+    //   productsId: i.id,
+    //   quantity: i.quantity,
+    //   unitprice: i.price
+    // }))
+    // const cartRes = await api.post('/ShoppingCartItems/batch', cartPayload)
+    // const itemIds = cartRes.data
+    // if (!Array.isArray(itemIds)) throw new Error('未取得 itemIds')
 
     // Step 3: 新增訂單詳情
-    const orderDetails = cartStore.items.map(item => ({
+    const orderDetails = cartStore.items.map((item, index) => ({
       OrderId: orderId,
-      ItemId: item.id,
+      ItemId: cartStore.cartItemIds?.[index] ?? -1,  // 找不到就用 -1 或其他代表錯誤的值   
       ProductName: item.name ?? '',
       Quantity: item.quantity,
       Unitprice: item.price
