@@ -4,6 +4,7 @@ import { ref } from 'vue'
 
 export const useOrderStore = defineStore('order', () => {
     const latestOrderItems = ref([])
+
     const orders = ref([])
 
     const setOrderItems = (items) => {

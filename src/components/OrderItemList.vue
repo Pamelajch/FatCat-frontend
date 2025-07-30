@@ -7,7 +7,7 @@ import PostReviewForm from './PostReviewForm.vue'
 const props = defineProps({
   items: Array,
   isCompleted: Boolean,
-  orderId: Number,
+  orderId: Number
 })
 
 const cartStore = useCartStore()
@@ -16,29 +16,17 @@ const loading = ref(false)
 const error = ref(null)
 const showReviewForm = ref(false)
 const selectedItem = ref(null)
-const isCompleted = ref(false)
 
-onMounted(async () => {
-  // 如果有傳入 items 就直接用，不用重抓
-  if (props.items && props.items.length > 0) {
-    showItems.value = props.items.map(item => ({
-      ...item,
-      subtotal: item.price * item.quantity
-    }))
-    return
-  }
-
+const fetchOrderData = async () => {
   try {
     loading.value = true
 
-    // 先查訂單狀態判斷是否完成
+    // 取得訂單狀態
     const orderRes = await axios.get(`/api/Orders/${props.orderId}`)
     const statusName = orderRes.data.orderStatus?.name
-    isCompleted.value =
-      orderRes.data.orderStatusId === 3 ||
-      statusName === '已完成（收貨成功）'
+    props.isCompleted = orderRes.data.orderStatusId === 3 || statusName === '已完成（收貨成功）'
 
-    // 平行取得訂單明細、購物車、商品與圖片
+    // 同時取得相關資料
     const [orderDetailsRes, cartRes, productRes, imageRes] = await Promise.all([
       axios.get('/api/OrderDetails', { params: { orderId: props.orderId } }),
       axios.get('/api/ShoppingCartItems'),
@@ -51,11 +39,10 @@ onMounted(async () => {
     const products = productRes.data
     const productImages = imageRes.data
 
-    // 對每筆訂單明細組合商品資料
+    // 組合資料
     showItems.value = orderDetails.map(od => {
       const cartItem = cartItems.find(ci => ci.itemId === od.itemId)
       const product = products.find(p => p.productsId === cartItem?.productsId)
-
       const mainImage = productImages.find(img =>
         img.productId === product?.productsId && img.isMain === 1
       )
@@ -63,7 +50,9 @@ onMounted(async () => {
       return {
         productId: product?.productsId || 0,
         name: product?.name || od.productName,
-        image: mainImage?.imageUrl ? `/ProductImages/${mainImage.imageUrl}` : '/ProductImages/default.png',
+        image: mainImage?.imageUrl
+          ? `/ProductImages/${mainImage.imageUrl}`
+          : '/ProductImages/default.png',
         price: od.unitprice,
         quantity: od.quantity,
         subtotal: od.unitprice * od.quantity,
@@ -71,10 +60,26 @@ onMounted(async () => {
       }
     })
   } catch (err) {
-    console.error(err)
-    error.value = '載入失敗'
+    console.error('❌ 載入失敗:', err)
+    error.value = '載入失敗，請稍後再試。'
   } finally {
     loading.value = false
+  }
+}
+
+onMounted(async () => {
+  if (!props.orderId) {
+    console.warn('⚠️ 缺少 orderId，無法載入訂單資料')
+    return
+  }
+
+  if (props.items?.length > 0) {
+    showItems.value = props.items.map(item => ({
+      ...item,
+      subtotal: item.price * item.quantity
+    }))
+  } else {
+    await fetchOrderData()
   }
 })
 
@@ -89,10 +94,10 @@ const closeReviewForm = () => {
 }
 
 const handleReviewSubmitted = () => {
-  closeReviewForm()
   if (selectedItem.value) {
     selectedItem.value.hasBeenReviewed = true
   }
+  closeReviewForm()
 }
 
 const total = computed(() => {
@@ -102,29 +107,20 @@ const total = computed(() => {
 })
 </script>
 
-
-<style scoped>
-.list-group-item {
-  border-radius: 12px;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.05);
-  margin-bottom: 8px;
-}
-</style>
-
 <template>
   <div v-if="loading">載入中...</div>
   <div v-else-if="error">{{ error }}</div>
   <div v-else>
     <div class="list-group mb-3">
       <div
-        class="list-group-item d-flex align-items-center gap-3"
         v-for="(item, index) in showItems"
         :key="index"
+        class="list-group-item d-flex align-items-center gap-3"
       >
         <img
           :src="item.image"
           alt="商品圖"
-          style="width: 60px; height: 60px; object-fit: cover;"
+          style="width: 60px; height: 60px; object-fit: cover"
         />
         <div class="flex-grow-1">
           <h6 class="mb-1">{{ item.name }}</h6>
@@ -133,16 +129,10 @@ const total = computed(() => {
           <div class="text-muted">小計：${{ item.subtotal }}</div>
         </div>
 
-        <!-- ✅ 僅在已完成狀態時顯示評價按鈕 -->
         <template v-if="isCompleted">
-          <button
-            v-if="item.hasBeenReviewed"
-            class="btn btn-secondary btn-sm"
-            disabled
-          >
+          <button v-if="item.hasBeenReviewed" class="btn btn-secondary btn-sm" disabled>
             已評價
           </button>
-
           <button
             v-else
             class="btn btn-outline-primary btn-sm"
@@ -154,12 +144,11 @@ const total = computed(() => {
       </div>
     </div>
 
-    <!-- ✅ 顯示總金額 -->
     <div class="text-end fw-bold fs-5">
       總金額：<span class="text-danger">${{ total }}</span>
     </div>
 
-    <!-- 評論表單 Modal -->
+    <!-- 評價表單 Modal -->
     <div
       v-if="showReviewForm && selectedItem"
       class="modal fade show"
@@ -170,11 +159,7 @@ const total = computed(() => {
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">對「{{ selectedItem.name }}」發表評論</h5>
-            <button
-              type="button"
-              class="btn-close"
-              @click="closeReviewForm"
-            ></button>
+            <button type="button" class="btn-close" @click="closeReviewForm"></button>
           </div>
           <div class="modal-body">
             <PostReviewForm
@@ -189,8 +174,12 @@ const total = computed(() => {
   </div>
 </template>
 
-
 <style scoped>
+.list-group-item {
+  border-radius: 12px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 8px;
+}
 .modal {
   z-index: 1050;
 }
