@@ -212,13 +212,17 @@ const runAway = () => {
       <div
         v-for="item in filteredProducts"
         :key="item.productsId"
-        class="ingredient-card"
+        class="ingredient-ironbox"
         draggable="true"
         @dragstart="(event) => onDragStart(event, item)"
       >
-        <img :src="item.imageUrl" :alt="item.name" />
-        <h4>{{ item.name }}</h4>
-        <p>{{ item.description }}</p>
+        <div class="ironbox-frame">
+          <img :src="item.imageUrl" :alt="item.name" class="ironbox-image" />
+        </div>
+        <div class="ironbox-info">
+          <h4>{{ item.name }}</h4>
+          <p>{{ item.description }}</p>
+        </div>
       </div>
     </div>
     <!-- 星光粒子效果 -->
@@ -455,26 +459,47 @@ const runAway = () => {
   justify-content: center;
   gap: 20px;
 }
-.ingredient-card {
+.ingredient-ironbox {
   width: 160px;
-  padding: 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.466);
-  backdrop-filter: blur(6px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: grab;
+  animation: floatCard 6s ease-in-out infinite;
+}
+
+.ironbox-frame {
+  width: 140px;
+  height: 140px;
+  background-image: url('/ironbox.png');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+}
+
+.ironbox-image {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+}
+
+.ironbox-info {
+  margin-top: 8px;
   text-align: center;
-  transition: transform 0.2s;
 }
-.ingredient-card:hover {
-  transform: scale(1.05);
+
+.ironbox-info h4 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #a27bff;
 }
-.ingredient-card img {
-  width: 120px;
-  height: 120px;
-  object-fit: cover; /* 裁切並填滿區域 */
-  border-radius: 10px;
-  display: block;
-  margin: 0 auto;
+
+.ironbox-info p {
+  font-size: 12px;
+  color: #444;
 }
 
 /* 卡片漂浮動畫 */
