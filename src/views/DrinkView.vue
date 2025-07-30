@@ -386,6 +386,7 @@ const runAway = () => {
   align-items: center;
   gap: 10px;
   padding: 8px 14px;
+  min-width: 250px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid #d8bbff;
   border-radius: 12px;
@@ -404,7 +405,7 @@ const runAway = () => {
   white-space: nowrap;        /* 不換行 */
   overflow: hidden;           /* 超出隱藏 */
   text-overflow: ellipsis;    /* 超出加上「...」 */
-  max-width: 100px;           /* 限定最大寬度，可依需求調整 */
+  max-width: 200px;           /* 限定最大寬度，可依需求調整 */
 }
 
 .remove-btn {
