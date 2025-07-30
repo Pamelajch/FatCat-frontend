@@ -130,13 +130,27 @@ const fetchProductDetail = async () => {
       { label: '過敏原', value: '含愛心與貓毛' }
     ]
 
-    // 推薦商品寫死
-    recommendedProducts.value = [
-      { id: 73, name: '如果我是宋朝人', image: '/ProductImages/如果我是宋朝人.jpg', price: 99 },
-      { id: 74, name: '如果我是埃及豔后', image: '/ProductImages/如果我是埃及豔后.jpg', price: 119 }
-    ]
+    await fetchRecommendedProducts()
   } catch (err) {
     console.error('取得商品資料失敗', err)
+  }
+}
+
+// 隨機推薦商品（排除目前商品）
+const fetchRecommendedProducts = async () => {
+  try {
+    const res = await fetch(`https://localhost:7017/api/Products/recommend?excludeId=${productId}&count=3`)
+    const data = await res.json()
+
+    // 補上圖片路徑（如果 imageUrl 不是完整路徑）
+    recommendedProducts.value = data.map(p => ({
+      ...p,
+      image: p.imageUrl.startsWith('/ProductImages/')
+        ? p.imageUrl
+        : '/ProductImages/' + p.imageUrl
+    }))
+  } catch (err) {
+    console.error('推薦商品取得失敗', err)
   }
 }
 
@@ -163,7 +177,10 @@ const productSpecs = ref([])
 const recommendedProducts = ref([])
 
 onMounted(fetchProductDetail) 
-watch(()=> route.query.id, fetchProductDetail) // 當路由變更時，重新載入商品資料 by JJ
+watch(() => route.query.id, async () => {
+  await fetchProductDetail()
+  await fetchRecommendedProducts()
+}) // 當路由變更時，重新載入商品資料 by JJ
 
 </script>
 
@@ -278,14 +295,19 @@ watch(()=> route.query.id, fetchProductDetail) // 當路由變更時，重新載
       </div>
     </div>
     <!-- 推薦商品 -->
-    <div class="recommendation-section">
-      <h3>你可能也會喜歡 🍜</h3>
-      <div class="recommendation-list">
-        <div class="recommend-card" v-for="item in recommendedProducts" :key="item.id">
+    <div class="recommend-area">
+      <h3>你可能會喜歡</h3>
+      <div class="recommend-list">
+        <router-link
+          v-for="item in recommendedProducts"
+          :key="item.productsId"
+          :to="{ name: 'product', query: { id: item.productsId } }"
+          class="recommend-item"
+        >
           <img :src="item.image" :alt="item.name" />
-          <p class="name">{{ item.name }}</p>
-          <p class="price">NT$ {{ item.price }}</p>
-        </div>
+          <p>{{ item.name }}</p>
+          <p>NT$ {{ item.price }}</p>
+        </router-link>
       </div>
     </div>
   </div>
@@ -703,45 +725,39 @@ watch(()=> route.query.id, fetchProductDetail) // 當路由變更時，重新載
 }
 
 /* 推薦商品區塊 */
-.recommendation-section {
-  margin-top: 80px;
+.recommend-area {
+  margin-top: 2rem;
 }
-.recommendation-section h3 {
-  font-size: 24px;
-  color: #a43f96;
-  text-align: center;
-  margin-bottom: 20px;
-}
-.recommendation-list {
+
+.recommend-list {
   display: flex;
-  flex-wrap: wrap;
+  gap: 1rem;
   justify-content: center;
-  gap: 30px;
+  flex-wrap: wrap;
 }
-.recommend-card {
-  width: 200px;
-  background-color: #fff0f8;
-  padding: 15px;
-  border-radius: 20px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  text-align: center;
-  transition: transform 0.3s ease;
-}
-.recommend-card:hover {
-  transform: translateY(-5px);
-}
-.recommend-card img {
-  width: 100%;
-  height: auto;
+
+.recommend-item {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid #d8bbff;
   border-radius: 12px;
-  margin-bottom: 10px;
+  padding: 10px;
+  width: 150px;
+  text-align: center;
+  box-shadow: 0 0 8px #a27bff80;
+  transition: transform 0.3s ease;
+  color: inherit;
+  text-decoration: none;
 }
-.recommend-card .name {
-  font-weight: bold;
-  color: #cc3c9b;
+
+.recommend-item:hover {
+  transform: scale(1.05);
 }
-.recommend-card .price {
-  color: #888;
-  margin-top: 5px;
+
+.recommend-item img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
 }
 </style>
