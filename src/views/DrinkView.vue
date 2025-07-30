@@ -108,6 +108,21 @@ const clearCup = () => {
   cup.value = []
 }
 
+const hoveredProduct = ref(null)
+const tooltipX = ref(0)
+const tooltipY = ref(0)
+
+const handleMouseEnter = (product) => {
+  hoveredProduct.value = product
+}
+const handleMouseLeave = () => {
+  hoveredProduct.value = null
+}
+const handleMouseMove = (event) => {
+  tooltipX.value = event.pageX + 12
+  tooltipY.value = event.pageY + 12
+}
+
 // 貓貓預言師輪播
 const messages = [
   '你確定這樣好喝嗎？',
@@ -215,13 +230,15 @@ const runAway = () => {
         class="ingredient-ironbox"
         draggable="true"
         @dragstart="(event) => onDragStart(event, item)"
+        @mouseenter="handleMouseEnter(item)"
+        @mouseleave="handleMouseLeave"
+        @mousemove="handleMouseMove"
       >
         <div class="ironbox-frame">
           <img :src="item.imageUrl" :alt="item.name" class="ironbox-image" />
         </div>
         <div class="ironbox-info">
           <h4>{{ item.name }}</h4>
-          <p>{{ item.description }}</p>
         </div>
       </div>
     </div>
@@ -243,6 +260,14 @@ const runAway = () => {
         }"
       ></div>
     </div>
+  </div>
+  <!-- 說明 tooltip -->
+  <div
+    v-if="hoveredProduct"
+    class="desc-tooltip"
+    :style="{ top: tooltipY + 'px', left: tooltipX + 'px' }"
+  >
+    {{ hoveredProduct.description }}
   </div>
 </template>
 
@@ -302,7 +327,7 @@ const runAway = () => {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid #fff;
   border-radius: 12px;
-  color: #a27bff;
+  color: #fff;
   font-weight: bold;
   text-align: center;
   font-size: 14px;
@@ -484,22 +509,43 @@ const runAway = () => {
   width: 100px;
   height: 100px;
   object-fit: contain;
+  display: block;
+  margin: auto;
+  background-color: white; /* 讓透明圖片也有底色可見 */
+  border-radius: 10px;
 }
 
 .ironbox-info {
   margin-top: 8px;
   text-align: center;
+  position: relative;
+}
+
+.desc-tooltip {
+  position: absolute;
+  background: rgba(57, 57, 57, 0.85);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #a27bff80;
+  white-space: pre-wrap;
+  font-size: 13px;
+  max-width: 200px;
+  z-index: 1000;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  transform: translate(-50%, -100%);
+}
+
+/* 滑鼠移入 ingredient 卡片時顯示說明 */
+.ingredient-ironbox:hover .desc-tooltip {
+  opacity: 1;
 }
 
 .ironbox-info h4 {
   font-size: 16px;
   font-weight: bold;
-  color: #a27bff;
-}
-
-.ironbox-info p {
-  font-size: 12px;
-  color: #444;
+  color: #fff;
 }
 
 /* 卡片漂浮動畫 */
