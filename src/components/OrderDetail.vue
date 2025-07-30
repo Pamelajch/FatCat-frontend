@@ -39,8 +39,12 @@ const matchedCoupon = computed(() =>
 // 計算折扣金額（totalAmount - payableAmount）
 const discountAmount = computed(() => {
   if (!order.value) return 0
-  return (order.value.totalAmount || 0) - (order.value.payableAmount || 0)
-}) 
+  const totalAmount = order.value.totalAmount || 0
+  const shippingFee = matchedShipping.value?.shippingFee || 0
+  const payableAmount = order.value.payableAmount || 0
+  // 折扣 = 總金額 + 運費 - 實付金額
+  return totalAmount + shippingFee - payableAmount
+})
 
 // 彙整顯示的商品資訊（合併 product、image、cart）
 const detailedItems = computed(() => {
@@ -153,7 +157,7 @@ onMounted(async () => {
           訂單總金額：{{ order?.totalAmount ?? '—' }} 元
           <div>
             運費：{{ matchedShipping?.shippingFee ?? '—' }} 元<br />
-            折扣金額：{{ discountAmount }} 元
+            折扣金額：-{{ discountAmount }} 元
             <hr />
             實付金額：<strong>{{ order?.payableAmount ?? '—' }} 元</strong>
           </div>
