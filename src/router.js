@@ -21,7 +21,6 @@ import ForgotPasswordView from "./views/ForgotPasswordView.vue"
 import SpecialNoodleView from "./views/SpecialNoodleView.vue"
 import OneSpecialNoodleView from "./views/OneSpecialNoodleView.vue"
 import AdminChat from "./views/Admin/AdminChat.vue"
-import JjtestView from "./views/jjtestView.vue"
 import CouponAddView from '@/views/Admin/CouponAddView.vue'
 import CouponDetailView from '@/views/Admin/CouponDetailView.vue'
 import OrderDetailView from "./views/Admin/OrderDetailView.vue"
@@ -125,9 +124,6 @@ const routes = [
             title: 'LINE 登入處理中...'
         }
     },
-    //通知 --佳馨
-    //http://localhost:5173/jjtest
-    { path: "/jjtest", component: JjtestView, name: "jjtest" },
     //===================================================================
     // --- rr 管理者後台路由區塊 ---//http://localhost:5180/admin/login
     //===================================================================

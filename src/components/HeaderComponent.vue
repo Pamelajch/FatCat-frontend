@@ -283,8 +283,7 @@
       </div>
 
       <!-- 右側按鈕群組 -->
-      <div class="d-flex align-items-center gap-3 gap-lg-4">
-        <RouterLink :to="{name:'jjtest'}" class="icon-btn" title="UserId"><i>UserId查資料表</i></RouterLink>        
+      <div class="d-flex align-items-center gap-3 gap-lg-4">      
         <RouterLink :to="{name:'home'}" class="icon-btn" title="首頁"><i class="bi bi-house-door"></i></RouterLink>
         <RouterLink :to="{name:'drink'}" class="icon-btn" title="飲料"><i class="fa-solid fa-martini-glass"></i></RouterLink>
         <RouterLink :to="{name:'productlist'}" class="icon-btn" title="商品"><i class="fa-solid fa-bowl-food"></i></RouterLink>
@@ -358,6 +357,11 @@
   background-color: #c286cf; /* 紫色背景 */
   color: white;
   box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
 
 /* Logo 大小 */

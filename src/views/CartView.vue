@@ -1,12 +1,67 @@
 <script setup>
 import { useCartStore } from '@/stores/cart'
+import { useAuthStore } from '@/stores/auth'
 import CartItemList from '@/components/CartItemList.vue'
 import CouponSection from '@/components/CouponSection.vue'
+import LoginForm from '@/components/LoginForm.vue'
+import { ref } from 'vue'
 import GueseeULikeSection from '@/components/GueseeULikeSection.vue'
 import { useRouter } from 'vue-router'
 import api from '@/services/jjapi.js'
 
 const cartStore = useCartStore()
+
+// 添加登入路由守衛 by jj
+const authStore = useAuthStore()
+
+// 登入模態框狀態
+const showLoginModal = ref(false)
+
+const products = ref([
+  {
+    id: 101,
+    name: '社畜最愛宵夜麵',
+    imageUrl: '/fakenoodle.jpg',
+    tag: '強檔'
+  },
+  {
+    id: 102,
+    name: '小女友泡麵套餐',
+    imageUrl: '/fakenoodle.jpg',
+    tag: '推薦'
+  },
+  {
+    id: 103,
+    name: '16塊腹肌指定口味',
+    imageUrl: '/fakenoodle.jpg',
+    tag: '人氣'
+  }
+])
+
+// 處理結帳按鈕點擊
+function handleCheckoutClick() {
+  // 檢查用戶是否已登入
+  if (!authStore.isAuthenticated) {
+    // 未登入，顯示登入模態框
+    showLoginModal.value = true
+    return
+  }
+  
+  // 已登入，導向結帳頁面
+  window.location.href = '/checkout'
+}
+
+// 處理登入成功
+function handleLoginSuccess() {
+  // 登入成功後，關閉登入模態框並導向結帳頁面
+  showLoginModal.value = false
+  window.location.href = '/checkout'
+}
+
+// 關閉登入模態框
+function closeLoginModal() {
+  showLoginModal.value = false
+}
 const router = useRouter()
 
 // 點擊「前往結帳」：將購物車資料批次送至後端，並取得 itemId 列表存入 Pinia，再跳轉結帳頁
@@ -83,16 +138,36 @@ async function proceedToCheckout() {
             <router-link to="/">
               <button type="button" class="btn custom-purple-outline-btn">繼續購物</button>
             </router-link>
-            <button type="button" class="btn custom-purple-btn" @click="proceedToCheckout">
-              前往結帳
-            </button>
+            <button type="button" class="btn custom-purple-btn" @click="handleCheckoutClick">前往結帳</button>
           </div>
         </div>
       </div>
     </div>
   </div>
-</template>
 
+  <!-- 登入模態框 -->
+  <div v-if="showLoginModal" class="login-modal-overlay" @click="closeLoginModal">
+    <div class="login-modal-content" @click.stop>
+      <!-- 關閉按鈕 -->
+      <button type="button" class="btn-close modal-close-btn" @click="closeLoginModal" aria-label="Close">
+        <i class="bi bi-x-lg"></i>
+      </button>
+
+      <!-- 模態框標題 -->
+      <div class="modal-header">
+        <h4 class="modal-title">請先登入</h4>
+        <p class="modal-subtitle">登入後即可繼續結帳流程</p>
+      </div>
+
+      <!-- 直接使用現有的 LoginForm 組件 -->
+      <LoginForm 
+        :is-modal="true" 
+        :redirect-path="'/checkout'"
+        @login-success="handleLoginSuccess" 
+      />
+    </div>
+  </div>
+</template>
 <style scoped lang="css">
 .custom-purple-btn {
   background-color: #92559c;
@@ -165,6 +240,96 @@ async function proceedToCheckout() {
 }
 
 .product-section {
-  flex: 1;
+  margin-bottom: 2rem;
+}
+
+/* 模態框樣式 */
+.login-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(5px);
+}
+
+.login-modal-content {
+  background: white;
+  border-radius: 15px;
+  padding: 2rem;
+  max-width: 450px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #666;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.modal-close-btn:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.modal-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-top: 1rem;
+}
+
+.modal-title {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.modal-subtitle {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* 響應式調整 */
+@media (max-width: 576px) {
+  .login-modal-content {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .modal-title {
+    font-size: 1.25rem;
+  }
 }
 </style>

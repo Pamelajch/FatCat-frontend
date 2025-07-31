@@ -64,12 +64,17 @@ const isAdminPage = computed(() => {
 
     <!--內容畫面 -->
     <div v-else>
+      <!-- header -->
       <HeaderComponent v-if="!shouldhideHeaderFooter" />
-      <main>
+      <main :class="['main-content', { 'with-header': !shouldhideHeaderFooter}]">
+        <!-- 各種 component -->
         <RouterView />
+        <!-- 右下角貓貓客服 -->
         <CustomerService v-if="!isAdminPage" />
+        <!-- 直播logo -->
         <StreamLogo v-if="!isAdminPage" />
       </main>
+      <!-- Footer -->
       <FooterComponent v-if="!shouldhideHeaderFooter" />
     </div>
   </div>
@@ -91,5 +96,28 @@ const isAdminPage = computed(() => {
 
 .loading-img {
   width: 700px; /* 調整gif大小 */
+}
+
+/* 預設沒有間距 */
+.main-content{
+  padding-top: 0;
+}
+/* 為主要內容區域添加頂部間距,避免被固定的header擋住 */
+.main-content.with-header{
+  padding-top: 66px;
+}
+
+/* 響應式調整 */
+/* 中等螢幕 */
+@media(max-width:768px){
+  .main-content.with-header{
+    padding-top: 65px;
+  }
+}
+/* 超小螢幕 */
+@media(max-width:576px){
+  .main-content.with-header{
+    padding-top: 65px;
+  }
 }
 </style>

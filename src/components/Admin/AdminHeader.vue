@@ -1,10 +1,12 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed, inject } from 'vue';
+import { ref, onMounted, onUnmounted, computed, inject, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAdminAuthStore } from '@/stores/adminauth';
+import { useNotificationStore } from '@/stores/notification';
 
 const router = useRouter();
 const adminAuthStore = useAdminAuthStore();
+const notificationStore = useNotificationStore();
 const currentTime = ref('');
 let timer = null;
 const isDropdownOpen = ref(false);
@@ -13,6 +15,9 @@ const adminInfo = ref(null);
 // 注入側邊欄切換函數和狀態
 const toggleSidebar = inject('toggleSidebar');
 const isSidebarCollapsed = inject('isSidebarCollapsed', ref(false));
+
+// 使用 store 的未讀通知數量
+const unreadCount = computed(() => notificationStore.unreadCount);
 
 const welcomeMessage = computed(() => {
   if (adminInfo.value && adminInfo.value.name) {
@@ -42,6 +47,26 @@ const updateTime = () => {
   }).replace(/\//g, '-');
 };
 
+// 取得未讀通知數量
+async function fetchUnreadCount(){
+  const admin = localStorage.getItem('adminUser');
+  const adminId = admin? JSON.parse(admin).adminId:null;
+  if(!adminId){
+    console.log('無法從localstorage 取得 adminId，未讀通知數量設為 0')
+    return
+  }
+  if(!adminAuthStore.isAuthenticated){
+    console.log('未登入，未讀通知數量設為 0');
+    return;
+  }
+  await notificationStore.fetchAdminNotifications(adminId);
+}
+
+// 點擊通知按鈕跳轉到通知頁面
+function goToNotification(){
+  router.push({ name: 'AdminNotifications'})
+}
+
 onMounted(() => {
   const storedAdmin = localStorage.getItem('adminUser');
   if (storedAdmin) {
@@ -49,10 +74,22 @@ onMounted(() => {
   }
   updateTime();
   timer = setInterval(updateTime, 1000);
+
+  // 取得未讀通知數量
+  fetchUnreadCount();
 });
 
 onUnmounted(() => {
   clearInterval(timer);
+});
+
+// 如果有登入狀態變化, 重新取得未讀數量
+watch(()=> adminAuthStore.isAuthenticated, (newVal)=>{
+  if(newVal){
+    fetchUnreadCount();
+  }else{
+    notificationStore.clearNotifications();
+  }
 });
 </script>
 
@@ -73,7 +110,16 @@ onUnmounted(() => {
       <span class="date-time">{{ currentTime }}</span>
       <div class="divider"></div>
       <div class="icon-group">
-        <i class="bi bi-bell-fill"></i>
+        <!-- 通知按鈕 -->
+         <button type="button" class="btn btn-primary position-relative notification-btn" @click="goToNotification" title="通知">
+          <i class="bi bi-bell-fill"></i>
+          <span v-if="unreadCount > 0 " 
+            class="position-absolute top-0 start-100 badge rounded-pill bg-danger"
+            style="transform: translate(-50%,2%);">
+            {{ unreadCount > 99 ? '99+': unreadCount }}
+            <span class="visually-hidden">unread message</span>
+          </span>
+         </button>
         
         <div class="profile-section">
           <i class="bi bi-person-circle" @click="toggleDropdown"></i>
@@ -146,7 +192,25 @@ onUnmounted(() => {
   cursor: pointer;
   color: #ffffff;
 }
+/* 通知按鈕樣式 */
+.notification-btn {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 1.2rem;
+  transition: color 0.3s ease;
+  padding: 0.5rem;
+}
 
+.notification-btn:hover {
+  color: #ffe0f0;
+  background: none;
+  border: none;
+}
+
+.notification-btn:focus {
+  box-shadow: none;
+}
 /* --- 下拉選單樣式 --- */
 .profile-section {
   position: relative;

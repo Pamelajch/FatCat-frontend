@@ -10,6 +10,21 @@
     const router = useRouter()
     const authStore = useAuthStore()
 
+    // 定義 props 來支援不同使用場景
+    const props = defineProps({
+      isModal: {
+        type: Boolean,
+        default: false
+      },
+      redirectPath: {
+        type: String,
+        default: '/'
+      }
+    })
+
+    // 定義 emits 
+    const emit = defineEmits(['login-success'])
+
     // 表單數據
     const loginForm = ref({
     email: '',
@@ -92,9 +107,16 @@
           console.log('登入結果:', result)
 
           if (result.success) {
-          // 登入成功，跳轉到首頁
-          console.log('登入成功，準備跳轉')
-          router.push('/')
+          // 登入成功，根據使用場景決定行為
+          console.log('登入成功')
+          
+          if (props.isModal) {
+            // 在模態框中使用，發送事件給父組件
+            emit('login-success')
+          } else {
+            // 在獨立頁面中使用，直接跳轉
+            router.push(props.redirectPath)
+          }
           } else {
           // 登入失敗，顯示錯誤訊息
           console.log('登入失敗，顯示錯誤訊息:', result.message)
@@ -153,8 +175,12 @@
         
         alert(welcomeMessage)
         
-        // 跳轉到首頁
-        router.push('/')
+        // 根據使用場景決定行為
+        if (props.isModal) {
+          emit('login-success')
+        } else {
+          router.push(props.redirectPath)
+        }
       } else if (result.needsManualBinding) {
         // Email 已被其他帳號使用，需要手動綁定
         const confirmed = confirm(
@@ -255,8 +281,12 @@
               
               alert(welcomeMessage)
               
-              // 跳轉到首頁
-              router.push('/')
+              // 根據使用場景決定行為
+              if (props.isModal) {
+                emit('login-success')
+              } else {
+                router.push(props.redirectPath)
+              }
             } else if (result.needsManualBinding) {
               // Email 已被其他帳號使用，需要手動綁定
               const confirmed = confirm(
@@ -341,11 +371,16 @@
           
           // 顯示歡迎訊息並導向首頁
           alert('🎉 歡迎加入 Fat Cat 購物商城！\nLINE 帳號註冊並登入成功')
-          router.push('/')
         } else {
           // 現有用戶登入成功
           console.log('LINE 現有用戶登入成功')
-          router.push('/')
+        }
+        
+        // 根據使用場景決定行為
+        if (props.isModal) {
+          emit('login-success')
+        } else {
+          router.push(props.redirectPath)
         }
       } else if (result.needsManualBinding) {
         // 需要手動綁定的情況
@@ -391,7 +426,16 @@
         <span class="input-group-text custom-input-group-text">
           <i class="bi bi-envelope"></i>
         </span>
-        <input id="email" v-model="loginForm.email" type="text" class="form-control custom-form-control" :class="{ 'is-invalid': emailError }" placeholder="請輸入您的電子郵件" :disabled="isLoading" @input="emailError = ''; errorMessage = ''">
+        <input 
+          id="email" 
+          v-model="loginForm.email" 
+          type="text" 
+          class="form-control custom-form-control" 
+          :class="{ 'is-invalid': emailError }" 
+          placeholder="請輸入您的電子郵件" 
+          :disabled="isLoading" 
+          @input="emailError = ''; errorMessage = ''"
+        >
       </div>
       <div v-if="emailError" class="email-error-message">
         {{ emailError }}
@@ -405,7 +449,17 @@
         <span class="input-group-text custom-input-group-text">
           <i class="bi bi-lock"></i>
         </span>
-        <input id="password" v-model="loginForm.password" :type="showPassword ? 'text' : 'password'" class="form-control custom-form-control" :class="{ 'is-invalid': passwordError }" placeholder="請輸入您的密碼" :disabled="isLoading" @input="passwordError = ''; errorMessage = ''" @keyup.enter="handleLogin">
+        <input 
+          id="password" 
+          v-model="loginForm.password" 
+          :type="showPassword ? 'text' : 'password'" 
+          class="form-control custom-form-control" 
+          :class="{ 'is-invalid': passwordError }" 
+          placeholder="請輸入您的密碼" 
+          :disabled="isLoading" 
+          @input="passwordError = ''; errorMessage = ''" 
+          @keyup.enter="handleLogin"
+        >
         <!-- 密碼顯示切換 -->
         <button type="button" class="btn custom-password-toggle" @click="togglePassword" :disabled="isLoading">
           <i :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
