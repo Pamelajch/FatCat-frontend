@@ -9,6 +9,9 @@ import { computed } from 'vue'
 const route = useRoute()
 const orderId = route.params.id
 
+const shippings = ref([])
+const shippingFee = ref(null)
+
 // 訂單詳細資料
 const order = ref(null)
 // 訂單明細列表 (API: OrderDetails，需要另外寫service)
@@ -55,6 +58,14 @@ const fetchData = async () => {
     // 取得優惠券描述
     await fetchCouponDescription(order.value.couponId)
 
+    // 取得運費列表
+    const shippingsRes = await axios.get('https://localhost:7017/api/Shippings')
+    shippings.value = shippingsRes.data
+
+    // 找出訂單的運費（用 order.shippingId）
+    const shippingInfo = shippings.value.find(s => s.shippingId === order.value.shippingId)
+    shippingFee.value = shippingInfo ? shippingInfo.shippingFee : null
+
     // 狀態資料
     const [orderStatusRes, shippingStatusRes] = await Promise.all([
       getOrderStatuses(),
@@ -93,6 +104,17 @@ const updateStatus = async () => {
 }
 
 onMounted(fetchData)
+
+const formatCurrency = (num) => {
+  if (typeof num !== 'number') return '-'
+  return num.toLocaleString('zh-TW', { style: 'currency', currency: 'TWD' , minimumFractionDigits: 0, maximumFractionDigits: 0})
+}
+
+const discountAmount = computed(() => {
+  if (orderTotal.value == null || shippingFee.value == null || order.value == null) return 0
+  return orderTotal.value + shippingFee.value - order.value.payableAmount
+})
+
 </script>
 
 <template>
@@ -103,7 +125,7 @@ onMounted(fetchData)
       <h4>訂單基本資料</h4>
       <p>會員ID: {{ order.userId }}</p>
       <p>訂單日期: {{ new Date(order.orderdate).toLocaleString() }}</p>
-      <p>總金額: {{ order.payableAmount }}</p>
+      <p>訂單金額: ${{ order.payableAmount }}</p>
 
       <div class="mb-3">
         <label>訂單狀態</label>
@@ -158,8 +180,10 @@ onMounted(fetchData)
 </table>
 
 <!-- 顯示實際訂單記錄的總金額 -->
+<p>運費：{{ shippingFee !== null ? formatCurrency(shippingFee) : '無資料' }}</p>
 <p>使用優惠券：{{ couponDescription }}</p>
-<p>實付金額：{{ order.payableAmount }}</p>
+<p>折扣金額：{{ formatCurrency(discountAmount) }}</p>
+<p>實付金額：${{ order.payableAmount }}</p>
 
     </div>
 
