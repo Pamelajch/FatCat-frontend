@@ -4,7 +4,7 @@
     import { computed } from 'vue'
     import { useCartStore } from '@/stores/cart'
     import CartOffcanvas from '@/components/CartOffcanvas.vue'
-    // import * as bootstrap from 'bootstrap'  
+    import * as bootstrap from 'bootstrap'
     import Swal from 'sweetalert2'
     import {ref,onMounted, watch} from 'vue'
     import api from '@/services/jjapi'

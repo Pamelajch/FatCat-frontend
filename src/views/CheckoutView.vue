@@ -57,7 +57,7 @@ async function handleCheckout() {
     const orderPayload = {
       userId: authStore.user.userId,
       orderdate: new Date().toISOString(),
-      location: checkoutStore.address || checkoutStore.storeName || '未填寫地址',
+      location: checkoutStore.recipientAddress || '未填寫地址',
       couponId: checkoutStore.couponId || null,
       totalAmount: cartStore.total,
       payableAmount: checkoutStore.total,

@@ -1,11 +1,46 @@
 <script setup>
 import { useCartStore } from '@/stores/cart'
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, watch, computed } from 'vue'
 import * as bootstrap from 'bootstrap'
 
 const cartStore = useCartStore()
 
+// 計算屬性：確保響應式更新
+const cartItems = computed(() => cartStore.items)
+const cartTotal = computed(() => cartStore.total)
+
 let offcanvasInstance = null
+
+// 監聽購物車變化，當有新商品加入時立即載入圖片
+watch(
+  () => cartStore.items.length,
+  async (newLength, oldLength) => {
+    // 當商品數量增加時，為新加入的商品載入圖片
+    if (newLength > oldLength) {
+      console.log('檢測到新商品加入購物車，開始載入圖片...')
+      await cartStore.loadImagesForCartItems()
+    }
+  },
+  { immediate: false }
+)
+
+// 監聽個別商品變化，確保圖片正確載入
+watch(
+  () => cartStore.items.map(item => ({ id: item.id, image: item.image })),
+  async (newItems, oldItems) => {
+    // 檢查是否有商品圖片需要更新
+    const needsImageUpdate = newItems.some((newItem, index) => {
+      const oldItem = oldItems?.[index]
+      return newItem && (!newItem.image || newItem.image === '/ProductImages/default.jpg')
+    })
+    
+    if (needsImageUpdate) {
+      console.log('檢測到商品圖片需要更新...')
+      await cartStore.loadImagesForCartItems()
+    }
+  },
+  { deep: true }
+)
 
 // 這段可選，確保 offcanvas 正確初始化（只初始化一次）
 onMounted(() => {
@@ -14,8 +49,7 @@ onMounted(() => {
     offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(el)
   }
 
-  
-  // ✅ 載入購物車商品圖片
+  // ✅ 初始載入購物車商品圖片
   cartStore.loadImagesForCartItems()
 })
 
@@ -70,11 +104,11 @@ function debounce(fn, delay = 300) {
     </div>
 
     <div class="offcanvas-body">
-      <template v-if="cartStore.items.length">
+      <template v-if="cartItems.length">
         <div class="list-group mb-3">
           <div
             class="list-group-item d-flex align-items-center gap-3"
-            v-for="item in cartStore.items"
+            v-for="item in cartItems"
             :key="item.id"
           >
             <img
@@ -107,7 +141,7 @@ function debounce(fn, delay = 300) {
         </div>
 
         <div class="fw-bold text-end mb-3">
-          總金額：<span class="text-danger">${{ cartStore.total }}</span>
+          總金額：<span class="text-danger">${{ cartTotal }}</span>
         </div>
 
         <router-link to="/cart" class="btn custom-purple-btn w-100" @click="closeOffcanvas">立刻結帳</router-link>

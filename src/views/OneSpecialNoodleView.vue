@@ -2,14 +2,18 @@
 import { ref, onMounted, onBeforeUnmount,watch } from 'vue' // 加入watch by JJ
 import { useRoute } from 'vue-router'
 import ProductReview from '@/components/ProductReview.vue'
+import CartOffcanvas from '@/components/CartOffcanvas.vue'
 import api from '@/services/jjapi.js'; // 【rr：引入 api 實例】
 import { useAuthStore } from '@/stores/auth'; // 【rr：引入 Pinia Auth Store】
+import { useCartStore } from '@/stores/cart'; // 【引入購物車 Store】
 import Swal from 'sweetalert2'; // 【rr：引入 SweetAlert2】
 import 'sweetalert2/dist/sweetalert2.min.css'; // 【rr：引入 SweetAlert2 的樣式】
+import * as bootstrap from 'bootstrap';
 
 const route = useRoute()
 const productId = route.query.id
 const authStore = useAuthStore(); // by rr
+const cartStore = useCartStore(); // 購物車 Store
 
 // ====== 通知流程 ======
 // ====== 通知流程：卡牌版 ======
@@ -97,6 +101,97 @@ const addToFavorites = async () => {
   }
 };
 // 【rr：加入收藏 結束】
+
+// 【加入購物車的函式】
+const addToCart = async () => {
+  // 檢查商品資料是否存在
+  if (!productDetail.value) {
+    Swal.fire({
+      icon: 'error',
+      title: '操作失敗',
+      text: '商品資料載入中，請稍後再試。',
+    });
+    return;
+  }
+
+  // 檢查數量是否有效
+  if (!quantity.value || quantity.value < 1) {
+    Swal.fire({
+      icon: 'warning',
+      title: '請選擇數量',
+      text: '請選擇要加入購物車的商品數量。',
+    });
+    return;
+  }
+
+  // 檢查庫存
+  if (quantity.value > productDetail.value.stock) {
+    Swal.fire({
+      icon: 'warning',
+      title: '庫存不足',
+      text: `目前庫存只有 ${productDetail.value.stock} 個，無法加入 ${quantity.value} 個商品。`,
+    });
+    return;
+  }
+
+  try {
+    // 顯示載入中
+    Swal.fire({
+      title: '加入購物車中...',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    // 準備商品資料
+    const productToAdd = {
+      id: productDetail.value.productsId,
+      productsId: productDetail.value.productsId,
+      name: productDetail.value.name,
+      price: productDetail.value.price,
+      image: productDetail.value.imageUrl || images.value[0] || '/ProductImages/default.jpg'
+    };
+
+    console.log('準備加入購物車的商品資料:', productToAdd);
+
+    // 根據選擇的數量加入購物車
+    for (let i = 0; i < quantity.value; i++) {
+      await cartStore.addItem(productToAdd);
+    }
+
+    Swal.fire({
+      icon: 'success',
+      title: '加入成功！',
+      text: `已將 ${quantity.value} 個「${productDetail.value.name}」加入購物車`,
+      timer: 1500,
+      showConfirmButton: false
+    });
+
+    // 重置數量為 1
+    quantity.value = 1;
+
+    // 自動打開購物車側邊欄
+    setTimeout(() => {
+      const cartOffcanvas = document.getElementById('offcanvasExample');
+      if (cartOffcanvas) {
+        const offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(cartOffcanvas);
+        offcanvasInstance.show();
+      }
+    }, 1600); // 等待成功提示消失後打開購物車
+
+  } catch (err) {
+    console.error('加入購物車失敗:', err);
+    Swal.fire({
+      icon: 'error',
+      title: '加入失敗',
+      text: '加入購物車時發生錯誤，請稍後再試。',
+    });
+  }
+};
+// 【加入購物車 結束】
 
 
 onMounted(() => {
@@ -269,13 +364,13 @@ watch(() => route.query.id, async () => {
           <input id="qty" type="number" v-model="quantity" min="1" />
         </div>
         <div class="button-group">
-          <button class="cart-btn">加入購物車</button> <!-- !!!!!!!給仔瑋的!!!!!!! -->
+          <button class="cart-btn" @click="addToCart">加入購物車</button>
           <button 
             v-if="authStore.isAuthenticated" 
             class="favorite-btn" 
             @click="addToFavorites">
             加入最愛
-          </button> <!-- !!!!!!!給r謙的!!!!!!!  RRR已完成-->
+          </button>
         </div>
       </div>
     </div>
@@ -311,6 +406,9 @@ watch(() => route.query.id, async () => {
       </div>
     </div>
   </div>
+
+  <!-- 購物車側邊欄 -->
+  <CartOffcanvas />
 </template>
 
 <style lang="css" scoped>

@@ -94,7 +94,7 @@ watch(selectedAddressId, (id) => {
     } else {
       // 宅配 addr.addressType != 1
       checkout.recipientAddress = (addr.city || '') + (addr.district || '') + (addr.addressDetail || '') // 宅配地址(城市+區域+詳細地址)
-      checkout.storeName = '' // 超商名稱為空
+      checkout.storeName = '' // 超商名稱為空 
     }
   }
 })
