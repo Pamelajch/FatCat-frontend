@@ -139,7 +139,8 @@ onMounted(fetchData)
 </table>
 
 <!-- 顯示實際訂單記錄的總金額 -->
-<p>訂單紀錄總金額（payableAmount）：{{ order.payableAmount }}</p>
+<p>訂單總金額（payableAmount）：{{ order.payableAmount }}</p>
+<p>訂單總金額：{{ order.payableAmount }}</p>
 
     </div>
 

@@ -16,15 +16,16 @@ const loading = ref(false)
 const error = ref(null)
 const showReviewForm = ref(false)
 const selectedItem = ref(null)
-
+const isOrderCompleted = ref(false)  // ✅頂層定義，template 才能使用
 const fetchOrderData = async () => {
+  console.log('✅ 訂單是否完成:', isOrderCompleted.value)
   try {
     loading.value = true
 
     // 取得訂單狀態
     const orderRes = await axios.get(`/api/Orders/${props.orderId}`)
-    const statusName = orderRes.data.orderStatus?.name
-    props.isCompleted = orderRes.data.orderStatusId === 3 || statusName === '已完成（收貨成功）'
+    const statusName = orderRes.data.orderStatus?.description
+    isOrderCompleted.value = orderRes.data.orderStatusId === 3 || statusName === '已完成（收貨成功）'
 
     // 同時取得相關資料
     const [orderDetailsRes, cartRes, productRes, imageRes] = await Promise.all([
@@ -128,7 +129,7 @@ const total = computed(() =>
           <div class="text-muted">小計：${{ item.subtotal }}</div>
         </div>
 
-        <template v-if="isCompleted">
+        <template v-if="isOrderCompleted">
           <button v-if="item.hasBeenReviewed" class="btn btn-secondary btn-sm" disabled>
             已評價
           </button>

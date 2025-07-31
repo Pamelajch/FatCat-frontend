@@ -25,6 +25,8 @@ const shippingOptions = ref([])
 const cartItems = ref([])
 const products = ref([])
 const productImages = ref([])
+const orderStatuses = ref([])
+const shippingStatuses = ref([])
 
 const matchedShipping = computed(() =>
   shippingOptions.value.find(s => s.shippingId === order.value?.shippingId)
@@ -34,7 +36,13 @@ const matchedCoupon = computed(() =>
   couponOptions.value.find(c => c.couponId === order.value?.couponId)
 )
 
+ const matchedOrderStatus = computed(() =>
+  orderStatuses.value.find(s => s.orderStatusId === order.value?.orderStatusId)
+)
 
+const matchedShippingStatus = computed(() =>
+  shippingStatuses.value.find(s => s.shippingStatusId === order.value?.shippingStatusId)
+)
 
 // 計算折扣金額（totalAmount - payableAmount）
 const discountAmount = computed(() => {
@@ -73,21 +81,27 @@ const selectedShipping = computed(() =>
   shippingOptions.value.find(s => s.shippingId === checkout.shippingId)
 )
 
+
+
 onMounted(async () => {
   try {
-    const [couponRes, shippingRes, productRes, imageRes, ordersRes] = await Promise.all([
+    const [couponRes, shippingRes, productRes, imageRes, ordersRes,orderStatusRes,
+  shippingStatusRes] = await Promise.all([
       axios.get('https://localhost:7017/api/Coupons'),
       axios.get('https://localhost:7017/api/Shippings'),
       axios.get('https://localhost:7017/api/Products'),
       axios.get('https://localhost:7017/api/ProductImages'),
       axios.get('https://localhost:7017/api/Orders'),
+      axios.get('https://localhost:7017/api/OrderStatus'),      // ✅ 新增
+      axios.get('https://localhost:7017/api/ShippingStatus')    // ✅ 新增
     ])
 
     couponOptions.value = couponRes.data
     shippingOptions.value = shippingRes.data
     products.value = productRes.data
     productImages.value = imageRes.data
-
+    orderStatuses.value = orderStatusRes.data
+    shippingStatuses.value = shippingStatusRes.data
     // 找出該筆訂單資料
     order.value = ordersRes.data.find(o => o.orderId === currentOrderId)
 
@@ -100,6 +114,7 @@ onMounted(async () => {
     const cartRes = await axios.get(`https://localhost:7017/api/ShoppingCartItems?orderId=${order.value.orderId}`)
     cartItems.value = cartRes.data
 
+   
     // 取得該訂單的訂單明細
     const orderDetailsRes = await axios.get(
       `https://localhost:7017/api/OrderDetails?orderId=${order.value.orderId}`
@@ -130,6 +145,12 @@ onMounted(async () => {
     <div class="col-12 col-md-4 mb-3">
       <ul class="list-group">
         <li class="list-group-item"><h3>送貨資料</h3></li>
+        <li class="list-group-item">
+          訂單狀態：<div>{{ matchedOrderStatus?.description || '無資料' }}</div>
+        </li>
+        <li class="list-group-item">
+          物流狀態：<div>{{ matchedShippingStatus?.description || '無資料' }}</div>
+        </li>
         <li class="list-group-item">送貨方式：
           <div>{{ matchedShipping?.name || '未選擇' }}</div>
         </li>
