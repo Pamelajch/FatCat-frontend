@@ -197,7 +197,7 @@
     const cartItemCount = computed(() =>
       cartStore.items.reduce((sum, item) => sum + item.quantity, 0)
     )
-
+    const cartItemKindCount = computed(() => cartStore.items.length)
     // 通知功能區 end------------------------------------------
 </script>
 
@@ -290,12 +290,12 @@
         <button class="icon-btn position-relative" @click="openOffcanvas" title="購物車">
           <i class="fa fa-shopping-cart"></i>
           <span
-            v-if="cartItemCount > 0"
+            v-if="cartItemKindCount > 0"
             class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
             style="font-size: 0.75rem;"
           >
-            {{ cartItemCount > 99 ? '99+' : cartItemCount }}
-            <span class="visually-hidden">購物車內商品數量</span>
+            {{ cartItemKindCount > 99 ? '99+' : cartItemKindCount }}
+            <span class="visually-hidden">購物車內商品種類數量</span>
           </span>
         </button>
         <RouterLink :to="{name:'favorite'}" class="icon-btn" title="我的最愛"><i class="bi bi-heart-fill"></i></RouterLink>
