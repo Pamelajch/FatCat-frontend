@@ -42,6 +42,27 @@ const filteredOrders = computed(() =>
   userOrders.value.filter(order => order.orderStatusId === selectedStatus.value)
 )
 
+const currentPage = ref(1)
+const pageSize = 10
+
+// 分頁後的訂單資料
+const pagedOrders = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filteredOrders.value.slice(start, start + pageSize)
+})
+
+// 計算總頁數
+const totalPages = computed(() =>
+  Math.ceil(filteredOrders.value.length / pageSize)
+)
+
+// 換頁
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
+
 // 將狀態 ID 轉換成描述
 const getStatusText = (statusId) => {
   const status = statuses.value.find(s => s.orderStatusId === statusId)
@@ -127,7 +148,7 @@ onMounted(fetchData)
             </tr>
           </thead>
           <tbody>
-            <tr v-for="order in filteredOrders" :key="order.orderId">
+            <tr v-for="order in pagedOrders" :key="order.orderId">
               <td>{{ order.orderId }}</td>
               <td>{{ new Date(order.orderdate).toLocaleDateString() }}</td>
               <td>NT${{ order.payableAmount }}</td>
@@ -154,6 +175,26 @@ onMounted(fetchData)
             </tr>
           </tbody>
         </table>
+        <nav v-if="totalPages > 1" class="mt-3">
+    <ul class="pagination justify-content-center">
+      <li class="page-item" :class="{ disabled: currentPage === 1 }">
+        <a class="page-link" href="#" @click.prevent="goToPage(currentPage - 1)">上一頁</a>
+      </li>
+
+      <li
+        class="page-item"
+        v-for="page in totalPages"
+        :key="page"
+        :class="{ active: currentPage === page }"
+      >
+        <a class="page-link" href="#" @click.prevent="goToPage(page)">{{ page }}</a>
+      </li>
+
+      <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+        <a class="page-link" href="#" @click.prevent="goToPage(currentPage + 1)">下一頁</a>
+      </li>
+    </ul>
+  </nav>
       </div>
 
       <div v-else>

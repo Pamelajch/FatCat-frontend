@@ -2,83 +2,90 @@
 import { useCartStore } from '@/stores/cart'
 import CartItemList from '@/components/CartItemList.vue'
 import CouponSection from '@/components/CouponSection.vue'
-import { ref } from 'vue'
 import GueseeULikeSection from '@/components/GueseeULikeSection.vue'
+import { useRouter } from 'vue-router'
+import api from '@/services/jjapi.js'
 
 const cartStore = useCartStore()
+const router = useRouter()
 
-const products = ref([
-  {
-    id: 101,
-    name: '社畜最愛宵夜麵',
-    imageUrl: '/fakenoodle.jpg',
-    tag: '強檔'
-  },
-  {
-    id: 102,
-    name: '小女友泡麵套餐',
-    imageUrl: '/fakenoodle.jpg',
-    tag: '推薦'
-  },
-  {
-    id: 103,
-    name: '16塊腹肌指定口味',
-    imageUrl: '/fakenoodle.jpg',
-    tag: '人氣'
+// 點擊「前往結帳」：將購物車資料批次送至後端，並取得 itemId 列表存入 Pinia，再跳轉結帳頁
+async function proceedToCheckout() {
+  try {
+    const cartPayload = cartStore.items.map(i => ({
+      itemId: 0,            // 後端會自動產生
+      productsId: i.id,
+      quantity: i.quantity,
+      unitprice: i.price
+    }))
+    
+    const res = await api.post('/ShoppingCartItems/batch', cartPayload)
+
+    if (Array.isArray(res.data)) {
+      cartStore.setCartItemIds(res.data)
+      console.log('後端回傳購物車項目ID列表:', res.data)
+      router.push('/checkout')
+    } else {
+      alert('取得購物車項目ID失敗')
+    }
+  } catch (err) {
+    console.error('❌ 建立購物車資料失敗:', err)
+    alert('無法建立購物車資料，請稍後再試')
   }
-])
+}
 </script>
-
 
 <template>
   <div class="page-content-wrapper pt-5 pb-5">
     <div class="container mb-2">
       <h2>購物車確認</h2>
 
-      <!-- 購物車 Accordion -->
+      <!-- 購物車區塊 -->
       <div class="accordion col-lg-10 container mb-5" id="accordionPanelsStayOpenExample">
         <div class="accordion-item">
           <h2 class="accordion-header" id="panelsStayOpen-headingOne">
-            <button class="accordion-button" type="button" data-bs-toggle="collapse"
-              data-bs-target="#panelsStayOpen-collapseOne" aria-expanded="true"
-              aria-controls="panelsStayOpen-collapseOne">
+            <button
+              class="accordion-button"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#panelsStayOpen-collapseOne"
+              aria-expanded="true"
+              aria-controls="panelsStayOpen-collapseOne"
+            >
               <h3>購物車</h3>
             </button>
           </h2>
-          <div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse show"
-            aria-labelledby="panelsStayOpen-headingOne">
+          <div
+            id="panelsStayOpen-collapseOne"
+            class="accordion-collapse collapse show"
+            aria-labelledby="panelsStayOpen-headingOne"
+          >
             <div class="accordion-body">
-              <!-- 購物車內容開始 -->
               <CartItemList />
-              <!-- 購物車內容結束 -->
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 猜你喜歡與優惠 -->
+    <!-- 猜你喜歡 + 優惠券區塊 -->
     <div class="container">
       <div class="row">
-        <!-- 猜你喜歡區塊 -->
         <div class="col-12 col-md-6">
           <li class="list-group-item d-flex gap-2">
             <GueseeULikeSection />
           </li>
         </div>
 
-        <!-- 優惠區塊 + 按鈕 -->
         <div class="col-12 col-md-6 d-flex flex-column">
           <CouponSection />
-
-          <!-- 按鈕區塊，靠右排列 -->
           <div class="mt-3 d-flex justify-content-end gap-2">
             <router-link to="/">
               <button type="button" class="btn custom-purple-outline-btn">繼續購物</button>
             </router-link>
-            <router-link to="/checkout">
-              <button type="button" class="btn custom-purple-btn">前往結帳</button>
-            </router-link>
+            <button type="button" class="btn custom-purple-btn" @click="proceedToCheckout">
+              前往結帳
+            </button>
           </div>
         </div>
       </div>
@@ -86,16 +93,15 @@ const products = ref([
   </div>
 </template>
 
-
-<style lang="css" scoped>
+<style scoped lang="css">
 .custom-purple-btn {
   background-color: #92559c;
   border-color: #92559c;
   color: white;
+  transition: background-color 0.3s ease;
 }
-
 .custom-purple-btn:hover {
-  background-color: #7b4583; /* 可選的 hover 色 */
+  background-color: #7b4583;
   border-color: #7b4583;
 }
 
@@ -105,14 +111,14 @@ const products = ref([
   color: #92559c;
   transition: all 0.3s ease;
 }
-
 .custom-purple-outline-btn:hover {
   background-color: #92559c;
   color: white;
   border-color: #92559c;
 }
+
 .btn-space {
-  margin-right: 10px; /* 可以依需求微調距離 */
+  margin-right: 10px;
 }
 
 .product-card:hover {
@@ -123,7 +129,7 @@ const products = ref([
   width: 100%;
   height: 180px;
   object-fit: cover;
-  margin-top: 10px; /* 圖片上方間距 */
+  margin-top: 10px;
 }
 
 .product-info {
@@ -146,11 +152,13 @@ const products = ref([
   color: #4a2e6e;
   font-weight: bold;
 }
+
 .product-grid {
   display: flex;
   gap: 1rem;
-  justify-content: space-between; /* 或 center / flex-start */
+  justify-content: space-between;
 }
+
 .product-card {
   flex: 1 1 30%;
   max-width: 30%;

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
   getOrders, 
@@ -14,12 +14,14 @@ const shippings = ref([])
 const shippingStatuses = ref([])
 const router = useRouter()
 
-const selectedStatusId = ref(null) // 目前選中的訂單狀態分頁
+const selectedStatusId = ref(null)
+
+const currentPage = ref(1)
+const pageSize = 10
 
 const goToOrderDetail = (orderId) => {
   router.push(`/admin/orderdetail/${orderId}`)
 }
-
 
 const fetchAllData = async () => {
   try {
@@ -35,8 +37,8 @@ const fetchAllData = async () => {
     shippings.value = shippingRes.data
     shippingStatuses.value = shippingStatusRes.data
 
-    // 預設第一個訂單狀態分頁
-    if(statusRes.data.length > 0) {
+    // 預設第一個訂單狀態
+    if (statusRes.data.length > 0) {
       selectedStatusId.value = statusRes.data[0].orderStatusId
     }
   } catch (err) {
@@ -50,6 +52,29 @@ const filteredOrders = computed(() => {
   return orders.value.filter(o => o.orderStatusId === selectedStatusId.value)
 })
 
+// 分頁後的訂單
+const pagedOrders = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filteredOrders.value.slice(start, start + pageSize)
+})
+
+// 總頁數
+const totalPages = computed(() =>
+  Math.ceil(filteredOrders.value.length / pageSize)
+)
+
+// 換頁
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
+
+// 切換狀態時，重設分頁
+watch(selectedStatusId, () => {
+  currentPage.value = 1
+})
+
 const getOrderStatusDesc = (id) =>
   orderStatuses.value.find(item => item.orderStatusId === id)?.description || '未知'
 
@@ -60,13 +85,14 @@ const getShippingStatusDesc = (id) =>
   shippingStatuses.value.find(item => item.shippingStatusId === id)?.description || '未知'
 
 onMounted(fetchAllData)
+
 </script>
 
 <template>
   <div class="container">
     <h2>訂單管理</h2>
 
-    <!-- 頁籤區塊 -->
+    <!-- 分類頁籤 -->
     <ul class="nav nav-tabs mb-3">
       <li class="nav-item" v-for="status in orderStatuses" :key="status.orderStatusId">
         <a 
@@ -80,6 +106,7 @@ onMounted(fetchAllData)
       </li>
     </ul>
 
+    <!-- 表格 -->
     <table class="table table-bordered">
       <thead>
         <tr>
@@ -94,7 +121,7 @@ onMounted(fetchAllData)
         </tr>
       </thead>
       <tbody>
-        <tr v-for="order in filteredOrders" :key="order.orderId">
+        <tr v-for="order in pagedOrders" :key="order.orderId">
           <td>{{ order.orderId }}</td>
           <td>{{ order.userId }}</td>
           <td>{{ new Date(order.orderdate).toLocaleString() }}</td>
@@ -111,5 +138,27 @@ onMounted(fetchAllData)
         </tr>
       </tbody>
     </table>
+
+    <!-- 分頁區塊 -->
+    <nav v-if="totalPages > 1" class="mt-3">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+          <a class="page-link" href="#" @click.prevent="goToPage(currentPage - 1)">上一頁</a>
+        </li>
+
+        <li 
+          class="page-item" 
+          v-for="page in totalPages" 
+          :key="page" 
+          :class="{ active: currentPage === page }"
+        >
+          <a class="page-link" href="#" @click.prevent="goToPage(page)">{{ page }}</a>
+        </li>
+
+        <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+          <a class="page-link" href="#" @click.prevent="goToPage(currentPage + 1)">下一頁</a>
+        </li>
+      </ul>
+    </nav>
   </div>
 </template>

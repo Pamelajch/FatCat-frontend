@@ -1,125 +1,110 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
-import Swal from 'sweetalert2'; // by rr
-import 'sweetalert2/dist/sweetalert2.min.css'; // by rr
-import PostReviewForm from '@/components/PostReviewForm.vue' // by rr
-import api from '@/services/jjapi.js'; //by rr
+import { useCartStore } from '@/stores/cart'
+import PostReviewForm from './PostReviewForm.vue'
 
-// ✅ 傳入 props：orderId 和 orderStatusId
 const props = defineProps({
-  orderId: {
-    type: Number,
-    required: true
-  },
-  orderStatusId: {
-    type: Number,
-    required: true
+  items: Array,
+  isCompleted: Boolean,
+  orderId: Number
+})
+
+const cartStore = useCartStore()
+const showItems = ref([])
+const loading = ref(false)
+const error = ref(null)
+const showReviewForm = ref(false)
+const selectedItem = ref(null)
+const isOrderCompleted = ref(false)  // ✅頂層定義，template 才能使用
+const fetchOrderData = async () => {
+  console.log('✅ 訂單是否完成:', isOrderCompleted.value)
+  try {
+    loading.value = true
+
+    // 取得訂單狀態
+    const orderRes = await axios.get(`/api/Orders/${props.orderId}`)
+    const statusName = orderRes.data.orderStatus?.description
+    isOrderCompleted.value = orderRes.data.orderStatusId === 3 || statusName === '已完成（收貨成功）'
+
+    // 同時取得相關資料
+    const [orderDetailsRes, cartRes, productRes, imageRes] = await Promise.all([
+      axios.get('/api/OrderDetails', { params: { orderId: props.orderId } }),
+      axios.get('/api/ShoppingCartItems'),
+      axios.get('/api/Products'),
+      axios.get('/api/ProductImages')
+    ])
+
+    const orderDetails = orderDetailsRes.data
+    const cartItems = cartRes.data
+    const products = productRes.data
+    const productImages = imageRes.data
+
+    // 組合資料
+    showItems.value = orderDetails.map(od => {
+      const cartItem = cartItems.find(ci => ci.itemId === od.itemId)
+      const product = products.find(p => p.productsId === cartItem?.productsId)
+      const mainImage = productImages.find(img =>
+        img.productId === product?.productsId && img.isMain === 1
+      )
+
+      return {
+        productId: product?.productsId || 0,
+        name: product?.name || od.productName,
+        image: mainImage?.imageUrl
+          ? `/ProductImages/${mainImage.imageUrl}`
+          : '/ProductImages/default.png',
+        price: od.unitprice,
+        quantity: od.quantity,
+        subtotal: od.unitprice * od.quantity,
+        hasBeenReviewed: false
+      }
+    })
+  } catch (err) {
+    console.error('❌ 載入失敗:', err)
+    error.value = '載入失敗，請稍後再試。'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(async () => {
+  if (!props.orderId) {
+    console.warn('⚠️ 缺少 orderId，無法載入訂單資料')
+    return
+  }
+
+  if (props.items?.length > 0) {
+    showItems.value = props.items.map(item => ({
+      ...item,
+      subtotal: item.price * item.quantity
+    }))
+  } else {
+    await fetchOrderData()
   }
 })
 
-const loading = ref(true)
-const error = ref(null)
-const orderItems = ref([])
-
-// rr新增：控制評論表單的顯示狀態
-const showReviewForm = ref(false)
-const selectedItem = ref(null)
-
-// ✅ 判斷是否為已完成狀態（orderStatusId === 3）
-const isCompleted = computed(() => props.orderStatusId === 3)
-console.log('orderStatusId:', props.orderStatusId)
-// ✅ 計算總金額
-const total = computed(() =>
-  orderItems.value.reduce((sum, item) => sum + item.unitprice * item.quantity, 0)
-)
-
-// rr 修改後的評價按鈕點擊處理
-function handleReviewClick(item) {  
-  // 設定選中的商品和顯示評論表單
+const handleReviewClick = (item) => {
   selectedItem.value = item
   showReviewForm.value = true
 }
 
-// 處理評論提交成功的回調
-function handleReviewSubmitted() {
+const closeReviewForm = () => {
+  showReviewForm.value = false
+  selectedItem.value = null
+}
+
+const handleReviewSubmitted = () => {
   if (selectedItem.value) {
-    const reviewedItem = orderItems.value.find(
-      item => item.productId === selectedItem.value.productId
-    );
-    if (reviewedItem) {
-      reviewedItem.hasBeenReviewed = true;
-    }
+    selectedItem.value.hasBeenReviewed = true
   }
-  showReviewForm.value = false
-  selectedItem.value = null
-  
-  Swal.fire({
-    icon: 'success',
-    title: '評論提交成功！',
-    text: '感謝您的評論',
-    timer: 2000,
-    showConfirmButton: false
-  })
+  closeReviewForm()
 }
 
-// 關閉評論表單
-function closeReviewForm() {
-  showReviewForm.value = false
-  selectedItem.value = null
-}
-
-
-onMounted(async () => {
-  try {
-    const [orderDetailRes, cartItemRes, productRes, imageRes] = await Promise.all([
-      axios.get('https://localhost:7017/api/OrderDetails'),
-      axios.get('https://localhost:7017/api/ShoppingCartItems'),
-      axios.get('https://localhost:7017/api/Products'),
-      axios.get('https://localhost:7017/api/ProductImages')
-    ])
-
-    const orderDetails = orderDetailRes.data.filter(
-      od => Number(od.orderId) === Number(props.orderId)
-    )
-    const cartItems = cartItemRes.data
-    const products = productRes.data
-    const images = imageRes.data
-
-    const merged = orderDetails.map(od => {
-      const cartItem = cartItems.find(ci => ci.itemId === od.itemId)
-      const product = products.find(p => p.productsId === cartItem?.productsId)
-      const mainImage = images.find(
-        img => img.productId === product?.productsId && img.isMain === 1
-      )
-
-      return {
-        name: product?.name || '未知商品',
-        unitprice: cartItem?.unitprice || 0,
-        quantity: cartItem?.quantity || 0,
-        subtotal: (cartItem?.unitprice || 0) * (cartItem?.quantity || 0),
-        image: mainImage ? `https://localhost:7017/ProductImages/${mainImage.imageUrl}` : 'https://localhost:7017/ProductImages/default.jpg',
-        productId: product?.productsId, // rr新增：評論表單需要的 productId
-        hasBeenReviewed: false // rr新增 預設都是「未評價」
-      }
-    })
-    const reviewedResponse = await api.get(`/reviews/by-user/reviewed-products`);//by rr
-    const reviewedProductIds = reviewedResponse.data; // 得到陣列
-
-    // 遍歷訂單項目，只要商品的 productId 在上面那個列表裡，就標記為「已評價」
-    merged.forEach(item => {
-      if (reviewedProductIds.includes(item.productId)) {
-        item.hasBeenReviewed = true;
-      }
-    });
-
-    orderItems.value = merged
-  } catch (err) {
-    error.value = '載入失敗：' + err.message
-  } finally {
-    loading.value = false
-  }
-})
+const total = computed(() =>
+  showItems.value.reduce((sum, item) =>
+    sum + (item.subtotal || item.price * item.quantity), 0)
+)
 </script>
 
 <template>
@@ -128,52 +113,45 @@ onMounted(async () => {
   <div v-else>
     <div class="list-group mb-3">
       <div
-        class="list-group-item d-flex align-items-center gap-3"
-        v-for="(item, index) in orderItems"
+        v-for="(item, index) in showItems"
         :key="index"
+        class="list-group-item d-flex align-items-center gap-3"
       >
         <img
           :src="item.image"
           alt="商品圖"
-          style="width: 60px; height: 60px; object-fit: cover;"
+          style="width: 60px; height: 60px; object-fit: cover"
         />
         <div class="flex-grow-1">
           <h6 class="mb-1">{{ item.name }}</h6>
-          <div>單價：${{ item.unitprice }}</div>
+          <div>單價：${{ item.price }}</div>
           <div>數量：{{ item.quantity }}</div>
           <div class="text-muted">小計：${{ item.subtotal }}</div>
         </div>
 
-        <!-- ✅ 僅在已完成狀態時顯示評價按鈕 RRRRRRRRRRRRRRRR-->
-        <template v-if="isCompleted">
-        <button 
-          v-if="item.hasBeenReviewed" 
-          class="btn btn-secondary btn-sm" 
-          disabled
-        >
-          已評價
-        </button>
-        
-        <button 
-          v-else 
-          class="btn btn-outline-primary btn-sm" 
-          @click="handleReviewClick(item)"
-        >
-          評價
-        </button>
-      </template>
+        <template v-if="isOrderCompleted">
+          <button v-if="item.hasBeenReviewed" class="btn btn-secondary btn-sm" disabled>
+            已評價
+          </button>
+          <button
+            v-else
+            class="btn btn-outline-primary btn-sm"
+            @click="handleReviewClick(item)"
+          >
+            評價
+          </button>
+        </template>
       </div>
     </div>
 
-    <!-- ✅ 顯示總金額 -->
     <div class="text-end fw-bold fs-5">
       總金額：<span class="text-danger">${{ total }}</span>
     </div>
-  
-    <!-- 評論表單 Modal -->
-    <div 
-      v-if="showReviewForm && selectedItem" 
-      class="modal fade show" 
+
+    <!-- 評價表單 Modal -->
+    <div
+      v-if="showReviewForm && selectedItem"
+      class="modal fade show"
       style="display: block; background-color: rgba(0,0,0,0.5);"
       @click.self="closeReviewForm"
     >
@@ -181,11 +159,7 @@ onMounted(async () => {
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">對「{{ selectedItem.name }}」發表評論</h5>
-            <button 
-              type="button" 
-              class="btn-close" 
-              @click="closeReviewForm"
-            ></button>
+            <button type="button" class="btn-close" @click="closeReviewForm"></button>
           </div>
           <div class="modal-body">
             <PostReviewForm
@@ -198,12 +172,14 @@ onMounted(async () => {
       </div>
     </div>
   </div>
-
-
 </template>
 
-
 <style scoped>
+.list-group-item {
+  border-radius: 12px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 8px;
+}
 .modal {
   z-index: 1050;
 }

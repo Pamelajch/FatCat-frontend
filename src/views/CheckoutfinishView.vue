@@ -1,28 +1,39 @@
 <script setup>
-import { onMounted } from 'vue' 
+import { onMounted, ref,computed  } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useOrderStore } from '@/stores/order'
-import { useRouter } from 'vue-router'
-//import OrderItemList from '@/components/OrderItemList.vue'
+import { useRouter, useRoute } from 'vue-router'
+import axios from 'axios'
+
 import OrderSummary from '@/components/OrderSummary.vue'
-import CartItemList from '@/components/CartItemList.vue'
+import OrderItemList from '@/components/OrderItemList.vue'
+
 const cartStore = useCartStore()
 const orderStore = useOrderStore()
 const router = useRouter()
+const route = useRoute()
 
-onMounted(() => {
-  if (cartStore.items.length > 0) {
-    orderStore.setOrderItems(cartStore.items)
-    // ❌ 不要馬上清空購物車
+const orderId = computed(() => Number(route.query.orderId)) // ⬅️ 要用 query 而不是 params
+
+onMounted(async () => {
+  orderId.value = route.query.orderId
+  if (!orderId.value) return
+
+  try {
+    const res = await axios.get('/api/OrderDetails', {
+      params: { orderId: orderId.value }
+    })
+    orderStore.latestOrderItems.value = res.data
+  } catch (error) {
+    console.error('❌ 抓取訂單明細失敗:', error)
   }
 })
 
 const goToMyOrders = () => {
-  cartStore.clearCart() // ✅ 在點按鈕時清空購物車
-  router.push('/myorders') // ✅ 導向「我的訂單」頁面
+  cartStore.clearCart()
+  router.push('/myorders')
 }
 </script>
-
 
 <template>
   <div class="page-content-wrapper pt-5 pb-5">
@@ -49,16 +60,14 @@ const goToMyOrders = () => {
             aria-labelledby="panelsStayOpen-headingOne"
           >
             <div class="accordion-body">
-              <CartItemList />
+              <OrderItemList :order-id="Number(orderId)" />
             </div>
           </div>
         </div>
       </div>
 
-      <!-- ✅ 整合後的個人/送貨/付款資訊元件 -->
       <OrderSummary />
 
-      <!-- 原本是 router-link，要改成按鈕並加 click 事件 -->
       <button type="button" class="btn custom-purple-btn float-end" @click="goToMyOrders">
         我的訂單
       </button>
