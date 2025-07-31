@@ -7,7 +7,7 @@ import DateRangeFilter from '@/components/admin/DateRangeFilter.vue';
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Filler);
 
-const pinkPalette = {
+const pinkPalette = { //顏色
   dark: '#C71585',
   medium: 'rgba(219, 112, 147, 1)',
   medium_bg: 'rgba(219, 112, 147, 0.7)',
