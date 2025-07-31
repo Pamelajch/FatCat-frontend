@@ -192,6 +192,12 @@
     function goToNotification() {
       router.push({ name: 'notification' })
     }
+
+    //計算購物車內品項數
+    const cartItemCount = computed(() =>
+      cartStore.items.reduce((sum, item) => sum + item.quantity, 0)
+    )
+
     // 通知功能區 end------------------------------------------
 </script>
 
@@ -282,8 +288,16 @@
         <RouterLink :to="{name:'home'}" class="icon-btn" title="首頁"><i class="bi bi-house-door"></i></RouterLink>
         <RouterLink :to="{name:'drink'}" class="icon-btn" title="飲料"><i class="fa-solid fa-martini-glass"></i></RouterLink>
         <RouterLink :to="{name:'productlist'}" class="icon-btn" title="商品"><i class="fa-solid fa-bowl-food"></i></RouterLink>
-        <button class="icon-btn" @click="openOffcanvas" title="購物車">
-        <i class="fa fa-shopping-cart"></i>
+        <button class="icon-btn position-relative" @click="openOffcanvas" title="購物車">
+          <i class="fa fa-shopping-cart"></i>
+          <span
+            v-if="cartItemCount > 0"
+            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+            style="font-size: 0.75rem;"
+          >
+            {{ cartItemCount > 99 ? '99+' : cartItemCount }}
+            <span class="visually-hidden">購物車內商品數量</span>
+          </span>
         </button>
         <RouterLink :to="{name:'favorite'}" class="icon-btn" title="我的最愛"><i class="bi bi-heart-fill"></i></RouterLink>
 
