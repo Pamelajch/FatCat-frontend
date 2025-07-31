@@ -100,11 +100,10 @@ const handleReviewSubmitted = () => {
   closeReviewForm()
 }
 
-const total = computed(() => {
-  return showItems.value.reduce((sum, item) => {
-    return sum + (item.subtotal || item.price * item.quantity)
-  }, 0).toFixed(2)
-})
+const total = computed(() =>
+  showItems.value.reduce((sum, item) =>
+    sum + (item.subtotal || item.price * item.quantity), 0)
+)
 </script>
 
 <template>
