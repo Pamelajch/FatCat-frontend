@@ -13,7 +13,23 @@ const orderId = route.params.id
 const order = ref(null)
 // 訂單明細列表 (API: OrderDetails，需要另外寫service)
 const orderDetails = ref([])
+const couponDescription = ref('無使用優惠券')
+const fetchCouponDescription = async (couponId) => {
+  if (!couponId || couponId === 0) {
+    couponDescription.value = '無使用優惠券'
+    return
+  }
 
+  try {
+    const res = await axios.get('https://localhost:7017/api/Coupons')
+    const coupons = res.data
+    const matched = coupons.find(c => c.couponId === couponId)
+    couponDescription.value = matched ? matched.description : '查無優惠券'
+  } catch (error) {
+    console.error('無法取得優惠券資料', error)
+    couponDescription.value = '載入優惠券失敗'
+  }
+}
 const orderTotal = computed(() => {
   return orderDetails.value.reduce((sum, item) => {
     const qty = item.quantity ?? 0
@@ -35,6 +51,9 @@ const fetchData = async () => {
     // 訂單資料
     const orderRes = await getOrderById(orderId)
     order.value = orderRes.data
+
+    // 取得優惠券描述
+    await fetchCouponDescription(order.value.couponId)
 
     // 狀態資料
     const [orderStatusRes, shippingStatusRes] = await Promise.all([
@@ -139,8 +158,8 @@ onMounted(fetchData)
 </table>
 
 <!-- 顯示實際訂單記錄的總金額 -->
-<p>訂單總金額（payableAmount）：{{ order.payableAmount }}</p>
-<p>訂單總金額：{{ order.payableAmount }}</p>
+<p>使用優惠券：{{ couponDescription }}</p>
+<p>實付金額：{{ order.payableAmount }}</p>
 
     </div>
 
