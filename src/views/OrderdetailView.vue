@@ -13,7 +13,35 @@ const orderId = route.params.id
 const order = ref(null)
 const orderStatusId = computed(() => order.value?.orderStatusId || 0)
 const orderItems = ref([])
+const isOrderCanceled = computed(() => order.value?.orderStatusId === 6)
 
+const cancelOrder = async () => {
+  const confirmCancel = window.confirm('確定要取消訂單嗎？此操作無法復原。')
+  if (!confirmCancel) return
+
+  try {
+    const res = await fetch(`https://localhost:7017/api/Orders/${orderId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ...order.value,
+        orderStatusId: 6 // 代表已取消
+      })
+    })
+
+    if (!res.ok) throw new Error('取消失敗')
+
+    // 更新前端狀態
+    order.value.orderStatusId = 6
+    alert('訂單已成功取消。')
+
+  } catch (err) {
+    console.error('取消訂單失敗:', err)
+    alert('取消訂單失敗，請稍後再試。')
+  }
+}
 const fetchOrderDetail = async () => {
   try {
     const [orderRes, itemsRes] = await Promise.all([
@@ -66,12 +94,34 @@ onMounted(fetchOrderDetail)
 
       
       <div class="mt-4">
-        <button type="button" class="btn custom-purple-btn float-end">聯絡我們</button>
-        <button type="button" class="btn btn-danger float-end btn-space">取消訂單</button>
-        <router-link to="/myorders">
-          <button type="button" class="btn custom-purple-outline-btn float-end btn-space">返回我的訂單</button>
-        </router-link>
-      </div>
+  
+      <button
+        v-if="!isOrderCanceled"
+        type="button"
+        class="btn custom-purple-btn float-end btn-space"
+      >
+        聯絡我們
+      </button>
+      
+      <button
+          v-if="!isOrderCanceled"
+          type="button"
+          class="btn btn-danger float-end btn-space"
+          @click="cancelOrder"
+        >
+          取消訂單
+        </button>
+
+            <router-link to="/myorders">
+        <button type="button" class="btn custom-purple-outline-btn float-end btn-space">
+          返回我的訂單
+        </button>
+      </router-link>
+
+  
+
+  
+</div>
     </div>
   </div>
 </template>
