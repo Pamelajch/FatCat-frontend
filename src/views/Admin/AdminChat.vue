@@ -51,7 +51,7 @@ const initConnection = async () => {
     })
   };
   
-  // 後續的程式碼完全不用改變
+  //userMessages > Map 結構。檢查是否已有這位使用者的聊天記錄了？如果沒有，為他建立一個新的空陣列。
   const userId = formattedMessage.userId;
   if (!userMessages.value.has(userId)) {
     userMessages.value.set(userId, []);
@@ -60,6 +60,7 @@ const initConnection = async () => {
   // 將我們剛剛手動建立的、格式完全正確的 formattedMessage 物件推進陣列
   userMessages.value.get(userId).push(formattedMessage);
 
+  //收到的訊息來自當前正在對話的使用者。如果不是，該使用者的未讀計數加一，出現一個小紅點提示。
   if (currentUserId.value !== userId) {
     const user = onlineUsers.value.find(u => u.userId === userId);
     if (user) {
@@ -70,12 +71,13 @@ const initConnection = async () => {
   }
 });
 
+//如果這位使用者不在列表上，就把他加進去
   connection.value.on('UserOnline', (userId) => {
     if (!onlineUsers.value.some(u => u.userId === userId)) {
       onlineUsers.value.push({ userId, unreadCount: 0 });
     }
   });
-  
+//用 filter 方法將這位使用者從列表中移除
   connection.value.on('UserOffline', (userId) => {
     onlineUsers.value = onlineUsers.value.filter(u => u.userId !== userId);
     if (userMessages.value.has(userId)) {
@@ -90,6 +92,7 @@ const initConnection = async () => {
   }
   });
 
+  //呼叫 JoinAsAdmin 時，由後端一次性觸發接收從後端傳來的ID列表 (users)在線使用者列表。map方法會傳回我要的列表格式
   connection.value.on('OnlineUsersList', (users) => {
     onlineUsers.value = users.map(userId => ({ userId, unreadCount: 0 }));
   });
