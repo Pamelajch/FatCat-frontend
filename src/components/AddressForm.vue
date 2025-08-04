@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { twCities, getDistrictsByCity, getAllCityNames } from '@/data/twCities'
 
 const showMapModal = ref(false)
 const mapLoading = ref(false)
@@ -10,6 +11,7 @@ const props = defineProps({
     address: { type: Object, default: null },
     isSubmitting: { type: Boolean, default: false }
 })
+//////做到這裡
 
 const emit = defineEmits(['submit', 'cancel'])
 
