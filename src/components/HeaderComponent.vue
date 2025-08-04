@@ -3,10 +3,11 @@
     import { useRouter } from 'vue-router'
     import { computed } from 'vue'
     import { useCartStore } from '@/stores/cart'
+    import { useNotificationStore } from '@/stores/notification'
     import CartOffcanvas from '@/components/CartOffcanvas.vue'
     import * as bootstrap from 'bootstrap'
     import Swal from 'sweetalert2'
-    import {ref,onMounted, watch} from 'vue'
+    import {ref,onMounted, onUnmounted, watch} from 'vue'
     import api from '@/services/jjapi'
     import { searchAll } from '@/services/searchService.js';
 
@@ -51,6 +52,9 @@
 
     // 使用Cart store
     const cartStore = useCartStore()
+
+    // 使用notification store
+    const notificationStore = useNotificationStore()
 
     // 計算屬性：是否已登入
     const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -147,36 +151,53 @@
     //登入登出功能區 end-------------------------------------
     
     // 通知功能區------------------------------------------
-    // 未讀通知數量
-    const unreadCount = ref(0)
+    // 使用 store 的未讀通知數量
+    const unreadCount = computed(() => notificationStore.userUnreadCount)
 
     async function fetchUnreadCount() {
       const user = localStorage.getItem('user')
       const userId = user ? JSON.parse(user).userId : null
       if (!userId) {
-        unreadCount.value = 0
         console.log('無法從localstorage 取得 userId，未讀通知數量設為 0')
         return
       }
       if (!isAuthenticated.value){
-        unreadCount.value = 0
         console.log('未登入，未讀通知數量設為 0')
         return
       }
-      try {
-        const res = await api.get(`/Notifications/User/${userId}`)
-        // 統計未讀
-        unreadCount.value = res.data.filter(n => !n.isRead).length
-        console.log('取得未讀通知數量:', unreadCount.value)
-      } catch (error) {
-        unreadCount.value = 0
-        console.error('取得未讀通知數量失敗:', error)
+      await notificationStore.fetchUserNotifications(userId)
+      console.log('取得未讀通知數量:', unreadCount.value)
+    }
+
+    // 定義清理變量
+    let notificationInterval = null
+    const handleFocus = () => {
+      if (isAuthenticated.value) {
+        fetchUnreadCount()
       }
     }
 
     // 頁面載入時取得未讀通知數量
     onMounted(() => {
       fetchUnreadCount()
+      
+      // 當頁面重新獲得焦點時，重新檢查通知
+      window.addEventListener('focus', handleFocus)
+      
+      // 定期檢查通知（每2分鐘）
+      notificationInterval = setInterval(() => {
+        if (isAuthenticated.value) {
+          fetchUnreadCount()
+        }
+      }, 120000) // 2分鐘
+    })
+
+    // 清理事件監聽器
+    onUnmounted(() => {
+      window.removeEventListener('focus', handleFocus)
+      if (notificationInterval) {
+        clearInterval(notificationInterval)
+      }
     })
     
     // 如果有登入狀態變化，重新取得未讀數量
@@ -184,7 +205,7 @@
       if (newVal) {
         fetchUnreadCount()
       } else {
-        unreadCount.value = 0
+        notificationStore.clearUserNotifications()
       }
     })
 
