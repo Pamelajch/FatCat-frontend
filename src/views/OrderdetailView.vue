@@ -125,6 +125,7 @@ onMounted(fetchOrderDetail)
   <div class="page-content-wrapper pt-5 pb-5">
     <div class="container mb-2">
       <h2>訂單明細</h2>
+      <p class="text-muted">訂單編號：{{ orderId }}</p>
       <div class="accordion col-lg-10 container mb-5" id="accordionPanelsStayOpenExample">
         <div class="accordion-item">
           <h2 class="accordion-header" id="panelsStayOpen-headingOne">
