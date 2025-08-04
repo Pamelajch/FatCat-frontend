@@ -68,7 +68,7 @@ const router = useRouter()
 async function proceedToCheckout() {
   try {
     const cartPayload = cartStore.items.map(i => ({
-      itemId: 0,            // 後端會自動產生
+      itemId: 0,
       productsId: i.id,
       quantity: i.quantity,
       unitprice: i.price
@@ -88,6 +88,7 @@ async function proceedToCheckout() {
     alert('無法建立購物車資料，請稍後再試')
   }
 }
+
 </script>
 
 <template>
@@ -138,7 +139,7 @@ async function proceedToCheckout() {
             <router-link to="/">
               <button type="button" class="btn custom-purple-outline-btn">繼續購物</button>
             </router-link>
-            <button type="button" class="btn custom-purple-btn" @click="handleCheckoutClick">前往結帳</button>
+            <button type="button" class="btn custom-purple-btn" @click="proceedToCheckout">前往結帳</button>
           </div>
         </div>
       </div>
