@@ -3,8 +3,9 @@ import { onMounted, ref, computed } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useOrderStore } from '@/stores/order'
 import { useCheckoutStore } from '@/stores/checkout'
+import { useAuthStore } from '@/stores/auth'
 import { useRouter, useRoute } from 'vue-router'
-import axios from 'axios'
+import api from '@/services/jjapi.js'
 
 import OrderSummary from '@/components/OrderSummary.vue'
 import OrderItemList from '@/components/OrderItemList.vue'
@@ -12,6 +13,7 @@ import OrderItemList from '@/components/OrderItemList.vue'
 const cartStore = useCartStore()
 const orderStore = useOrderStore()
 const checkoutStore = useCheckoutStore()
+const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
@@ -51,12 +53,15 @@ onMounted(async () => {
   try {
     isLoading.value = true
     
+    // 確保認證狀態已初始化（從 ECPay 回來後可能需要重新載入）
+    authStore.initializeAuth()
+    
     // 並行請求所有必要資料
     const [orderRes, orderDetailsRes, couponsRes, shippingsRes] = await Promise.all([
-      axios.get(`/api/Orders/${orderId.value}`),
-      axios.get('/api/OrderDetails', { params: { orderId: orderId.value } }),
-      axios.get('/api/Coupons'),
-      axios.get('/api/Shippings')
+      api.get(`/Orders/${orderId.value}`),
+      api.get('/OrderDetails', { params: { orderId: orderId.value } }),
+      api.get('/Coupons'),
+      api.get('/Shippings')
     ])
 
     // 設定訂單資料
