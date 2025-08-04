@@ -183,28 +183,30 @@ const goToMyOrders = () => {
             <div class="row">
               <div class="col-md-6">
                 <table class="table table-borderless">
-                  <tr>
-                    <td>商品總金額：</td>
-                    <td class="text-end">NT$ {{ productTotal.toLocaleString() }}</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      運費：
-                      <small v-if="shippingInfo" class="text-muted">({{ shippingInfo.name }})</small>
-                    </td>
-                    <td class="text-end">NT$ {{ shippingFee.toLocaleString() }}</td>
-                  </tr>
-                  <tr v-if="discountAmount > 0">
-                    <td>
-                      折扣：
-                      <small v-if="couponInfo" class="text-muted">({{ couponInfo.description }})</small>
-                    </td>
-                    <td class="text-end text-success">-NT$ {{ discountAmount.toLocaleString() }}</td>
-                  </tr>
-                  <tr class="border-top">
-                    <td><strong>實付金額：</strong></td>
-                    <td class="text-end"><strong class="text-primary fs-5">NT$ {{ finalAmount.toLocaleString() }}</strong></td>
-                  </tr>
+                  <tbody>
+                    <tr>
+                      <td>商品總金額：</td>
+                      <td class="text-end">NT$ {{ productTotal.toLocaleString() }}</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        運費：
+                        <small v-if="shippingInfo" class="text-muted">({{ shippingInfo.name }})</small>
+                      </td>
+                      <td class="text-end">NT$ {{ shippingFee.toLocaleString() }}</td>
+                    </tr>
+                    <tr v-if="discountAmount > 0">
+                      <td>
+                        折扣：
+                        <small v-if="couponInfo" class="text-muted">({{ couponInfo.description }})</small>
+                      </td>
+                      <td class="text-end text-success">-NT$ {{ discountAmount.toLocaleString() }}</td>
+                    </tr>
+                    <tr class="border-top">
+                      <td><strong>實付金額：</strong></td>
+                      <td class="text-end"><strong class="text-primary fs-5">NT$ {{ finalAmount.toLocaleString() }}</strong></td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
               <div class="col-md-6">
