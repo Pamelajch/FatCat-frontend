@@ -53,7 +53,7 @@ const isHomeAddress = computed(() => form.addressType === '0')
 // 獲取城市列表
 const cityOptions = computed(()=> getAllCityNames())
 
-// 獲取區域列表
+// 獲取區域列表（根據選擇的城市）
 const districtOptions = computed(()=> {
     if(!form.city) return []
     return getDistrictsByCity(form.city)
@@ -114,76 +114,31 @@ const openMapModal = () => {
       form.storeType = 0 // 7-Eleven 的 StoreType 是 0
       form.storeBranch = '' // 7-11 沒有分店名，設為空字串
       
-      // 解析地址
-      const addr = storeInfo.storeAddress
-
-        if (addr.includes('台北市')) {
-          form.city = '台北市'
-          form.district = addr.replace('台北市', '').substring(0, 3)
-        } else if (addr.includes('新北市')) {
-          form.city = '新北市'
-          form.district = addr.replace('新北市', '').substring(0, 3)
-        } else if (addr.includes('桃園市')) {
-          form.city = '桃園市'
-          form.district = addr.replace('桃園市', '').substring(0, 3)
-        } else if (addr.includes('台中市')) {
-          form.city = '台中市'
-          form.district = addr.replace('台中市', '').substring(0, 3)
-        } else if (addr.includes('台南市')) {
-          form.city = '台南市'
-          form.district = addr.replace('台南市', '').substring(0, 3)
-        } else if (addr.includes('高雄市')) {
-          form.city = '高雄市'
-          form.district = addr.replace('高雄市', '').substring(0, 3)
-        } else if (addr.includes('基隆市')) {
-          form.city = '基隆市'
-          form.district = addr.replace('基隆市', '').substring(0, 3)
-        } else if (addr.includes('新竹市')) {
-          form.city = '新竹市'
-          form.district = addr.replace('新竹市', '').substring(0, 3)
-        } else if (addr.includes('嘉義市')) {
-          form.city = '嘉義市'
-          form.district = addr.replace('嘉義市', '').substring(0, 3)
-        } else if (addr.includes('新竹縣')) {
-          form.city = '新竹縣'
-          form.district = addr.replace('新竹縣', '').substring(0, 3)
-        } else if (addr.includes('苗栗縣')) {
-          form.city = '苗栗縣'
-          form.district = addr.replace('苗栗縣', '').substring(0, 3)
-        } else if (addr.includes('彰化縣')) {
-          form.city = '彰化縣'
-          form.district = addr.replace('彰化縣', '').substring(0, 3)
-        } else if (addr.includes('南投縣')) {
-          form.city = '南投縣'
-          form.district = addr.replace('南投縣', '').substring(0, 3)
-        } else if (addr.includes('雲林縣')) {
-          form.city = '雲林縣'
-          form.district = addr.replace('雲林縣', '').substring(0, 3)
-        } else if (addr.includes('嘉義縣')) {
-          form.city = '嘉義縣'
-          form.district = addr.replace('嘉義縣', '').substring(0, 3)
-        } else if (addr.includes('屏東縣')) {
-          form.city = '屏東縣'
-          form.district = addr.replace('屏東縣', '').substring(0, 3)
-        } else if (addr.includes('宜蘭縣')) {
-          form.city = '宜蘭縣'
-          form.district = addr.replace('宜蘭縣', '').substring(0, 3)
-        } else if (addr.includes('花蓮縣')) {
-          form.city = '花蓮縣'
-          form.district = addr.replace('花蓮縣', '').substring(0, 3)
-        } else if (addr.includes('台東縣')) {
-          form.city = '台東縣'
-          form.district = addr.replace('台東縣', '').substring(0, 3)
-        } else if (addr.includes('澎湖縣')) {
-          form.city = '澎湖縣'
-          form.district = addr.replace('澎湖縣', '').substring(0, 3)
-        } else if (addr.includes('金門縣')) {
-          form.city = '金門縣'
-          form.district = addr.replace('金門縣', '').substring(0, 3)
-        } else if (addr.includes('連江縣')) {
-          form.city = '連江縣'
-          form.district = addr.replace('連江縣', '').substring(0, 3)
-        }
+             // 解析地址 - 使用台灣地區資料進行智能解析
+       const addr = storeInfo.storeAddress
+       
+       // 遍歷所有城市，找到匹配的
+       for (const cityData of twCities) {
+         if (addr.includes(cityData.name)) {
+           form.city = cityData.name
+           
+           // 移除城市名稱後，嘗試匹配區域
+           const addressWithoutCity = addr.replace(cityData.name, '')
+           
+           // 找到匹配的區域
+           const matchedDistrict = cityData.districts.find(district => 
+             addressWithoutCity.includes(district.name)
+           )
+           
+           if (matchedDistrict) {
+             form.district = matchedDistrict.name
+           } else {
+             // 如果找不到完全匹配，使用前3個字符作為備選
+             form.district = addressWithoutCity.substring(0, 3)
+           }
+           break
+         }
+       }
 
       
       showMapModal.value = false
@@ -393,7 +348,22 @@ const handleSubmit = () => {
             <!-- 區域 -->
             <div class="form-group">
                 <label for="district" class="form-label">區域 *</label>
+                <select 
+                    v-if="isHomeAddress" 
+                    id="district" 
+                    v-model="form.district" 
+                    class="form-select" 
+                    :class="{ 'is-invalid': errors.district }" 
+                    :disabled="!form.city"
+                    required
+                >
+                    <option value="">{{ form.city ? '請選擇區域' : '請先選擇城市' }}</option>
+                    <option v-for="district in districtOptions" :key="district.zip" :value="district.name">
+                        {{ district.name }}
+                    </option>
+                </select>
                 <input 
+                    v-else
                     id="district" 
                     v-model="form.district" 
                     type="text" 
