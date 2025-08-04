@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/services/jjapi.js'
 import { useCartStore } from '@/stores/cart'
 import PostReviewForm from './PostReviewForm.vue'
 
@@ -17,22 +17,25 @@ const error = ref(null)
 const showReviewForm = ref(false)
 const selectedItem = ref(null)
 const isOrderCompleted = ref(false)  // ✅頂層定義，template 才能使用
+
+// 後端 URL 常數
+const BACKEND_URL = 'https://localhost:7017'
 const fetchOrderData = async () => {
   console.log('✅ 訂單是否完成:', isOrderCompleted.value)
   try {
     loading.value = true
 
     // 取得訂單狀態
-    const orderRes = await axios.get(`/api/Orders/${props.orderId}`)
+    const orderRes = await api.get(`/Orders/${props.orderId}`)
     const statusName = orderRes.data.orderStatus?.description
     isOrderCompleted.value = orderRes.data.orderStatusId === 3 || statusName === '已完成（收貨成功）'
 
     // 同時取得相關資料
     const [orderDetailsRes, cartRes, productRes, imageRes] = await Promise.all([
-      axios.get('/api/OrderDetails', { params: { orderId: props.orderId } }),
-      axios.get('/api/ShoppingCartItems'),
-      axios.get('/api/Products'),
-      axios.get('/api/ProductImages')
+      api.get('/OrderDetails', { params: { orderId: props.orderId } }),
+      api.get('/ShoppingCartItems'),
+      api.get('/Products'),
+      api.get('/ProductImages')
     ])
 
     const orderDetails = orderDetailsRes.data
@@ -52,8 +55,8 @@ const fetchOrderData = async () => {
         productId: product?.productsId || 0,
         name: product?.name || od.productName,
         image: mainImage?.imageUrl
-          ? `/ProductImages/${mainImage.imageUrl}`
-          : '/ProductImages/default.png',
+          ? `${BACKEND_URL}/ProductImages/${mainImage.imageUrl}`
+          : `${BACKEND_URL}/ProductImages/pingu.png`,
         price: od.unitprice,
         quantity: od.quantity,
         subtotal: od.unitprice * od.quantity,
