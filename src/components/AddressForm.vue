@@ -11,7 +11,7 @@ const props = defineProps({
     address: { type: Object, default: null },
     isSubmitting: { type: Boolean, default: false }
 })
-//////做到這裡
+
 
 const emit = defineEmits(['submit', 'cancel'])
 
@@ -46,6 +46,8 @@ const isEdit = computed(() => props.address !== null)
 
 // 計算屬性：判斷是否為超商地址 --------------------------------------------------------------------------------------------
 const isStoreAddress = computed(() => form.addressType === '1')
+//////做到這裡
+// 計算屬性：判斷是否為一般宅配地址
 
 // 7-11 電子地圖
 const openMapModal = () => {
