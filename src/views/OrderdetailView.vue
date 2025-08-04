@@ -39,7 +39,7 @@ const fetchOrderDetail = async () => {
   try {
     const [orderRes, itemsRes] = await Promise.all([
       api.get(`/Orders/${orderId}`),
-      api.get(`/OrderDetails/${orderId}`)
+      api.get('/OrderDetails', { params: { orderId: orderId } })
     ])
     order.value = orderRes.data
     orderItems.value = itemsRes.data
