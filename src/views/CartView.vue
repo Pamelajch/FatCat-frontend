@@ -53,9 +53,9 @@ function handleCheckoutClick() {
 
 // 處理登入成功
 function handleLoginSuccess() {
-  // 登入成功後，關閉登入模態框並導向結帳頁面
+  // 登入成功後，關閉登入模態框並重新執行結帳流程
   showLoginModal.value = false
-  window.location.href = '/checkout'
+  proceedToCheckout()
 }
 
 // 關閉登入模態框
@@ -64,8 +64,15 @@ function closeLoginModal() {
 }
 const router = useRouter()
 
-// 點擊「前往結帳」：將購物車資料批次送至後端，並取得 itemId 列表存入 Pinia，再跳轉結帳頁
+// 點擊「前往結帳」：先檢查登入狀態，再將購物車資料批次送至後端，並取得 itemId 列表存入 Pinia，最後跳轉結帳頁
 async function proceedToCheckout() {
+  // 檢查用戶是否已登入
+  if (!authStore.isAuthenticated) {
+    // 未登入，顯示登入模態框
+    showLoginModal.value = true
+    return
+  }
+
   try {
     const cartPayload = cartStore.items.map(i => ({
       itemId: 0,
