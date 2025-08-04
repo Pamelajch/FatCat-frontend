@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import OrderItemList from '@/components/OrderItemList.vue'
 import OrderDetail from '@/components/OrderDetail.vue'
 import { useOrderStore } from '@/stores/order'
+import api from '@/services/jjapi.js'
 
 const orderStore = useOrderStore()
 // 建議加載資料前先檢查是否為空，必要時使用 await fetch
@@ -20,18 +21,10 @@ const cancelOrder = async () => {
   if (!confirmCancel) return
 
   try {
-    const res = await fetch(`https://localhost:7017/api/Orders/${orderId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        ...order.value,
-        orderStatusId: 6 // 代表已取消
-      })
+    await api.put(`/Orders/${orderId}`, {
+      ...order.value,
+      orderStatusId: 6 // 代表已取消
     })
-
-    if (!res.ok) throw new Error('取消失敗')
 
     // 更新前端狀態
     order.value.orderStatusId = 6
@@ -45,11 +38,11 @@ const cancelOrder = async () => {
 const fetchOrderDetail = async () => {
   try {
     const [orderRes, itemsRes] = await Promise.all([
-      fetch(`https://localhost:7017/api/Orders/${orderId}`).then(res => res.json()),
-      fetch(`https://localhost:7017/api/OrderDetails/${orderId}`).then(res => res.json())
+      api.get(`/Orders/${orderId}`),
+      api.get(`/OrderDetails/${orderId}`)
     ])
-    order.value = orderRes
-    orderItems.value = itemsRes
+    order.value = orderRes.data
+    orderItems.value = itemsRes.data
   } catch (err) {
     console.error('無法載入訂單詳情', err)
   }

@@ -1,10 +1,8 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import axios from 'axios'
-import { useCheckoutStore } from '@/stores/checkout'
-import { useOrderStore } from '@/stores/order'
-import { useRoute } from 'vue-router' // ⬅️ 加入這行
-// 假設這裡你有 orderId ，可能從路由或其他方式取得
+import api from '@/services/jjapi.js'  // 改用配置好的 api 實例
+import { useRoute } from 'vue-router'
+
 const route = useRoute()
 
 const props = defineProps({
@@ -16,8 +14,6 @@ const props = defineProps({
 
 const currentOrderId = props.orderId
 
-const checkout = useCheckoutStore()
-const orderStore = useOrderStore()
 const order = ref(null)
 const orderDetails = ref([])
 const couponOptions = ref([])
@@ -28,6 +24,21 @@ const productImages = ref([])
 const orderStatuses = ref([])
 const shippingStatuses = ref([])
 
+// 用戶個人資料（從訂單API獲取）
+const userInfo = computed(() => ({
+  name: order.value?.userName || '',
+  email: order.value?.userEmail || '',
+  phone: order.value?.userPhone || ''
+}))
+
+// 收貨資料（從訂單API獲取）
+const recipientInfo = computed(() => ({
+  name: order.value?.recipientName || '',
+  phone: order.value?.recipientPhone || '',
+  address: order.value?.recipientAddress || '',
+  storeName: order.value?.storeName || ''
+}))
+
 const matchedShipping = computed(() =>
   shippingOptions.value.find(s => s.shippingId === order.value?.shippingId)
 )
@@ -36,7 +47,7 @@ const matchedCoupon = computed(() =>
   couponOptions.value.find(c => c.couponId === order.value?.couponId)
 )
 
- const matchedOrderStatus = computed(() =>
+const matchedOrderStatus = computed(() =>
   orderStatuses.value.find(s => s.orderStatusId === order.value?.orderStatusId)
 )
 
@@ -44,17 +55,16 @@ const matchedShippingStatus = computed(() =>
   shippingStatuses.value.find(s => s.shippingStatusId === order.value?.shippingStatusId)
 )
 
-// 計算折扣金額（totalAmount - payableAmount）
+// 計算折扣金額
 const discountAmount = computed(() => {
   if (!order.value) return 0
   const totalAmount = order.value.totalAmount || 0
   const shippingFee = matchedShipping.value?.shippingFee || 0
   const payableAmount = order.value.payableAmount || 0
-  // 折扣 = 總金額 + 運費 - 實付金額
   return totalAmount + shippingFee - payableAmount
 })
 
-// 彙整顯示的商品資訊（合併 product、image、cart）
+// 彙整顯示的商品資訊
 const detailedItems = computed(() => {
   return cartItems.value.map(cart => {
     const product = products.value.find(p => p.productsId === cart.productsId) || {}
@@ -74,26 +84,16 @@ const productTotal = computed(() =>
   detailedItems.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
 )
 
-const selectedCoupon = computed(() =>
-  couponOptions.value.find(c => c.couponId === checkout.couponId)
-)
-const selectedShipping = computed(() =>
-  shippingOptions.value.find(s => s.shippingId === checkout.shippingId)
-)
-
-
-
 onMounted(async () => {
   try {
-    const [couponRes, shippingRes, productRes, imageRes, ordersRes,orderStatusRes,
-  shippingStatusRes] = await Promise.all([
-      axios.get('https://localhost:7017/api/Coupons'),
-      axios.get('https://localhost:7017/api/Shippings'),
-      axios.get('https://localhost:7017/api/Products'),
-      axios.get('https://localhost:7017/api/ProductImages'),
-      axios.get('https://localhost:7017/api/Orders'),
-      axios.get('https://localhost:7017/api/OrderStatus'),      // ✅ 新增
-      axios.get('https://localhost:7017/api/ShippingStatus')    // ✅ 新增
+    const [couponRes, shippingRes, productRes, imageRes, orderRes, orderStatusRes, shippingStatusRes] = await Promise.all([
+      api.get('/Coupons'),                              // 改用 api
+      api.get('/Shippings'),                            // 改用 api
+      api.get('/Products'),                             // 改用 api
+      api.get('/ProductImages'),                        // 改用 api
+      api.get(`/Orders/${currentOrderId}`),             // 改用 api
+      api.get('/OrderStatus'),                          // 改用 api
+      api.get('/ShippingStatus')                        // 改用 api
     ])
 
     couponOptions.value = couponRes.data
@@ -102,8 +102,7 @@ onMounted(async () => {
     productImages.value = imageRes.data
     orderStatuses.value = orderStatusRes.data
     shippingStatuses.value = shippingStatusRes.data
-    // 找出該筆訂單資料
-    order.value = ordersRes.data.find(o => o.orderId === currentOrderId)
+    order.value = orderRes.data
 
     if (!order.value) {
       console.warn(`找不到 orderId=${currentOrderId} 的訂單`)
@@ -111,17 +110,12 @@ onMounted(async () => {
     }
 
     // 用 orderId 取得購物車項目
-    const cartRes = await axios.get(`https://localhost:7017/api/ShoppingCartItems?orderId=${order.value.orderId}`)
+    const cartRes = await api.get(`/ShoppingCartItems?orderId=${order.value.orderId}`)  // 改用 api
     cartItems.value = cartRes.data
 
-   
     // 取得該訂單的訂單明細
-    const orderDetailsRes = await axios.get(
-      `https://localhost:7017/api/OrderDetails?orderId=${order.value.orderId}`
-    )
+    const orderDetailsRes = await api.get(`/OrderDetails?orderId=${order.value.orderId}`)  // 改用 api
     orderDetails.value = orderDetailsRes.data
-
-    checkout.productTotal = productTotal.value
 
   } catch (err) {
     console.error('❌ 載入訂單資料失敗:', err)
@@ -135,9 +129,9 @@ onMounted(async () => {
     <div class="col-12 col-md-4 mb-3">
       <ul class="list-group">
         <li class="list-group-item"><h3>個人資料</h3></li>
-        <li class="list-group-item">姓名：<div>{{ checkout.name }}</div></li>
-        <li class="list-group-item">電話：<div>{{ checkout.phone }}</div></li>
-        <li class="list-group-item">Email：<div>{{ checkout.email }}</div></li>
+        <li class="list-group-item">姓名：<div>{{ userInfo.name }}</div></li>
+        <li class="list-group-item">電話：<div>{{ userInfo.phone }}</div></li>
+        <li class="list-group-item">Email：<div>{{ userInfo.email }}</div></li>
       </ul>
     </div>
 
@@ -156,14 +150,14 @@ onMounted(async () => {
         </li>
         <li class="list-group-item" v-if="matchedShipping?.shippingTypeId === 1">
           收件地址：
-          <div>{{ checkout.recipientAddress || '未填寫' }}</div>
+          <div>{{ recipientInfo.address || '未填寫' }}</div>
         </li>
         <li class="list-group-item" v-else-if="matchedShipping?.shippingTypeId === 2">
           取貨門市：
-          <div>{{ checkout.storeName || '未選擇' }}</div>
+          <div>{{ recipientInfo.storeName || '未選擇' }}</div>
         </li>
-        <li class="list-group-item">收件人姓名：<div>{{ checkout.recipientName }}</div></li>
-        <li class="list-group-item">收件人電話：<div>{{ checkout.recipientPhone }}</div></li>
+        <li class="list-group-item">收件人姓名：<div>{{ recipientInfo.name }}</div></li>
+        <li class="list-group-item">收件人電話：<div>{{ recipientInfo.phone }}</div></li>
       </ul>
     </div>
 

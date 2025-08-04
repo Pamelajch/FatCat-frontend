@@ -46,8 +46,24 @@ const isEdit = computed(() => props.address !== null)
 
 // 計算屬性：判斷是否為超商地址 --------------------------------------------------------------------------------------------
 const isStoreAddress = computed(() => form.addressType === '1')
-//////做到這裡
 // 計算屬性：判斷是否為一般宅配地址
+const isHomeAddress = computed(() => form.addressType === '0')
+
+// 獲取城市列表
+const cityOptions = computed(()=> getAllCityNames())
+
+// 獲取區域列表
+const districtOptions = computed(()=> {
+    if(!form.city) return []
+    return getDistrictsByCity(form.city)
+})
+
+// 監聽城市變化, 清空區域選擇
+watch(()=> form.city,(newCity,oldCity)=>{
+    if(newCity !== oldCity){
+        form.district = ''
+    }
+})
 
 // 7-11 電子地圖
 const openMapModal = () => {
@@ -347,7 +363,20 @@ const handleSubmit = () => {
             <!-- 城市 -->
             <div class="form-group">
                 <label for="city" class="form-label">城市 *</label>
+                 <select 
+                    v-if="isHomeAddress" 
+                    id="city" 
+                    v-model="form.city" 
+                    class="form-select" 
+                    :class="{ 'is-invalid': errors.city }" 
+                    required>
+                    <option value="">請選擇城市</option>
+                    <option v-for="cityName in cityOptions" :key="cityName" :value="cityName">
+                        {{ cityName }}
+                    </option>
+                </select>
                 <input 
+                    v-else
                     id="city" 
                     v-model="form.city" 
                     type="text" 
