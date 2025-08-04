@@ -55,10 +55,14 @@ const handleClaim = (coupon) => {
 
     <div class="row row-cols-1 row-cols-md-2 g-4">
       <div class="col" v-for="coupon in coupons" :key="coupon.couponId">
-        <div
-          class="card h-100"
-          :class="claimedCouponIds.includes(coupon.couponId) ? 'border-secondary text-muted' : 'border-success'"
-        >
+       <div
+            class="card h-100"
+            :class="[
+              claimedCouponIds.includes(coupon.couponId)
+                ? 'border-secondary text-muted bg-light'
+                : 'border-success bg-white'
+            ]"
+          >
           <div class="card-body">
             <h5 class="card-title">{{ coupon.name }}</h5>
             <p class="card-text">
@@ -100,5 +104,14 @@ const handleClaim = (coupon) => {
 }
 .card:hover {
   transform: translateY(-3px);
+}
+.claimed-bg {
+  background-color: #f0f0f0;
+}
+.unclaimed-bg {
+  background-color: #ffffff;
+}
+.campaign-container {
+  background-color: #b287e6;  /* 換背景顏色 */
 }
 </style>

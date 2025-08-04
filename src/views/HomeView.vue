@@ -15,7 +15,6 @@ import LoadingComponent from '@/components/LoadingComponent.vue';
     <ProductGridComponent></ProductGridComponent>
     <!-- 活動組件 --如謙-->
     <ActivityComponent></ActivityComponent>
-    <hr>
     <!-- 優惠券組件 --梓瑋-->
     <CouponComponent></CouponComponent>
 
