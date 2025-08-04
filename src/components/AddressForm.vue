@@ -47,8 +47,6 @@ const isEdit = computed(() => props.address !== null)
 
 // 計算屬性：判斷是否為超商地址 --------------------------------------------------------------------------------------------
 const isStoreAddress = computed(() => form.addressType === '1')
-//////做到這裡
-// 計算屬性：判斷是否為一般宅配地址
 // 計算屬性：判斷是否為一般宅配地址
 const isHomeAddress = computed(() => form.addressType === '0')
 
