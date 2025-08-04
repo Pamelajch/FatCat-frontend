@@ -49,7 +49,7 @@ const handleClaim = (coupon) => {
 </script>
 
 <template>
-  <div class="campaign-container container-fluid py-5">
+  <div id="coupon-section" class="campaign-container container-fluid py-5">
     <h2 class="text-center mb-5 display-5 fw-bold text-black">優惠領取</h2>
     <p v-if="message" class="text-danger text-center">{{ message }}</p>
 

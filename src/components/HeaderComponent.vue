@@ -43,6 +43,22 @@
     const closeDropdown = () => {
       showSearchDropdown.value = false;
     };
+
+    // 取得活動路由
+    const getCampaignRoute = (campaignTitle) => {
+      switch (campaignTitle) {
+        case '夏季清爽泡麵祭！全館88折':
+          return { name: 'campaigns', hash: '#campaign-1' };
+        case '情人節雙人套餐':
+          return { name: 'campaigns', hash: '#campaign-2' };
+        case '新品上市：地獄廚神聯名款麻辣泡麵':
+          return { name: 'campaigns', hash: '#campaign-4' };
+        case '我們的堅持：只用最好的食材':
+          return { name: 'campaigns', hash: '#campaign-5' };
+        default:
+          return { name: 'campaigns' }; // 預設導向活動頁面
+      }
+    };
     // 搜尋功能區end ----------------------------------------------------------
         
     //登入登出功能區------------------------------------------
@@ -258,7 +274,14 @@
             <div v-if="searchResult.categories.length">
               <div class="search-title">商品大分類</div>
               <ul>
-                <li v-for="c in searchResult.categories" :key="c.productCategoriesId">{{ c.name }}</li>
+                <li v-for="c in searchResult.categories" :key="c.productCategoriesId">
+                  <RouterLink
+                    :to="c.name === '特殊款泡麵' ? { name: 'specialnoodle' } : { name: 'productlist' }"
+                    @click="closeDropdown"
+                  >
+                    {{ c.name }}
+                  </RouterLink>
+                </li>
               </ul>
             </div>
             <div v-if="searchResult.sorts.length">
@@ -287,13 +310,27 @@
             <div v-if="searchResult.coupons.length">
               <div class="search-title">優惠券</div>
               <ul>
-                <li v-for="c in searchResult.coupons" :key="c.couponId">{{ c.couponCode }} - {{ c.description }}</li>
+                <li v-for="c in searchResult.coupons" :key="c.couponId">
+                  <RouterLink
+                    :to="{ name: 'home', hash: '#coupon-section' }"
+                    @click="closeDropdown"
+                  >
+                    {{ c.couponCode }} - {{ c.description }}
+                  </RouterLink>
+                </li>
               </ul>
             </div>
             <div v-if="searchResult.campaigns.length">
               <div class="search-title">活動</div>
               <ul>
-                <li v-for="c in searchResult.campaigns" :key="c.campaignId">{{ c.title }}</li>
+                <li v-for="c in searchResult.campaigns" :key="c.campaignId">
+                  <RouterLink
+                    :to="getCampaignRoute(c.title)"
+                    @click="closeDropdown"
+                  >
+                    {{ c.title }}
+                  </RouterLink>
+                </li>
               </ul>
             </div>
             <div v-if="!searchResult.categories.length && !searchResult.sorts.length && !searchResult.products.length && !searchResult.coupons.length && !searchResult.campaigns.length">

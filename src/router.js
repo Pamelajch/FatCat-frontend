@@ -213,6 +213,31 @@ const routes = [
 const router = createRouter({
     history: createWebHistory(),
     routes,
+    scrollBehavior(to, from, savedPosition) {
+        // 如果有錨點，滾動到指定元素
+        if (to.hash) {
+            return new Promise((resolve) => {
+                // 等待頁面渲染完成後再滾動
+                setTimeout(() => {
+                    const element = document.querySelector(to.hash);
+                    if (element) {
+                        resolve({
+                            el: to.hash,
+                            behavior: 'smooth'
+                        });
+                    } else {
+                        resolve({ top: 0 });
+                    }
+                }, 300);
+            });
+        }
+        // 如果有保存的位置（例如返回上一頁）
+        if (savedPosition) {
+            return savedPosition;
+        }
+        // 否則滾動到頂部
+        return { top: 0 };
+    }
 });
 
 router.afterEach((to, from) => {
