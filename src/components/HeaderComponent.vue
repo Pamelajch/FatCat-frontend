@@ -228,11 +228,11 @@
       <!-- 左側 Logo + 店名 -->
       <RouterLink :to="{name:'home'}" class="d-flex align-items-center gap-2 flex-shrink-0 text-decoration-none">
         <img src="/cat-logo.png" alt="logo" class="logo-img" />
-        <img src="/cat-font.png" alt="" style="height: 50px;">
+        <img src="/cat-font.png" alt="" style="height: 50px;" class="d-none d-lg-inline">
       </RouterLink>
 
       <!-- 搜尋區塊 -->
-      <div class="search-bar position-relative me-3" ref="searchBarRef">
+      <div class="search-bar position-relative me-3 me-md-2 me-sm-1" ref="searchBarRef">
         <div class="group">
            <i class="fa-solid fa-magnifying-glass search-icon"></i>
           <input
@@ -304,7 +304,7 @@
       </div>
 
       <!-- 右側按鈕群組 -->
-      <div class="d-flex align-items-center gap-3 gap-lg-4">      
+      <div class="d-flex align-items-center gap-1 gap-sm-2 gap-md-3 gap-lg-4 flex-shrink-0">      
         <RouterLink :to="{name:'home'}" class="icon-btn" title="首頁"><i class="bi bi-house-door"></i></RouterLink>
         <RouterLink :to="{name:'drink'}" class="icon-btn" title="飲料"><i class="fa-solid fa-martini-glass"></i></RouterLink>
         <RouterLink :to="{name:'productlist'}" class="icon-btn" title="商品"><i class="fa-solid fa-bowl-food"></i></RouterLink>
@@ -354,9 +354,9 @@
           </ul>
         </div>
         <!-- 通知按鈕 -->
-        <button type="button" class="btn btn-primary position-relative icon-btn"
+        <button type="button" class="position-relative icon-btn"
                 @click="goToNotification" title="通知">
-          <i class="bi bi-bell"></i>
+          <i class="fa fa-bell"></i>
           <span v-if="unreadCount > 0"
                 class="position-absolute top-0 start-100 badge rounded-pill bg-danger" 
                 style="font-size: 0.75rem; transform: translate(-75%,-20%);">
@@ -419,6 +419,8 @@
 搜尋功能樣式 */
 .search-bar {
   min-width: 500px;
+  flex: 1;
+  max-width: 600px;
 }
 
 .search-dropdown {
@@ -530,11 +532,17 @@
 }
 /* 響應式設計 */
 @media (max-width: 992px) {
+  .search-bar {
+    min-width: 300px;
+  }
   .group {
     max-width: 250px;
   }
 }
 @media (max-width: 768px) {
+  .search-bar {
+    min-width: 200px;
+  }
   .group {
     max-width: 180px;
   }
@@ -544,8 +552,11 @@
   }
 }
 @media (max-width: 576px) {
+  .search-bar {
+    min-width: 120px;
+  }
   .group {
-    max-width: 120px;
+    max-width: 100px;
   }
   .input {
     height: 32px;
@@ -582,6 +593,124 @@
   
   .icon-btn {
     font-size: 1.1rem;
+    min-width: 32px; /* 確保按鈕有最小寬度 */
+    padding: 0.25rem;
+  }
+}
+
+/* 超小螢幕額外優化 */
+@media (max-width: 480px) {
+  .search-bar {
+    min-width: 100px;
+    margin-right: 0.5rem !important; /* 進一步縮小與按鈕間距 */
+  }
+  
+  .icon-btn {
+    font-size: 1rem;
+    min-width: 28px;
+    padding: 0.2rem;
+  }
+  
+  .user-avatar {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* 極小螢幕優化 */
+@media (max-width: 380px) {
+  .search-bar {
+    min-width: 70px;
+    margin-right: 0.3rem !important; /* 極小螢幕間距 */
+  }
+  
+  .group {
+    max-width: 70px;
+  }
+  
+  .icon-btn {
+    font-size: 0.9rem;
+    min-width: 24px;
+    padding: 0.15rem;
+  }
+  
+  .user-avatar {
+    width: 18px;
+    height: 18px;
+  }
+  
+  /* 移除gap override，使用HTML類別控制 */
+}
+
+/* 320px 極限優化 */
+@media (max-width: 320px) {
+  .search-bar {
+    min-width: 60px;
+    margin-right: 0.25rem !important; /* 最小間距 */
+  }
+  
+  .group {
+    max-width: 60px;
+  }
+  
+  .input {
+    height: 28px;
+    font-size: 0.8rem;
+    padding-left: 1.5rem;
+  }
+  
+  .search-icon {
+    left: 0.5rem;
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+  
+  .icon-btn {
+    font-size: 0.8rem;
+    min-width: 20px;
+    padding: 0.1rem;
+  }
+  
+  .user-avatar {
+    width: 16px;
+    height: 16px;
+  }
+  
+  /* 使用HTML gap類別，不需要CSS override */
+}
+
+/* 280px 超極限優化 - 確保所有按鈕顯示 */
+@media (max-width: 280px) {
+  .search-bar {
+    min-width: 50px;
+    margin-right: 0.2rem !important;
+  }
+  
+  .group {
+    max-width: 50px;
+  }
+  
+  .input {
+    height: 24px;
+    font-size: 0.7rem;
+    padding-left: 1.2rem;
+  }
+  
+  .search-icon {
+    left: 0.3rem;
+    width: 0.7rem;
+    height: 0.7rem;
+  }
+  
+  .icon-btn {
+    font-size: 0.7rem;
+    min-width: 18px;
+    padding: 0.05rem;
+  }
+  
+  .user-avatar {
+    width: 14px;
+    height: 14px;
   }
 }
 
