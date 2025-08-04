@@ -5,7 +5,11 @@ const coupons = ref([]);
 const shippings = ref([]);
 const message = ref('');
 const claimedCouponIds = ref([]);
+const LOCAL_STORAGE_KEY = 'claimedCoupons'
 
+const saveClaimedCoupons = () => {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(claimedCouponIds.value))
+}
 // 計算最小與最大運費
 const minShippingFee = computed(() => {
   if (shippings.value.length === 0) return 0;
@@ -17,35 +21,48 @@ const maxShippingFee = computed(() => {
 });
 
 onMounted(async () => {
-  try {
-    const res = await fetch('https://localhost:7017/api/Coupons');
-    if (!res.ok) throw new Error('載入優惠券失敗');
-    const data = await res.json();
-
-    const now = new Date();
-    coupons.value = data.filter(coupon => new Date(coupon.expirydate) > now);
-  } catch (error) {
-    console.error(error);
-    message.value = '無法載入優惠券資料';
+  // 先讀取 localStorage 裡的優惠券領取資料
+  const stored = localStorage.getItem(LOCAL_STORAGE_KEY)
+  if (stored) {
+    try {
+      claimedCouponIds.value = JSON.parse(stored)
+    } catch (e) {
+      console.warn('解析 localStorage 領取優惠券失敗:', e)
+    }
   }
 
-  try {
-    const res2 = await fetch('https://localhost:7017/api/Shippings');
-    if (!res2.ok) throw new Error('載入運費失敗');
-    shippings.value = await res2.json();
-  } catch (error) {
-    console.error(error);
-    message.value += '\n無法載入運費資料';
-  }
+  // 你原本的 fetch 優惠券 & 運費資料程式碼...
+  try { 
+    const res = await fetch('https://localhost:7017/api/Coupons'); 
+    if (!res.ok) throw new Error('載入優惠券失敗'); 
+    const data = await res.json(); 
+ 
+    const now = new Date(); 
+    coupons.value = data.filter(coupon => new Date(coupon.expirydate) > now); 
+  } catch (error) { 
+    console.error(error); 
+    message.value = '無法載入優惠券資料'; 
+  } 
+ 
+  try { 
+    const res2 = await fetch('https://localhost:7017/api/Shippings'); 
+    if (!res2.ok) throw new Error('載入運費失敗'); 
+    shippings.value = await res2.json(); 
+  } catch (error) { 
+    console.error(error); 
+    message.value += '\n無法載入運費資料'; 
+  } 
 });
 
-// 模擬領取功能
-const handleClaim = (coupon) => {
-  if (claimedCouponIds.value.includes(coupon.couponId)) return;
-
-  claimedCouponIds.value.push(coupon.couponId);
-  alert(`成功領取優惠券：${coupon.description}`);
+const handleClaim = (coupon) => { 
+  if (claimedCouponIds.value.includes(coupon.couponId)) return; 
+ 
+  claimedCouponIds.value.push(coupon.couponId); 
+  saveClaimedCoupons() // 儲存到 localStorage
+  alert(`成功領取優惠券：${coupon.description}`); 
 };
+
+
 </script>
 
 <template>
