@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, defineExpose, computed } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import api from '@/services/jjapi.js'
 import { useCheckoutStore } from '@/stores/checkout'
 import { useAuthStore } from '@/stores/auth'
