@@ -114,33 +114,33 @@ const openMapModal = () => {
       form.storeType = 0 // 7-Eleven 的 StoreType 是 0
       form.storeBranch = '' // 7-11 沒有分店名，設為空字串
       
-             // 解析地址 - 使用台灣地區資料進行智能解析
-       const addr = storeInfo.storeAddress
-       
-       // 遍歷所有城市，找到匹配的
-       for (const cityData of twCities) {
-         if (addr.includes(cityData.name)) {
-           form.city = cityData.name
-           
-           // 移除城市名稱後，嘗試匹配區域
-           const addressWithoutCity = addr.replace(cityData.name, '')
-           
-           // 找到匹配的區域
-           const matchedDistrict = cityData.districts.find(district => 
-             addressWithoutCity.includes(district.name)
-           )
-           
-           if (matchedDistrict) {
-             form.district = matchedDistrict.name
-           } else {
-             // 如果找不到完全匹配，使用前3個字符作為備選
-             form.district = addressWithoutCity.substring(0, 3)
-           }
-           break
-         }
-       }
-
+      // 解析地址 - 使用台灣地區資料進行智能解析
+      const addr = storeInfo.storeAddress
       
+      // 遍歷所有城市，找到匹配的
+      for (const cityData of twCities) {
+        if (addr.includes(cityData.name)) {
+          form.city = cityData.name
+          
+          // 移除城市名稱後，嘗試匹配區域
+          const addressWithoutCity = addr.replace(cityData.name, '')
+          
+          // 找到匹配的區域
+          const matchedDistrict = cityData.districts.find(district => 
+            addressWithoutCity.includes(district.name)
+          )
+          
+          if (matchedDistrict) {
+            // 對於超商地址，區域欄位顯示門市名稱
+            form.district = form.storeName
+          } else {
+            // 如果找不到完全匹配，區域欄位顯示門市名稱
+            form.district = form.storeName
+          }
+          break
+        }
+      }
+
       showMapModal.value = false
       mapLoading.value = false
       window.removeEventListener('message', messageHandler)
@@ -190,7 +190,12 @@ watch(() => props.address, (newAddress) => {
         form.storeName = newAddress.storeName || ''
         form.storeBranch = newAddress.storeBranch || ''
         form.city = newAddress.city || ''
-        form.district = newAddress.district || ''
+        // 如果是超商地址，區域欄位顯示門市名稱
+        if (newAddress.addressType === 1) {
+            form.district = newAddress.storeName || ''
+        } else {
+            form.district = newAddress.district || ''
+        }
         form.addressDetail = newAddress.addressDetail || ''
         form.isDefault = newAddress.isDefault || false
     }
@@ -225,13 +230,15 @@ const handleSubmit = () => {
         addressDetail: form.addressDetail.trim(),
         isDefault: form.isDefault
     }
-    // 如果是超商地址，加入超商相關欄位S
+    // 如果是超商地址，加入超商相關欄位
     if (isStoreAddress.value) {
        // 確保 storeType 有值，如果沒有則設為 0 (7-11)
         submitData.storeType = form.storeType !== null ? parseInt(form.storeType) : 0
         submitData.storeName = form.storeName.trim()
         // 如果 storeBranch 為空, 設為空字串
         submitData.storeBranch = form.storeBranch? form.storeBranch.trim() : ''
+        // 對於超商地址，將門市名稱也設定到 district 欄位
+        submitData.district = form.storeName.trim()
     }
     console.log('提交資料:', submitData) // 測試
     emit('submit', submitData)
@@ -347,7 +354,7 @@ const handleSubmit = () => {
             </div>
             <!-- 區域 -->
             <div class="form-group">
-                <label for="district" class="form-label">區域 *</label>
+                <label for="district" class="form-label">{{ isStoreAddress ? '分店名稱' : '區域 *' }}</label>
                 <select 
                     v-if="isHomeAddress" 
                     id="district" 
@@ -355,7 +362,7 @@ const handleSubmit = () => {
                     class="form-select" 
                     :class="{ 'is-invalid': errors.district }" 
                     :disabled="!form.city"
-                    required
+                    :required="!form.city"
                 >
                     <option value="">{{ form.city ? '請選擇區域' : '請先選擇城市' }}</option>
                     <option v-for="district in districtOptions" :key="district.zip" :value="district.name">
@@ -369,7 +376,7 @@ const handleSubmit = () => {
                     type="text" 
                     class="form-control" 
                     :class="{ 'is-invalid': errors.district }" 
-                    :placeholder="isStoreAddress ? '請先選擇門市' : '請輸入區域'" 
+                    :placeholder="isStoreAddress ? form.storeName || '請先選擇門市' : '請輸入區域'" 
                     :readonly="isStoreAddress"
                     :disabled="isStoreAddress"
                     required 
