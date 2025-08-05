@@ -19,7 +19,7 @@ const maxShippingFee = computed(() => {
   if (shippings.value.length === 0) return 0;
   return Math.max(...shippings.value.map(s => s.shippingFee));
 });
-
+ 
 onMounted(async () => {
   // 先讀取 localStorage 裡的優惠券領取資料
   const stored = localStorage.getItem(LOCAL_STORAGE_KEY)
