@@ -3,10 +3,11 @@
     import { useRouter } from 'vue-router'
     import { computed } from 'vue'
     import { useCartStore } from '@/stores/cart'
+    import { useNotificationStore } from '@/stores/notification'
     import CartOffcanvas from '@/components/CartOffcanvas.vue'
     import * as bootstrap from 'bootstrap'
     import Swal from 'sweetalert2'
-    import {ref,onMounted, watch} from 'vue'
+    import {ref,onMounted, onUnmounted, watch} from 'vue'
     import api from '@/services/jjapi'
     import { searchAll } from '@/services/searchService.js';
 
@@ -42,6 +43,22 @@
     const closeDropdown = () => {
       showSearchDropdown.value = false;
     };
+
+    // 取得活動路由
+    const getCampaignRoute = (campaignTitle) => {
+      switch (campaignTitle) {
+        case '夏季清爽泡麵祭！全館88折':
+          return { name: 'campaigns', hash: '#campaign-1' };
+        case '情人節雙人套餐':
+          return { name: 'campaigns', hash: '#campaign-2' };
+        case '新品上市：地獄廚神聯名款麻辣泡麵':
+          return { name: 'campaigns', hash: '#campaign-4' };
+        case '我們的堅持：只用最好的食材':
+          return { name: 'campaigns', hash: '#campaign-5' };
+        default:
+          return { name: 'campaigns' }; // 預設導向活動頁面
+      }
+    };
     // 搜尋功能區end ----------------------------------------------------------
         
     //登入登出功能區------------------------------------------
@@ -51,6 +68,9 @@
 
     // 使用Cart store
     const cartStore = useCartStore()
+
+    // 使用notification store
+    const notificationStore = useNotificationStore()
 
     // 計算屬性：是否已登入
     const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -147,36 +167,53 @@
     //登入登出功能區 end-------------------------------------
     
     // 通知功能區------------------------------------------
-    // 未讀通知數量
-    const unreadCount = ref(0)
+    // 使用 store 的未讀通知數量
+    const unreadCount = computed(() => notificationStore.userUnreadCount)
 
     async function fetchUnreadCount() {
       const user = localStorage.getItem('user')
       const userId = user ? JSON.parse(user).userId : null
       if (!userId) {
-        unreadCount.value = 0
         console.log('無法從localstorage 取得 userId，未讀通知數量設為 0')
         return
       }
       if (!isAuthenticated.value){
-        unreadCount.value = 0
         console.log('未登入，未讀通知數量設為 0')
         return
       }
-      try {
-        const res = await api.get(`/Notifications/User/${userId}`)
-        // 統計未讀
-        unreadCount.value = res.data.filter(n => !n.isRead).length
-        console.log('取得未讀通知數量:', unreadCount.value)
-      } catch (error) {
-        unreadCount.value = 0
-        console.error('取得未讀通知數量失敗:', error)
+      await notificationStore.fetchUserNotifications(userId)
+      console.log('取得未讀通知數量:', unreadCount.value)
+    }
+
+    // 定義清理變量
+    let notificationInterval = null
+    const handleFocus = () => {
+      if (isAuthenticated.value) {
+        fetchUnreadCount()
       }
     }
 
     // 頁面載入時取得未讀通知數量
     onMounted(() => {
       fetchUnreadCount()
+      
+      // 當頁面重新獲得焦點時，重新檢查通知
+      window.addEventListener('focus', handleFocus)
+      
+      // 定期檢查通知（每2分鐘）
+      notificationInterval = setInterval(() => {
+        if (isAuthenticated.value) {
+          fetchUnreadCount()
+        }
+      }, 120000) // 2分鐘
+    })
+
+    // 清理事件監聽器
+    onUnmounted(() => {
+      window.removeEventListener('focus', handleFocus)
+      if (notificationInterval) {
+        clearInterval(notificationInterval)
+      }
     })
     
     // 如果有登入狀態變化，重新取得未讀數量
@@ -184,7 +221,7 @@
       if (newVal) {
         fetchUnreadCount()
       } else {
-        unreadCount.value = 0
+        notificationStore.clearUserNotifications()
       }
     })
 
@@ -207,11 +244,11 @@
       <!-- 左側 Logo + 店名 -->
       <RouterLink :to="{name:'home'}" class="d-flex align-items-center gap-2 flex-shrink-0 text-decoration-none">
         <img src="/cat-logo.png" alt="logo" class="logo-img" />
-        <img src="/cat-font.png" alt="" style="height: 50px;">
+        <img src="/cat-font.png" alt="" style="height: 50px;" class="d-none d-lg-inline">
       </RouterLink>
 
       <!-- 搜尋區塊 -->
-      <div class="search-bar position-relative me-3" ref="searchBarRef">
+      <div class="search-bar position-relative me-3 me-md-2 me-sm-1" ref="searchBarRef">
         <div class="group">
            <i class="fa-solid fa-magnifying-glass search-icon"></i>
           <input
@@ -237,7 +274,14 @@
             <div v-if="searchResult.categories.length">
               <div class="search-title">商品大分類</div>
               <ul>
-                <li v-for="c in searchResult.categories" :key="c.productCategoriesId">{{ c.name }}</li>
+                <li v-for="c in searchResult.categories" :key="c.productCategoriesId">
+                  <RouterLink
+                    :to="c.name === '特殊款泡麵' ? { name: 'specialnoodle' } : { name: 'productlist' }"
+                    @click="closeDropdown"
+                  >
+                    {{ c.name }}
+                  </RouterLink>
+                </li>
               </ul>
             </div>
             <div v-if="searchResult.sorts.length">
@@ -266,13 +310,27 @@
             <div v-if="searchResult.coupons.length">
               <div class="search-title">優惠券</div>
               <ul>
-                <li v-for="c in searchResult.coupons" :key="c.couponId">{{ c.couponCode }} - {{ c.description }}</li>
+                <li v-for="c in searchResult.coupons" :key="c.couponId">
+                  <RouterLink
+                    :to="{ name: 'home', hash: '#coupon-section' }"
+                    @click="closeDropdown"
+                  >
+                    {{ c.couponCode }} - {{ c.description }}
+                  </RouterLink>
+                </li>
               </ul>
             </div>
             <div v-if="searchResult.campaigns.length">
               <div class="search-title">活動</div>
               <ul>
-                <li v-for="c in searchResult.campaigns" :key="c.campaignId">{{ c.title }}</li>
+                <li v-for="c in searchResult.campaigns" :key="c.campaignId">
+                  <RouterLink
+                    :to="getCampaignRoute(c.title)"
+                    @click="closeDropdown"
+                  >
+                    {{ c.title }}
+                  </RouterLink>
+                </li>
               </ul>
             </div>
             <div v-if="!searchResult.categories.length && !searchResult.sorts.length && !searchResult.products.length && !searchResult.coupons.length && !searchResult.campaigns.length">
@@ -283,7 +341,7 @@
       </div>
 
       <!-- 右側按鈕群組 -->
-      <div class="d-flex align-items-center gap-3 gap-lg-4">      
+      <div class="d-flex align-items-center gap-1 gap-sm-2 gap-md-3 gap-lg-4 flex-shrink-0">      
         <RouterLink :to="{name:'home'}" class="icon-btn" title="首頁"><i class="bi bi-house-door"></i></RouterLink>
         <RouterLink :to="{name:'drink'}" class="icon-btn" title="飲料"><i class="fa-solid fa-martini-glass"></i></RouterLink>
         <RouterLink :to="{name:'productlist'}" class="icon-btn" title="商品"><i class="fa-solid fa-bowl-food"></i></RouterLink>
@@ -333,12 +391,12 @@
           </ul>
         </div>
         <!-- 通知按鈕 -->
-        <button type="button" class="btn btn-primary position-relative icon-btn"
+        <button type="button" class="position-relative icon-btn"
                 @click="goToNotification" title="通知">
-          <i class="bi bi-bell"></i>
+          <i class="fa fa-bell"></i>
           <span v-if="unreadCount > 0"
                 class="position-absolute top-0 start-100 badge rounded-pill bg-danger" 
-                style="transform: translate(-50%,2%);">
+                style="font-size: 0.75rem; transform: translate(-75%,-20%);">
             {{ unreadCount > 99 ? '99+' : unreadCount }}
             <span class="visually-hidden">unread messages</span>
           </span>
@@ -398,6 +456,8 @@
 搜尋功能樣式 */
 .search-bar {
   min-width: 500px;
+  flex: 1;
+  max-width: 600px;
 }
 
 .search-dropdown {
@@ -509,11 +569,17 @@
 }
 /* 響應式設計 */
 @media (max-width: 992px) {
+  .search-bar {
+    min-width: 300px;
+  }
   .group {
     max-width: 250px;
   }
 }
 @media (max-width: 768px) {
+  .search-bar {
+    min-width: 200px;
+  }
   .group {
     max-width: 180px;
   }
@@ -523,8 +589,11 @@
   }
 }
 @media (max-width: 576px) {
+  .search-bar {
+    min-width: 120px;
+  }
   .group {
-    max-width: 120px;
+    max-width: 100px;
   }
   .input {
     height: 32px;
@@ -561,6 +630,124 @@
   
   .icon-btn {
     font-size: 1.1rem;
+    min-width: 32px; /* 確保按鈕有最小寬度 */
+    padding: 0.25rem;
+  }
+}
+
+/* 超小螢幕額外優化 */
+@media (max-width: 480px) {
+  .search-bar {
+    min-width: 100px;
+    margin-right: 0.5rem !important; /* 進一步縮小與按鈕間距 */
+  }
+  
+  .icon-btn {
+    font-size: 1rem;
+    min-width: 28px;
+    padding: 0.2rem;
+  }
+  
+  .user-avatar {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* 極小螢幕優化 */
+@media (max-width: 380px) {
+  .search-bar {
+    min-width: 70px;
+    margin-right: 0.3rem !important; /* 極小螢幕間距 */
+  }
+  
+  .group {
+    max-width: 70px;
+  }
+  
+  .icon-btn {
+    font-size: 0.9rem;
+    min-width: 24px;
+    padding: 0.15rem;
+  }
+  
+  .user-avatar {
+    width: 18px;
+    height: 18px;
+  }
+  
+  /* 移除gap override，使用HTML類別控制 */
+}
+
+/* 320px 極限優化 */
+@media (max-width: 320px) {
+  .search-bar {
+    min-width: 60px;
+    margin-right: 0.25rem !important; /* 最小間距 */
+  }
+  
+  .group {
+    max-width: 60px;
+  }
+  
+  .input {
+    height: 28px;
+    font-size: 0.8rem;
+    padding-left: 1.5rem;
+  }
+  
+  .search-icon {
+    left: 0.5rem;
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+  
+  .icon-btn {
+    font-size: 0.8rem;
+    min-width: 20px;
+    padding: 0.1rem;
+  }
+  
+  .user-avatar {
+    width: 16px;
+    height: 16px;
+  }
+  
+  /* 使用HTML gap類別，不需要CSS override */
+}
+
+/* 280px 超極限優化 - 確保所有按鈕顯示 */
+@media (max-width: 280px) {
+  .search-bar {
+    min-width: 50px;
+    margin-right: 0.2rem !important;
+  }
+  
+  .group {
+    max-width: 50px;
+  }
+  
+  .input {
+    height: 24px;
+    font-size: 0.7rem;
+    padding-left: 1.2rem;
+  }
+  
+  .search-icon {
+    left: 0.3rem;
+    width: 0.7rem;
+    height: 0.7rem;
+  }
+  
+  .icon-btn {
+    font-size: 0.7rem;
+    min-width: 18px;
+    padding: 0.05rem;
+  }
+  
+  .user-avatar {
+    width: 14px;
+    height: 14px;
   }
 }
 

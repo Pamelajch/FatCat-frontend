@@ -1,6 +1,10 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import Swal from 'sweetalert2'
+import { useNotificationStore } from '@/stores/notification' // 上架發送通知 by jj
+
+// 引入 notification store  by jj
+const notificationStore = useNotificationStore()
 
 const products = ref([])
 const categories = ref([])
@@ -76,9 +80,21 @@ const toggleStatus = async (product) => {
 
     const result = await res.json()
 
+    // 記錄原始狀態，用於檢查是否為上架操作 by jj
+    const wasOffline = !product.isAvailable
+    
     // 更新前端的狀態（即時畫面同步）
     product.statusText = result.statusText
     product.isAvailable = result.isAvailable
+
+    // 如果是從下架變為上架，觸發用戶通知刷新 by jj
+    if (wasOffline && product.isAvailable) {
+      console.log(`商品「${product.name}」已上架，觸發用戶通知刷新`)
+      // 延遲一點時間讓後端通知寫入完成
+      setTimeout(async () => {
+        await notificationStore.refreshUserNotifications()
+      }, 1000)
+    }
   } catch (err) {
     console.error('切換上下架失敗', err)
     alert('操作失敗，請稍後再試')
