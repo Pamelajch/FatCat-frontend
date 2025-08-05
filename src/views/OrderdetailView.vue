@@ -35,6 +35,34 @@ const cancelOrder = async () => {
     alert('取消訂單失敗，請稍後再試。')
   }
 }
+
+const returnOrder = async () => {
+  const confirmReturn = window.confirm('確定要退貨嗎？')
+  if (!confirmReturn) return
+
+  try {
+    const res = await fetch(`https://localhost:7017/api/Orders/${orderId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ...order.value,
+        orderStatusId: 4 // 代表已退貨
+      })
+    })
+
+    if (!res.ok) throw new Error('退貨失敗')
+
+    order.value.orderStatusId = 4
+    alert('訂單已申請退貨。')
+
+  } catch (err) {
+    console.error('退貨失敗:', err)
+    alert('退貨失敗，請稍後再試。')
+  }
+}
+
 const fetchOrderDetail = async () => {
   try {
     const [orderRes, itemsRes] = await Promise.all([
@@ -52,6 +80,37 @@ const props = defineProps({
   order: Object
 })
 
+
+const handleOrderAction = async () => {
+  const isReturn = orderStatusId.value === 3
+  const actionText = isReturn ? '退貨' : '取消訂單'
+  const confirmAction = window.confirm(`確定要${actionText}嗎？`)
+
+  if (!confirmAction) return
+
+  try {
+    const newStatusId = isReturn ? 4 : 6
+    const res = await fetch(`https://localhost:7017/api/Orders/${orderId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ...order.value,
+        orderStatusId: newStatusId
+      })
+    })
+
+    if (!res.ok) throw new Error(`${actionText}失敗`)
+
+    order.value.orderStatusId = newStatusId
+    alert(`訂單已成功${isReturn ? '申請退貨' : '取消'}`)
+
+  } catch (err) {
+    console.error(`${actionText}失敗:`, err)
+    alert(`${actionText}失敗，請稍後再試。`)
+  }
+}
 onMounted(fetchOrderDetail)
 </script>
 
@@ -59,6 +118,7 @@ onMounted(fetchOrderDetail)
   <div class="page-content-wrapper pt-5 pb-5">
     <div class="container mb-2">
       <h2>訂單明細</h2>
+      <p class="text-muted">訂單編號：{{ orderId }}</p>
       <div class="accordion col-lg-10 container mb-5" id="accordionPanelsStayOpenExample">
         <div class="accordion-item">
           <h2 class="accordion-header" id="panelsStayOpen-headingOne">
@@ -97,13 +157,14 @@ onMounted(fetchOrderDetail)
       </button>
       
       <button
-          v-if="!isOrderCanceled"
-          type="button"
-          class="btn btn-danger float-end btn-space"
-          @click="cancelOrder"
-        >
-          取消訂單
-        </button>
+        v-if="!isOrderCanceled && orderStatusId !== 4 && (orderStatusId === 3 || orderStatusId !== 6)"
+        type="button"
+        class="btn btn-danger float-end btn-space"
+        @click="handleOrderAction"
+      >
+        {{ orderStatusId === 3 ? '我要退貨' : '取消訂單' }}
+      </button>
+
 
             <router-link to="/myorders">
         <button type="button" class="btn custom-purple-outline-btn float-end btn-space">

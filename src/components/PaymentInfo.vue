@@ -1,4 +1,4 @@
-<template>
+<template> 
   <ul class="list-group">
     <li class="list-group-item">
       <h3>付款資料</h3>
@@ -7,21 +7,33 @@
     <!-- 優惠券選擇 -->
     <li class="list-group-item">
       使用優惠券:
-      <select class="form-select form-select-sm" v-model="checkout.couponId">
-      <option value="">請選擇優惠</option>
-      <option 
-        v-for="coupon in couponOptions" 
-        :key="coupon.couponId"
-        :value="coupon.couponId"
-        :disabled="coupon.minimumPurchase > 0 && productTotal < coupon.minimumPurchase"
+      <select
+        class="form-select form-select-sm"
+        v-model="checkout.couponId"
+        :disabled="usableCoupons.length === 0"
       >
-        {{ coupon.description }}
-        <template v-if="coupon.minimumPurchase > 0">
-          （低消 {{ coupon.minimumPurchase }} 元
-          {{ productTotal < coupon.minimumPurchase ? '，未達門檻' : '' }}）
+        <!-- 使用者有可用優惠券 -->
+        <template v-if="usableCoupons.length > 0">
+          <option value="">請選擇優惠券</option>
+          <option 
+            v-for="coupon in usableCoupons" 
+            :key="coupon.couponId"
+            :value="coupon.couponId"
+            :disabled="coupon.minimumPurchase > 0 && productTotal < coupon.minimumPurchase"
+          >
+            {{ coupon.description }}
+            <template v-if="coupon.minimumPurchase > 0">
+              （低消 {{ coupon.minimumPurchase }} 元
+              {{ productTotal < coupon.minimumPurchase ? '，未達門檻' : '' }}）
+            </template>
+          </option>
         </template>
-      </option>
-    </select>
+
+        <!-- 使用者無可用優惠券 -->
+        <template v-else>
+          <option value="" selected>無可使用的優惠券</option>
+        </template>
+      </select>
 
       <!-- 提示訊息 -->
       <div v-if="couponMessage" class="text-danger mt-1">
@@ -53,15 +65,37 @@ const checkout = useCheckoutStore()
 const cartStore = useCartStore()
 
 const productTotal = computed(() => cartStore.total)
-const couponOptions = ref([])
-const couponMessage = ref('') // ✅ 優惠提示訊息
+const couponOptions = ref([])        // 從 API 取得的所有優惠券
+const couponMessage = ref('')        // 優惠券錯誤提示
+const claimedCouponIds = ref([])     // 從 localStorage 讀取的已領取優惠券ID列表
+
+const usableCoupons = computed(() =>
+  couponOptions.value.filter(coupon => claimedCouponIds.value.includes(coupon.couponId))
+)
+
 
 // ✅ 過濾出 minimumPurchase > 0 的優惠券
 const validCouponOptions = computed(() =>
   couponOptions.value.filter(c => c.minimumPurchase > 0)
 )
 
+const LOCAL_STORAGE_KEY = 'claimedCoupons'
+
+function loadClaimedCoupons() {
+  const stored = localStorage.getItem(LOCAL_STORAGE_KEY)
+  if (stored) {
+    try {
+      claimedCouponIds.value = JSON.parse(stored)
+    } catch (e) {
+      console.warn('解析 localStorage 領取優惠券失敗:', e)
+      claimedCouponIds.value = []
+    }
+  }
+}
+
 onMounted(async () => {
+  loadClaimedCoupons()
+
   try {
     const res = await axios.get('https://localhost:7017/api/Coupons')
     const now = new Date()

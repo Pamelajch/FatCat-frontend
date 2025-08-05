@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-
+import { useCartStore } from '@/stores/cart'
+const cartStore = useCartStore()
 const catRef = ref(null)
 const catX = ref(0)
 const catY = ref(0)
@@ -167,6 +168,19 @@ const runAway = () => {
     setTimeout(floatCat, 1000) // 一秒後回復漂浮
   }
 }
+
+const addCupToCart = async () => {
+  if (cup.value.length === 0) {
+    alert('請先加入一些材料喔！')
+    return
+  }
+
+  for (const product of cup.value) {
+    await cartStore.addItem(product)
+  }
+
+  alert('特調材料已加入購物車！')
+}
 </script>
 
 <template>
@@ -218,7 +232,7 @@ const runAway = () => {
     <!-- 中間：操作按鈕 -->
     <div class="action-buttons">
       <button class="magic-btn" @click="randomPick">🔮 隨機抽</button>
-      <button class="magic-btn">🛒 加入購物車</button>
+      <button class="magic-btn" @click="addCupToCart">🛒 加入購物車</button>
       <button class="magic-btn" @click="clearCup">🧼 清空特調</button>
     </div>
 

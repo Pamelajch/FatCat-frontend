@@ -9,6 +9,26 @@ const loading = ref(false)
 const error = ref(null)
 
 const cartTotal = computed(() => cartStore.total) // 購物車總金額
+// 新增：已領取的優惠券ID清單（localStorage）
+const claimedCouponIds = ref([])
+
+const LOCAL_STORAGE_KEY = 'claimedCoupons'
+
+function loadClaimedCoupons() {
+  const stored = localStorage.getItem(LOCAL_STORAGE_KEY)
+  if (stored) {
+    try {
+      claimedCouponIds.value = JSON.parse(stored)
+    } catch (e) {
+      console.warn('解析 localStorage 領取優惠券失敗:', e)
+    }
+  }
+}
+
+onMounted(() => {
+  loadClaimedCoupons()
+  fetchCoupons()
+})
 
 // 可用優惠：購物車金額 >= 優惠券門檻金額
 const availableCoupons = computed(() =>
@@ -76,6 +96,8 @@ onMounted(() => {
             <span v-else>
               （折 {{ coupon.discountAmount }} 元）
             </span>
+            <!-- 額外標示 -->
+            <span v-if="!claimedCouponIds.includes(coupon.couponId)" class="text-danger ms-2">(未領取)</span>
           </li>
         </ul>
       </div>
@@ -101,6 +123,9 @@ onMounted(() => {
             <span v-else>
               （折 {{ coupon.discountAmount }} 元）
             </span>
+
+            <!-- 額外標示 -->
+            <span v-if="!claimedCouponIds.includes(coupon.couponId)" class="text-danger ms-2">(未領取)</span>
           </li>
         </ul>
       </div>
