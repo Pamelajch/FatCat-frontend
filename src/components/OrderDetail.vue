@@ -24,7 +24,7 @@ const productImages = ref([])
 const orderStatuses = ref([])
 const shippingStatuses = ref([])
 
-// 用戶個人資料（從訂單API獲取）
+// 用戶個人資料（從訂單API獲取） 
 const userInfo = computed(() => ({
   name: order.value?.userName || '',
   email: order.value?.userEmail || '',

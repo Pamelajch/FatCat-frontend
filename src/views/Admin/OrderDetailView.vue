@@ -22,7 +22,7 @@ const fetchCouponDescription = async (couponId) => {
     couponDescription.value = '無使用優惠券'
     return
   }
-
+ 
   try {
     const res = await axios.get('https://localhost:7017/api/Coupons')
     const coupons = res.data
