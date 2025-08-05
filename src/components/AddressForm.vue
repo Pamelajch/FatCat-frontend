@@ -211,7 +211,8 @@ const validateForm = () => {
     if (!form.addressType) { errors.addressType = '請選擇地址類型'; isValid = false }
     if (isStoreAddress.value && !form.storeName.trim()) { errors.storeName = '請先選擇門市'; isValid = false }
     if (!form.city.trim()) { errors.city = '城市為必填欄位'; isValid = false }
-    if (!form.district.trim()) { errors.district = '區域為必填欄位'; isValid = false }
+    // 只有一般宅配地址才需要驗證區域欄位
+    if (isHomeAddress.value && !form.district.trim()) { errors.district = '區域為必填欄位'; isValid = false }
     if (!form.addressDetail.trim()) { errors.addressDetail = '詳細地址為必填欄位'; isValid = false }
     return isValid
 }
@@ -362,7 +363,7 @@ const handleSubmit = () => {
                     class="form-select" 
                     :class="{ 'is-invalid': errors.district }" 
                     :disabled="!form.city"
-                    :required="!form.city"
+                    required
                 >
                     <option value="">{{ form.city ? '請選擇區域' : '請先選擇城市' }}</option>
                     <option v-for="district in districtOptions" :key="district.zip" :value="district.name">

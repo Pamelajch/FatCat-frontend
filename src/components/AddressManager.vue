@@ -253,7 +253,7 @@ const setDefaultAddress = async (addressId) => {
             <div class="modal-content" @click.stop>
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        {{ editingAddress ? '編輯地址(AddressForm)' : '新增地址(AddressForm)' }}
+                        {{ editingAddress ? '編輯地址' : '新增地址' }}
                     </h5>
                     <button 
                         type="button" 
