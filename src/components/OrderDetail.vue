@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import api from '@/services/jjapi.js'  // 改用配置好的 api 實例
 import { useRoute } from 'vue-router'
 
+
 const route = useRoute()
 
 const props = defineProps({
@@ -23,6 +24,8 @@ const products = ref([])
 const productImages = ref([])
 const orderStatuses = ref([])
 const shippingStatuses = ref([])
+
+
 
 // 用戶個人資料（從訂單API獲取） 
 const userInfo = computed(() => ({
@@ -83,6 +86,8 @@ const detailedItems = computed(() => {
 const productTotal = computed(() =>
   detailedItems.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
 )
+
+
 
 onMounted(async () => {
   try {

@@ -81,6 +81,6 @@ export const useStreamStore = defineStore('stream', () => {
     checkCurrentStream,
     startStream,
     endStream,
-    initialize, // <--- 把它加回來了！
+    initialize, 
   };
 });

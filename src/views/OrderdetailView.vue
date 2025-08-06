@@ -5,6 +5,8 @@ import OrderItemList from '@/components/OrderItemList.vue'
 import OrderDetail from '@/components/OrderDetail.vue'
 import { useOrderStore } from '@/stores/order'
 import api from '@/services/jjapi.js'
+import CustomerService from '@/components/CustomerService.vue';
+
 
 const orderStore = useOrderStore()
 // 建議加載資料前先檢查是否為空，必要時使用 await fetch
@@ -15,6 +17,7 @@ const order = ref(null)
 const orderStatusId = computed(() => order.value?.orderStatusId || 0)
 const orderItems = ref([])
 const isOrderCanceled = computed(() => order.value?.orderStatusId === 6)
+const customerServiceRef = ref(null);
 
 const cancelOrder = async () => {
   const confirmCancel = window.confirm('確定要取消訂單嗎？此操作無法復原。')
@@ -111,6 +114,15 @@ const handleOrderAction = async () => {
     alert(`${actionText}失敗，請稍後再試。`)
   }
 }
+
+const openCustomerService = () => {
+  if (customerServiceRef.value) {
+    customerServiceRef.value.toggleChat();
+  }
+};
+
+
+
 onMounted(fetchOrderDetail)
 </script>
 
@@ -148,13 +160,15 @@ onMounted(fetchOrderDetail)
       
       <div class="mt-4">
   
-      <button
-        v-if="!isOrderCanceled"
-        type="button"
-        class="btn custom-purple-btn float-end btn-space"
-      >
-        聯絡我們
-      </button>
+        <button
+          v-if="!isOrderCanceled"
+          type="button"
+          class="btn custom-purple-btn float-end btn-space"
+          @click="openCustomerService" 
+        >
+          聯絡我們
+        </button>
+        <CustomerService ref="customerServiceRef" />
       
       <button
         v-if="!isOrderCanceled && orderStatusId !== 4 && (orderStatusId === 3 || orderStatusId !== 6)"
