@@ -291,10 +291,11 @@ const cancelEdit = () => {
           <div class="img-list">
             <div v-for="img in product.images" :key="img.productImagesId" class="img-card">
               <img :src="img.imageUrl" />
-              <button @click.prevent="deleteImage(img.productImagesId)">刪除</button>
+              <button @click.prevent="deleteImage(img.productImagesId)" class="image-button">刪除</button>
               <button
                 v-if="img.isMain !== 1"
                 @click.prevent="setMainImage(img.productImagesId)"
+                class="image-button"
               >
                 設主圖
               </button>
@@ -408,6 +409,23 @@ form textarea {
   object-fit: cover;
   border-radius: 6px;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.image-button {
+  margin-top: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  background-color: #ede7f6;
+  color: #7c4dff;
+  border: 1px solid #d1b3ff;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.image-button:hover {
+  background-color: #d1b3ff;
+  color: white;
 }
 
 .main-label {
