@@ -271,7 +271,7 @@ const setDefaultAddress = async (addressId) => {
                 </div>
             </div>
         </div> 
-    </div>
+    </div> 
 </template>
 <style scoped>
 .address-manager {
