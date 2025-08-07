@@ -65,12 +65,12 @@ export const useStreamStore = defineStore('stream', () => {
   };
   
   /**
-   * @description 【★ 核心修正 ★】初始化 store 的函式，供 App.vue 使用
+   * @description 
    */
   const initialize = () => {
       // 應用程式啟動時，自動檢查一次直播狀態
       checkCurrentStream();
-  };
+  }; 
 
   // 【★ 核心修正 ★】
   // 將 initialize 函式加回到 return 物件中
@@ -81,6 +81,6 @@ export const useStreamStore = defineStore('stream', () => {
     checkCurrentStream,
     startStream,
     endStream,
-    initialize, // <--- 把它加回來了！
+    initialize, 
   };
 });

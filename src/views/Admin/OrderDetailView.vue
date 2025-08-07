@@ -5,12 +5,14 @@ import { getOrderById, getOrderStatuses, getShippingStatuses } from '@/services/
 import axios from 'axios'
 import { computed } from 'vue'
 
+
 // 拿到 orderId
 const route = useRoute()
 const orderId = route.params.id
 
 const shippings = ref([])
 const shippingFee = ref(null)
+
 
 // 訂單詳細資料
 const order = ref(null)
@@ -102,6 +104,9 @@ const updateStatus = async () => {
     alert('更新失敗')
   }
 }
+
+
+
 
 onMounted(fetchData)
 

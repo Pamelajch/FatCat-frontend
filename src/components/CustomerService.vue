@@ -1,8 +1,9 @@
 <script setup>
 // --- 區塊作用：引入所有需要的工具 ---
-import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, computed, watch, defineExpose} from 'vue';
 import * as signalR from '@microsoft/signalr';
 import api from '@/services/jjapi.js';
+
 
 // --- 區塊作用：1. 核心狀態定義 (State) ---
 const isOpen = ref(false);
@@ -206,6 +207,8 @@ onMounted(() => {
   }
 });
 
+
+
 onUnmounted(() => {
   if (connection) {
     connection.stop();
@@ -240,6 +243,12 @@ const faqData = {
     ]
   }
 };
+
+// 2. 將 toggleChat 方法暴露出去
+defineExpose({
+  toggleChat
+});
+
 </script>
 
 <template>
