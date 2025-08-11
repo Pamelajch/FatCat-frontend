@@ -132,12 +132,12 @@ const handleFileUpload = async (event) => {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     const imageUrl = response.data.url;
-
+    // ★★★【這就是封裝成"圖片"！】★★★
     const messagePayload = {
       type: 'image',
       message: imageUrl,
     };
-    
+    // 透過 SignalR 將這個封裝好的物件發送給管理員
     await connection.invoke('SendMessageToAdmin', messagePayload);
 
     const localMessage = {
