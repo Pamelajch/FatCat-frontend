@@ -16,7 +16,7 @@ const error = computed(() => notificationStore.userError)
 async function fetchNotifications() {
   const user = localStorage.getItem('user')
   const userId = user ? JSON.parse(user).userId : null
-  
+   
   if (!userId || !authStore.isAuthenticated) {
     message.value = '請先登入'
     return
