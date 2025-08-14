@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import api from '@/services/jjapi.js'; //要抓會員id token用的
+import { useCartStore } from '@/stores/cart'; // ✅ 引入購物車 Store
 
 // --- 響應式狀態定義 ---
 const API_URL = 'https://localhost:7017/api/favorites'; 
@@ -10,7 +11,7 @@ const BACKEND_URL = 'https://localhost:7017';
 const favorites = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
-
+const cartStore = useCartStore(); // ✅ 建立購物車 store 實例
 // --- API 呼叫函式 ---
 const fetchFavorites = async () => {
   isLoading.value = true;
@@ -39,16 +40,18 @@ const removeFromFavorites = async (productId) => {
   }
 };
 
-// --- 【加入購物車的函式】 ---
+// --- 加入購物車 ---
 const addToCart = (product) => {
-  // 這裡的 alert 是一個暫時的佔位符
+  const cartItem = {
+    id: product.productId,
+    name: product.productName,
+    price: product.productPrice,
+    image: `/ProductImages/${product.productImageUrl}`
+  };
+  cartStore.addItem(cartItem);
   alert(`已將「${product.productName}」加入購物車！`);
-  
-  // --- 給梓偉加入 實際的邏輯區塊 (加入購物車) ---
-  // 可以在這裡呼叫 Pinia store 中的 action
-  // 
-  // ------------------------------------
 };
+
 
 
 // --- 生命週期鉤子 ---

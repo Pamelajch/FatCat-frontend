@@ -153,7 +153,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="review-section my-5">
+  <div class="review-section my-5 review-theme">
     
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
       <h3 class="mb-0">顧客評論 ({{ reviews.length }})</h3>
@@ -286,82 +286,125 @@ onMounted(() => {
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
 
-.review-section { max-width: 800px; margin-left: auto; margin-right: auto; }
-.review-card { border-left: 4px solid #0d6efd; }
-.star { color: #e0e0e0; font-size: 1.5rem; } 
-.star.filled { color: #ffa600; }
-.official-response { background-color: #f6f6f6; border-radius: 5px; border: 1px solid #eee; }
-.review-actions .btn-link { text-decoration: none; font-size: 0.8rem; }
-.review-actions .btn-link:hover { text-decoration: underline; }
-.sort-control { max-width: 180px; }
-/* --- 附件縮圖樣式 --- */
-.attachment-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px; /* 圖片間距 */
+/* 主題變數：淡白毛玻璃 + 黑字 */
+:root{
+  --panel: rgba(255,255,255,0.6);  /* 白色透明背景 */
+  --panel-strong: rgba(255,255,255,0.75);
+  --stroke: rgba(255,255,255,.4);
+  --stroke-strong: rgba(255,255,255,.6);
+  --glow: rgba(190,160,255,.6);
+  --txt: #222;                     /* 主要文字黑色 */
+  --txt-dim: #555;                 /* 較淡文字深灰 */
+  --accent: #bb88ff;
+  --accent2:#ffccff;
+  --star: #ffb400;
 }
 
-.attachment-thumbnail {
-  width: 80px; 
-  height: 80px; 
-  object-fit: cover; 
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-  border-radius: 4px;
-  border: 1px solid #dee2e6; /* 沿用 bootstrap img-thumbnail 的邊框色 */
+/* 版面寬度 */
+.review-section{ max-width:1200px; margin: 0 auto; }
+
+/* 標題與文字顏色（黑/灰） */
+.review-theme :deep(h3),
+.review-theme :deep(.card-title),
+.review-theme :deep(.card-text),
+.average-rating strong{ color: var(--txt); text-shadow:none; }
+.review-theme :deep(.text-muted){ color: var(--txt-dim) !important; }
+
+/* 卡片：淡白毛玻璃 + 紫色邊框光暈 */
+.review-card.card{
+  background: rgba(255,255,255,0.85); /* 白色透明度加高 */
+  border: 2px solid rgba(255,255,255,0.9); /* 更明顯的白邊 */
+  border-left: 4px solid var(--accent);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15), inset 0 0 8px rgba(255,255,255,0.5); /* 外陰影+內光暈 */
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s;
+}
+.review-card.card:hover{
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,1);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.25), inset 0 0 10px rgba(255,255,255,0.6);
 }
 
-.attachment-thumbnail:hover {
-  opacity: 0.8;
+/* 頭像光暈 */
+.review-header img.rounded-circle{
+  width:44px;height:44px;object-fit:cover;
+  border-radius:50%;
+  border:1px solid var(--stroke);
+  box-shadow:0 0 8px var(--glow);
 }
 
-/* --- 圖片 Modal 彈窗樣式 --- */
-.image-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  padding: 15px;
+/* 星星 */
+.star{ color:#ccc; font-size:1.2rem; }
+.star.filled{ color:var(--star); text-shadow:none; }
+.average-rating strong{ font-weight:800; }
+
+/* 官方回覆 */
+.official-response{
+  background: rgba(255,255,255,0.5);
+  border:1px solid var(--stroke);
+  border-radius:12px;
+  color:var(--txt);
+  padding-left:14px;
+  position:relative;
+}
+.official-response::before{
+  content:''; position:absolute; left:0; top:10px; bottom:10px; width:4px;
+  background: linear-gradient(180deg, var(--accent2), var(--accent));
+  border-radius:4px; box-shadow:0 0 6px var(--glow);
 }
 
-.image-modal-content {
-  position: relative;
-  display: flex;
+/* 附件縮圖 */
+.attachment-grid{ display:flex; flex-wrap:wrap; gap:10px; }
+.attachment-thumbnail{
+  width:90px;height:90px;object-fit:cover;cursor:pointer;
+  border-radius:12px;
+  border:1px solid var(--stroke);
+  box-shadow:0 4px 8px rgba(0,0,0,.1);
+  transition: transform .2s, box-shadow .2s, border-color .2s;
+}
+.attachment-thumbnail:hover{
+  transform: translateY(-2px) scale(1.02);
+  border-color: var(--stroke-strong);
+  box-shadow:0 6px 14px rgba(0,0,0,.15), 0 0 12px var(--glow);
 }
 
-.modal-image {
-  max-width: 90vw;
-  max-height: 90vh;
-  object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+/* 分頁按鈕 */
+.pagination .page-link{
+  background: var(--panel);
+  border:1px solid var(--stroke);
+  color: var(--txt);
+  border-radius: 999px;
+  transition: transform .2s, box-shadow .2s, border-color .2s;
+}
+.pagination .page-item.active .page-link{
+  background: linear-gradient(135deg, #ffd6e8, #f3baff);
+  color:#4a2e6e;
+  border-color:transparent;
+  box-shadow:0 0 12px var(--glow);
+}
+.pagination .page-link:hover{
+  transform: translateY(-1px);
+  border-color: var(--stroke-strong);
 }
 
-.image-modal-close {
-  position: absolute;
-  top: -15px;
-  right: -15px;
-  font-size: 2rem;
-  color: white;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-  text-shadow: 0 0 8px rgba(0,0,0,0.8);
+/* 排序選單 */
+.sort-control select.form-select{
+  background: var(--panel);
+  color: var(--txt);
+  border:1px solid var(--stroke);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 0 8px var(--glow);
+}
+.sort-control select.form-select:focus{
+  border-color: var(--stroke-strong);
+  box-shadow: 0 0 0 3px rgba(187,136,255,.25);
 }
 
-.image-modal-close:hover {
-  transform: scale(1.2);
-}
-
-/* 頁碼的按鈕樣式 */
-.pagination .page-item.active .page-link {
-  background-color: #92559c; 
-  border-color: #92559c;
-  color: white; 
+/* RWD */
+@media (max-width:576px){
+  .attachment-thumbnail{ width:78px; height:78px; }
 }
 </style>
