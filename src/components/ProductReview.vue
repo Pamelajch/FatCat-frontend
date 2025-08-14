@@ -336,9 +336,16 @@ onMounted(() => {
 }
 
 /* 星星 */
-.star{ color:#ccc; font-size:1.2rem; }
-.star.filled{ color:var(--star); text-shadow:none; }
-.average-rating strong{ font-weight:800; }
+.star{ 
+  color: #ccc; 
+  font-size: 1.2rem; 
+  /* 【修正】增加一個 transition 讓顏色變化更平滑 */
+  transition: color 0.2s; 
+}
+.star.filled{ 
+  color: #ffb400;
+  text-shadow: 0 0 5px rgba(255, 180, 0, 0.5); /* 增加一點點光暈效果 */
+}.average-rating strong{ font-weight:800; }
 
 /* 官方回覆 */
 .official-response{
@@ -391,7 +398,7 @@ onMounted(() => {
 
 /* 排序選單 */
 .sort-control select.form-select{
-  background: var(--panel);
+  background: rgb(255, 255, 255);
   color: var(--txt);
   border:1px solid var(--stroke);
   backdrop-filter: blur(6px);
@@ -407,4 +414,77 @@ onMounted(() => {
 @media (max-width:576px){
   .attachment-thumbnail{ width:78px; height:78px; }
 }
+/* --- 燈箱背景遮罩 --- */
+.image-modal-overlay {
+  position: fixed; /* 固定在視窗上 */
+  top: 0;
+  left: 0;
+  width: 100vw; /* 佔滿整個視窗寬度 */
+  height: 100vh; /* 佔滿整個視窗高度 */
+  background-color: rgba(0, 0, 0, 0.8); /* 半透明黑色背景 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* 確保在最上層 */
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  /* 動畫效果 */
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* --- 燈箱內容容器 --- */
+.image-modal-content {
+  position: relative;
+  max-width: 90vw; /* 最大寬度為視窗的 90% */
+  max-height: 90vh; /* 最大高度為視窗的 90% */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* 動畫效果 */
+  animation: zoomIn 0.3s ease;
+}
+
+@keyframes zoomIn {
+  from { transform: scale(0.8); }
+  to { transform: scale(1); }
+}
+
+/* --- 關閉按鈕 --- */
+.image-modal-close {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  width: 35px;
+  height: 35px;
+  background-color: white;
+  color: #333;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.image-modal-close:hover {
+  transform: scale(1.1);
+  background-color: #f1f1f1;
+}
+
+/* --- 燈箱中的圖片 --- */
+.modal-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* 確保圖片完整顯示，不被裁切 */
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
 </style>
